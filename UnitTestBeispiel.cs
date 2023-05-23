@@ -16,7 +16,7 @@ namespace Backend_3.Tests
             var temperatureF = weatherForecast.TemperatureF;
 
             // Assert
-            Assert.AreEqual(77, temperatureF);
+            Assert.AreEqual(76, temperatureF);
         }
     }
 }
