@@ -37,6 +37,7 @@ cache:
 stages:
   - build
   - lint
+  - test
 
 build:
   stage: build
@@ -59,3 +60,8 @@ lint:
     - /root/.dotnet/tools/roslynator analyze
   dependencies:
     - build
+
+test:
+  stage: test
+  script:
+    - dotnet test
