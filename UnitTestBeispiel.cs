@@ -1,4 +1,3 @@
-global using NUnit.Framework;
 
 namespace Backend_3.Tests
 {
