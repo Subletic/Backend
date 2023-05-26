@@ -22,7 +22,7 @@ git push -uf origin main
 
 ## Integrate with your tools
 
-- [ ] [Set up project integrations](https://gitlab.imn.htwk-leipzig.de/projekt2023-u-live-stream-editor-zur-korrektur-von-untertiteln-gbs-gmbh1/backend_3/-/settings/integrations)
+- [ ] [Set up project integrations](https://gitlab.imn.htwk-leipzig.de/projekt2023-o-live-stream-editor-zur-korrektur-von-untertiteln-gbs-gmbh1/backend_3/-/settings/integrations)
 
 ## Collaborate with your team
 
