@@ -1,15 +1,22 @@
+using Backend;
+
 namespace BackendTests;
 
-public class Tests
+public class WeatherForecastTests
 {
-    [SetUp]
-    public void Setup()
-    {
-    }
-
     [Test]
-    public void Test1()
+    public void TemperatureF_Should_Convert_TemperatureC_Correctly()
     {
-        Assert.Pass();
+        // Arrange
+        var weatherForecast = new WeatherForecast
+        {
+            TemperatureC = 25
+        };
+
+        // Act
+        var temperatureF = weatherForecast.TemperatureF;
+
+        // Assert
+        Assert.That(temperatureF, Is.EqualTo(76));
     }
 }
