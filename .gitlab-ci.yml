@@ -1,0 +1,74 @@
+variables:
+  # 1) Name of directory where restore and build objects are stored.
+  OBJECTS_DIRECTORY: 'obj'
+  # 2) Name of directory used for keeping restored dependencies.
+  NUGET_PACKAGES_DIRECTORY: '.nuget'
+  # 3) A relative path to the source code from project repository root.
+  # NOTE: Please edit this path so it matches the structure of your project!
+  SOURCE_CODE_PATH: 'Backend'
+  TESTS_PATH: 'BackendTests'
+
+cache:
+  # Per-stage and per-branch caching.
+  key: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
+  paths:
+    # Specify three paths that should be cached:
+    #
+    # 1) Main JSON file holding information about package dependency tree, packages versions,
+    # frameworks etc. It also holds information where to the dependencies were restored.
+    - '$SOURCE_CODE_PATH$OBJECTS_DIRECTORY/project.assets.json'
+    # 2) Other NuGet and MSBuild related files. Also needed.
+    - '$SOURCE_CODE_PATH$OBJECTS_DIRECTORY/*.csproj.nuget.*'
+    # 3) Path to the directory where restored dependencies are kept.
+    - '$NUGET_PACKAGES_DIRECTORY'
+  #
+  # 'pull-push' policy means that latest cache will be downloaded (if it exists)
+  # before executing the job, and a newer version will be uploaded afterwards.
+  # Such a setting saves time when there are no changes in referenced third-party
+  # packages.
+  #
+  # For example, if you run a pipeline with changes in your code,
+  # but with no changes within third-party packages which your project is using,
+  # then project restore will happen quickly as all required dependencies
+  # will already be there — unzipped from cache.
+
+  # 'pull-push' policy is the default cache policy, you do not have to specify it explicitly.
+  policy: pull-push
+
+stages:
+  - build
+  - lint
+  - test
+
+build:
+  stage: build
+  image: mcr.microsoft.com/dotnet/sdk:7.0
+  script:
+    - echo "Building the project..."
+    - dotnet restore
+    - dotnet build
+  artifacts:
+    paths:
+      - $SOURCE_CODE_PATH/bin/Debug/net7.0/
+
+lint:
+  stage: lint
+  image: mcr.microsoft.com/dotnet/sdk:7.0
+  script:
+    - echo "Checking Code-style..."
+    - dotnet tool restore
+    - dotnet tool install -g roslynator.dotnet.cli
+    - /root/.dotnet/tools/roslynator analyze
+  dependencies:
+    - build
+
+test:
+  stage: test
+  image: mcr.microsoft.com/dotnet/sdk:7.0
+  script:
+    - dotnet test
+  artifacts:
+    paths:
+      - $TEST_PATH/bin/Debug/net7.0/
+
+
