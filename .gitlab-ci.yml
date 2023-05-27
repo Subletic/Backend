@@ -5,7 +5,8 @@ variables:
   NUGET_PACKAGES_DIRECTORY: '.nuget'
   # 3) A relative path to the source code from project repository root.
   # NOTE: Please edit this path so it matches the structure of your project!
-  SOURCE_CODE_PATH: ''
+  SOURCE_CODE_PATH: 'Backend'
+  TESTS_PATH: 'BackendTests'
 
 cache:
   # Per-stage and per-branch caching.
@@ -15,9 +16,11 @@ cache:
     #
     # 1) Main JSON file holding information about package dependency tree, packages versions,
     # frameworks etc. It also holds information where to the dependencies were restored.
-    - '$SOURCE_CODE_PATH$OBJECTS_DIRECTORY/project.assets.json'
+    - '$SOURCE_CODE_PATH/$OBJECTS_DIRECTORY/project.assets.json'
+    - '$TESTS_PATH/$OBJECTS_DIRECTORY/project.assets.json'
     # 2) Other NuGet and MSBuild related files. Also needed.
-    - '$SOURCE_CODE_PATH$OBJECTS_DIRECTORY/*.csproj.nuget.*'
+    - '$SOURCE_CODE_PATH/$OBJECTS_DIRECTORY/*.csproj.nuget.*'
+    - '$TESTS_PATH/$OBJECTS_DIRECTORY/*.csproj.nuget.*'
     # 3) Path to the directory where restored dependencies are kept.
     - '$NUGET_PACKAGES_DIRECTORY'
   #
@@ -37,6 +40,7 @@ cache:
 stages:
   - build
   - lint
+  - test
 
 build:
   stage: build
@@ -47,7 +51,7 @@ build:
     - dotnet build
   artifacts:
     paths:
-      - $SOURCE_CODE_PATHbin/Debug/net7.0/
+      - $SOURCE_CODE_PATH/bin/Debug/net7.0/
 
 lint:
   stage: lint
@@ -59,3 +63,15 @@ lint:
     - /root/.dotnet/tools/roslynator analyze
   dependencies:
     - build
+
+test:
+  stage: test
+  image: mcr.microsoft.com/dotnet/sdk:7.0
+  script:
+    - echo "Running Unit Tests..."
+    - dotnet test
+  artifacts:
+    paths:
+      - $TEST_PATH/bin/Debug/net7.0/
+
+
