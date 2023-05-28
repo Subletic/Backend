@@ -7,7 +7,7 @@ public struct WordToken
         Word = word;
         Confidence = confidence;
         TimeStamp = timeStamp;
-        Speaker = Speaker;
+        Speaker = speaker;
     }
     
     public string Word { get; set; }
