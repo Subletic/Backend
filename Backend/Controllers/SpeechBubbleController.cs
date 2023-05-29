@@ -19,17 +19,17 @@ public class SpeechBubbleController
 
     public void HandleNewWord(WordToken wordToken)
     {
-        const int maxWordCount = 20;
-        
         SetSpeakerIfSpeakerIsNull(wordToken);
 
         // Add new word Token to current Speech Bubble
         if (_currentSpeaker != null && _currentSpeaker == wordToken.Speaker)
         {
-            _wordTokenBuffer.Add(wordToken);
+            if (IsSpeechBubbleFull(wordToken))
+            {
+                FlushBufferToNewSpeechBubble();
+            }
             
-            if (_wordTokenBuffer.Count < maxWordCount) return;
-            FlushBufferToNewSpeechBubble();
+            _wordTokenBuffer.Add(wordToken);
         }
         // Finish current SpeechBubble if new Speaker is detected
         else if (_currentSpeaker != null && _currentSpeaker != wordToken.Speaker)
@@ -37,7 +37,26 @@ public class SpeechBubbleController
             FlushBufferToNewSpeechBubble();
 
             _currentSpeaker = wordToken.Speaker;
+            _wordTokenBuffer.Add(wordToken);
         }
+    }
+
+    private bool IsSpeechBubbleFull(WordToken wordToken)
+    {
+        const int maxWordCount = 20;
+        const int maxSecondsTimeDifference = 5;
+        var isTimeLimitExceeded = false;
+
+        if (_wordTokenBuffer.Count > 0)
+        {
+            var lastBufferElementTimeStamp = _wordTokenBuffer.Last().TimeStamp;
+            var newWordTokenTimeStamp = wordToken.TimeStamp;
+            var timeDifference = newWordTokenTimeStamp - lastBufferElementTimeStamp;
+
+            isTimeLimitExceeded = timeDifference > maxSecondsTimeDifference;
+        }
+
+        return _wordTokenBuffer.Count >= maxWordCount - 1 || isTimeLimitExceeded;
     }
 
     private void FlushBufferToNewSpeechBubble()
