@@ -143,7 +143,7 @@ public class SpeechBubbleController : ISpeechBubbleController
         try
         {
             await _hubContext.Clients.All.SendAsync("newBubble", speechBubble);
-        } catch (Exception e)
+        } catch (Exception)
         {
             await Console.Error.WriteAsync("Failed to transmit to Frontend.");
         }
