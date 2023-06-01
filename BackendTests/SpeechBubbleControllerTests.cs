@@ -1,5 +1,8 @@
 ﻿using Backend.Controllers;
 using Backend.Data;
+using Backend.Hubs;
+using Microsoft.AspNetCore.SignalR;
+using Moq;
 
 namespace BackendTests;
 
@@ -8,7 +11,8 @@ public class SpeechBubbleControllerTests
     [Test]
     public void SpeechBubbleController_Insert19NewWords_SpeechBubbleListEmpty()
     {
-        var controller = new SpeechBubbleController();
+        var mockClients = new Mock<IHubContext<CommunicationHub>>();
+        var controller = new SpeechBubbleController(mockClients.Object);
 
         var testWord = new WordToken(word: "Test", confidence: 0.9f, timeStamp: 1, speaker: 1);
         for (var i = 0; i < 19; i++)
@@ -21,7 +25,8 @@ public class SpeechBubbleControllerTests
     [Test]
     public void SpeechBubbleController_Insert20NewWords_FirstSpeechBubbleAvailable()
     {
-        var controller = new SpeechBubbleController();
+        var mockClients = new Mock<IHubContext<CommunicationHub>>();
+        var controller = new SpeechBubbleController(mockClients.Object);
 
         var testWord = new WordToken(word: "Test", confidence: 0.9f, timeStamp: 1, speaker: 1);
         for (var i = 0; i < 20; i++)
@@ -36,7 +41,8 @@ public class SpeechBubbleControllerTests
     [Test]
     public void SpeechBubbleController_Insert40NewWords_SpeechBubbleListContains2Bubbles()
     {
-        var controller = new SpeechBubbleController();
+        var mockClients = new Mock<IHubContext<CommunicationHub>>();
+        var controller = new SpeechBubbleController(mockClients.Object);
 
         var testWord = new WordToken(word: "Test", confidence: 0.9f, timeStamp: 1, speaker: 1);
         for (var i = 0; i < 40; i++)
@@ -50,7 +56,8 @@ public class SpeechBubbleControllerTests
     [Test]
     public void SpeechBubbleController_Insert120NewWords_SpeechBubbleListContains6Bubbles()
     {
-        var controller = new SpeechBubbleController();
+        var mockClients = new Mock<IHubContext<CommunicationHub>>();
+        var controller = new SpeechBubbleController(mockClients.Object);
 
         var testWord = new WordToken(word: "Test", confidence: 0.9f, timeStamp: 1, speaker: 1);
         for (var i = 0; i < 120; i++)
@@ -64,7 +71,8 @@ public class SpeechBubbleControllerTests
     [Test]
     public void SpeechBubbleController_Insert3WordsSeperated6Seconds_SpeechBubbleListContains2Bubbles()
     {
-        var controller = new SpeechBubbleController();
+        var mockClients = new Mock<IHubContext<CommunicationHub>>();
+        var controller = new SpeechBubbleController(mockClients.Object);
 
         var firstWord = new WordToken(word: "Test", confidence: 0.9f, timeStamp: 1, speaker: 1);
         var secondWord = new WordToken(word: "Test2", confidence: 0.7f, timeStamp: 7, speaker: 1);
@@ -79,7 +87,8 @@ public class SpeechBubbleControllerTests
     [Test]
     public void SpeechBubbleController_Insert3WordsDifferentSpeakers_SpeechBubbleListContains2Bubbles()
     {
-        var controller = new SpeechBubbleController();
+        var mockClients = new Mock<IHubContext<CommunicationHub>>();
+        var controller = new SpeechBubbleController(mockClients.Object);
 
         var firstWord = new WordToken(word: "Test", confidence: 0.9f, timeStamp: 1, speaker: 1);
         var secondWord = new WordToken(word: "Test2", confidence: 0.7f, timeStamp: 1, speaker: 2);
@@ -94,7 +103,8 @@ public class SpeechBubbleControllerTests
     [Test]
     public void SpeechBubbleController_Insert4WordsDifferentTimeStampsDifferentSpeakers_SpeechBubbleListContains2Bubbles()
     {
-        var controller = new SpeechBubbleController();
+        var mockClients = new Mock<IHubContext<CommunicationHub>>();
+        var controller = new SpeechBubbleController(mockClients.Object);
 
         var firstWord = new WordToken(word: "Test", confidence: 0.9f, timeStamp: 1, speaker: 1);
         var secondWord = new WordToken(word: "Test2", confidence: 0.7f, timeStamp: 2, speaker: 2);
