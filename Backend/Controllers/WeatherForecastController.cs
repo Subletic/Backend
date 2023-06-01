@@ -15,6 +15,7 @@ public class WeatherForecastController : ControllerBase
 
     public WeatherForecastController(ILogger<WeatherForecastController> logger)
     {
+        Console.Out.WriteLine("Hier");
         _logger = logger;
     }
 
