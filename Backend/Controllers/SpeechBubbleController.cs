@@ -1,4 +1,6 @@
 ﻿using Backend.Data;
+using Backend.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Backend.Controllers;
 
@@ -9,6 +11,8 @@ namespace Backend.Controllers;
 /// </summary>
 public class SpeechBubbleController : ISpeechBubbleController
 {
+    private readonly IHubContext<CommunicationHub> _hubContext;
+
     private readonly LinkedList<SpeechBubble> _speechBubbleList;
     private readonly List<WordToken> _wordTokenBuffer;
 
@@ -20,11 +24,11 @@ public class SpeechBubbleController : ISpeechBubbleController
     /// Initializes with an empty SpeechBubbleList.
     /// Sets needed private attributes to default values.
     /// </summary>
-    public SpeechBubbleController()
-    {
+    public SpeechBubbleController(IHubContext<CommunicationHub> hubContext) {
         _speechBubbleList = new LinkedList<SpeechBubble>();
         _wordTokenBuffer = new List<WordToken>();
         _nextSpeechBubbleId = 1;
+        _hubContext = hubContext;
     }
 
     /// <summary>
@@ -92,7 +96,7 @@ public class SpeechBubbleController : ISpeechBubbleController
     /// Empties WordBuffer and appends new SpeechBubble to the End of the LinkedList
     /// Increments the SpeechBubbleId by 1, so each SpeechBubble has a unique Id.
     /// </summary>
-    private void FlushBufferToNewSpeechBubble()
+    private async void FlushBufferToNewSpeechBubble()
     {
         var nextSpeechBubble = new SpeechBubble(
             id: _nextSpeechBubbleId,
@@ -105,6 +109,7 @@ public class SpeechBubbleController : ISpeechBubbleController
         _nextSpeechBubbleId++;
         _wordTokenBuffer.Clear();
         _speechBubbleList.AddLast(nextSpeechBubble);
+        await SendNewSpeechBubbleMessageToFrontend(nextSpeechBubble);
     }
 
     /// <summary>
@@ -125,5 +130,16 @@ public class SpeechBubbleController : ISpeechBubbleController
     public LinkedList<SpeechBubble> GetSpeechBubbles()
     {
         return _speechBubbleList;
+    }
+    
+    
+    /// <summary>
+    /// Sends an asynchronous request to the frontend via SignalR.
+    /// The frontend will then display the new SpeechBubble.
+    /// </summary>
+    /// <param name="speechBubble"></param>
+    private async Task SendNewSpeechBubbleMessageToFrontend(SpeechBubble speechBubble)
+    {
+        await _hubContext.Clients.All.SendAsync("newBubble", speechBubble);
     }
 }
