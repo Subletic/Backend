@@ -140,6 +140,12 @@ public class SpeechBubbleController : ISpeechBubbleController
     /// <param name="speechBubble"></param>
     private async Task SendNewSpeechBubbleMessageToFrontend(SpeechBubble speechBubble)
     {
-        await _hubContext.Clients.All.SendAsync("newBubble", speechBubble);
+        try
+        {
+            await _hubContext.Clients.All.SendAsync("newBubble", speechBubble);
+        } catch (Exception e)
+        {
+            await Console.Error.WriteAsync("Failed to transmit to Frontend.");
+        }
     }
 }
