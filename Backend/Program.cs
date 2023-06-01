@@ -1,4 +1,5 @@
 using Backend.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,8 +32,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
-
 app.UseRouting();
 
 app.UseCors("AllowAngularFrontend");
@@ -40,11 +39,7 @@ app.MapHub<CommunicationHub>("/communicationHub");
 
 app.UseHttpsRedirection();
 
-var test = new CommunicationHub();
-
 app.UseRouting();
-
-app.MapGet("/test", () => test.SendMessage("test"));
 
 app.UseAuthorization();
 

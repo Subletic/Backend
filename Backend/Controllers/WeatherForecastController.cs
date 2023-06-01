@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Backend.Hubs;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Backend.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("/Controller")]
 public class WeatherForecastController : ControllerBase
 {
+    private readonly IHubContext<CommunicationHub> _hubContext;
     private static readonly string[] Summaries = new[]
     {
         "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
@@ -13,11 +16,19 @@ public class WeatherForecastController : ControllerBase
 
     private readonly ILogger<WeatherForecastController> _logger;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger, IHubContext<CommunicationHub> hubContext)
     {
-        Console.Out.WriteLine("Hier");
+        _hubContext = hubContext;
         _logger = logger;
+        Console.Out.WriteLine("hallo");
+        Send();
     }
+    
+    public async Task Send()
+    {
+        await _hubContext.Clients.All.SendAsync("ReceiveMessage", "hallo angular");
+    }
+
 
     [HttpGet(Name = "GetWeatherForecast")]
     public IEnumerable<WeatherForecast> Get()
