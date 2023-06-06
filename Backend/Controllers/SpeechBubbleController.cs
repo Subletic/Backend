@@ -1,4 +1,6 @@
 ﻿using Backend.Data;
+using Backend.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Backend.Controllers;
 
@@ -9,6 +11,8 @@ namespace Backend.Controllers;
 /// </summary>
 public class SpeechBubbleController : ISpeechBubbleController
 {
+    private readonly IHubContext<CommunicationHub> _hubContext;
+
     private readonly LinkedList<SpeechBubble> _speechBubbleList;
     private readonly List<WordToken> _wordTokenBuffer;
 
@@ -20,11 +24,11 @@ public class SpeechBubbleController : ISpeechBubbleController
     /// Initializes with an empty SpeechBubbleList.
     /// Sets needed private attributes to default values.
     /// </summary>
-    public SpeechBubbleController()
-    {
+    public SpeechBubbleController(IHubContext<CommunicationHub> hubContext) {
         _speechBubbleList = new LinkedList<SpeechBubble>();
         _wordTokenBuffer = new List<WordToken>();
         _nextSpeechBubbleId = 1;
+        _hubContext = hubContext;
     }
 
     /// <summary>
@@ -76,8 +80,8 @@ public class SpeechBubbleController : ISpeechBubbleController
 
         if (_wordTokenBuffer.Count > 0)
         {
-            var lastBufferElementTimeStamp = _wordTokenBuffer.Last().TimeStamp;
-            var newWordTokenTimeStamp = wordToken.TimeStamp;
+            var lastBufferElementTimeStamp = _wordTokenBuffer.Last().StartTime;
+            var newWordTokenTimeStamp = wordToken.StartTime;
             var timeDifference = newWordTokenTimeStamp - lastBufferElementTimeStamp;
 
             isTimeLimitExceeded = timeDifference > maxSecondsTimeDifference;
@@ -92,19 +96,20 @@ public class SpeechBubbleController : ISpeechBubbleController
     /// Empties WordBuffer and appends new SpeechBubble to the End of the LinkedList
     /// Increments the SpeechBubbleId by 1, so each SpeechBubble has a unique Id.
     /// </summary>
-    private void FlushBufferToNewSpeechBubble()
+    private async void FlushBufferToNewSpeechBubble()
     {
         var nextSpeechBubble = new SpeechBubble(
             id: _nextSpeechBubbleId,
             speaker: (int)_currentSpeaker!,
-            start: _wordTokenBuffer.First().TimeStamp,
-            end: _wordTokenBuffer.Last().TimeStamp,
+            startTime: _wordTokenBuffer.First().StartTime,
+            endTime: _wordTokenBuffer.Last().EndTime,
             wordTokens: _wordTokenBuffer
         );
 
         _nextSpeechBubbleId++;
         _wordTokenBuffer.Clear();
         _speechBubbleList.AddLast(nextSpeechBubble);
+        await SendNewSpeechBubbleMessageToFrontend(nextSpeechBubble);
     }
 
     /// <summary>
@@ -125,5 +130,22 @@ public class SpeechBubbleController : ISpeechBubbleController
     public LinkedList<SpeechBubble> GetSpeechBubbles()
     {
         return _speechBubbleList;
+    }
+    
+    
+    /// <summary>
+    /// Sends an asynchronous request to the frontend via SignalR.
+    /// The frontend can then subscribe to incoming Objects and handle them accordingly.
+    /// </summary>
+    /// <param name="speechBubble"></param>
+    private async Task SendNewSpeechBubbleMessageToFrontend(SpeechBubble speechBubble)
+    {
+        try
+        {
+            await _hubContext.Clients.All.SendAsync("newBubble", speechBubble);
+        } catch (Exception)
+        {
+            await Console.Error.WriteAsync("Failed to transmit to Frontend.");
+        }
     }
 }
