@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Backend.Hubs
 {
+    /// <summary>
+    /// Used for SignalR communication.
+    /// </summary>
     public class CommunicationHub : Hub
     {
         /// <summary>
         /// Not actually used.
-        /// Hub needs content to work.
         /// Should contain Methods which are called from the Frontend.
         /// </summary>
         /// <param name="message"></param>

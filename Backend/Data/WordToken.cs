@@ -2,16 +2,18 @@
 
 public struct WordToken
 {
-    public WordToken(string word, float confidence, int timeStamp, int speaker)
+    public WordToken(string word, float confidence, double startTime, double endTime, int speaker)
     {
         Word = word;
         Confidence = confidence;
-        TimeStamp = timeStamp;
+        StartTime = startTime;
+        EndTime = endTime;
         Speaker = speaker;
     }
     
     public string Word { get; set; }
     public float Confidence { get; set; }
-    public int TimeStamp { get; set; }
+    public double StartTime { get; set; }
+    public double EndTime { get; set; }
     public int Speaker { get; set; }
 }

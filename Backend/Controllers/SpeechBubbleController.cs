@@ -80,8 +80,8 @@ public class SpeechBubbleController : ISpeechBubbleController
 
         if (_wordTokenBuffer.Count > 0)
         {
-            var lastBufferElementTimeStamp = _wordTokenBuffer.Last().TimeStamp;
-            var newWordTokenTimeStamp = wordToken.TimeStamp;
+            var lastBufferElementTimeStamp = _wordTokenBuffer.Last().StartTime;
+            var newWordTokenTimeStamp = wordToken.StartTime;
             var timeDifference = newWordTokenTimeStamp - lastBufferElementTimeStamp;
 
             isTimeLimitExceeded = timeDifference > maxSecondsTimeDifference;
@@ -101,8 +101,8 @@ public class SpeechBubbleController : ISpeechBubbleController
         var nextSpeechBubble = new SpeechBubble(
             id: _nextSpeechBubbleId,
             speaker: (int)_currentSpeaker!,
-            start: _wordTokenBuffer.First().TimeStamp,
-            end: _wordTokenBuffer.Last().TimeStamp,
+            startTime: _wordTokenBuffer.First().StartTime,
+            endTime: _wordTokenBuffer.Last().EndTime,
             wordTokens: _wordTokenBuffer
         );
 
@@ -135,7 +135,7 @@ public class SpeechBubbleController : ISpeechBubbleController
     
     /// <summary>
     /// Sends an asynchronous request to the frontend via SignalR.
-    /// The frontend will then display the new SpeechBubble.
+    /// The frontend can then subscribe to incoming Objects and handle them accordingly.
     /// </summary>
     /// <param name="speechBubble"></param>
     private async Task SendNewSpeechBubbleMessageToFrontend(SpeechBubble speechBubble)
