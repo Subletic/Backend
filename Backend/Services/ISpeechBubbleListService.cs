@@ -11,9 +11,4 @@ public interface ISpeechBubbleListService
     public void DeleteOldestSpeechBubble();
 
     public void ReplaceSpeechBubble(SpeechBubble speechBubble);
-
-    
-
-
-
 }

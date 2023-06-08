@@ -14,6 +14,10 @@ public class SpeechBubbleController : ISpeechBubbleController
 {
     private readonly IHubContext<CommunicationHub> _hubContext;
 
+    /// <summary>
+    /// Dependency Injection for accessing the LinkedList of SpeechBubbles and corresponding methods.
+    /// All actions on the SpeechBubbleList are delegated to the SpeechBubbleListService.
+    /// </summary>
     private readonly ISpeechBubbleListService _speechBubbleListService;
 
     private readonly List<WordToken> _wordTokenBuffer;

@@ -1,6 +1,5 @@
 ﻿using Backend.Data;
 using Backend.Services;
-using Moq;
 
 namespace BackendTests
 {
@@ -167,6 +166,15 @@ namespace BackendTests
                 Assert.That(speechBubbles.First!.Value, Is.EqualTo(testSpeechBubble1));
                 Assert.That(speechBubbles.ElementAt(1), Is.EqualTo(testSpeechBubble4));
             });
+        }
+
+        [Test]
+        public void ReplaceSpeechBubble_ReplaceIntoEmptyListAddsElementToList()
+        {
+            _speechBubbleListService.ReplaceSpeechBubble(_testSpeechBubble1);
+
+            var speechBubbles = _speechBubbleListService.GetSpeechBubbles();
+            Assert.That(speechBubbles, Has.Count.EqualTo(1));
         }
     }
 }
