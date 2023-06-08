@@ -25,7 +25,9 @@ public class SpeechBubbleController : ISpeechBubbleController
     /// Initializes with an empty SpeechBubbleList.
     /// Sets needed private attributes to default values.
     /// </summary>
-    public SpeechBubbleController(IHubContext<CommunicationHub> hubContext, ISpeechBubbleListService speechBubbleListService) {
+    public SpeechBubbleController(IHubContext<CommunicationHub> hubContext,
+        ISpeechBubbleListService speechBubbleListService)
+    {
         _speechBubbleListService = speechBubbleListService;
         _wordTokenBuffer = new List<WordToken>();
         _nextSpeechBubbleId = 1;
@@ -81,7 +83,7 @@ public class SpeechBubbleController : ISpeechBubbleController
 
         if (_wordTokenBuffer.Count > 0)
         {
-            var lastBufferElementTimeStamp = _wordTokenBuffer.Last().StartTime;
+            var lastBufferElementTimeStamp = _wordTokenBuffer.Last().EndTime;
             var newWordTokenTimeStamp = wordToken.StartTime;
             var timeDifference = newWordTokenTimeStamp - lastBufferElementTimeStamp;
 
@@ -91,7 +93,7 @@ public class SpeechBubbleController : ISpeechBubbleController
         return _wordTokenBuffer.Count >= maxWordCount - 1 || isTimeLimitExceeded;
     }
 
-    
+
     /// <summary>
     /// Method to flush the WordToken buffer to a new SpeechBubble.
     /// Empties WordBuffer and appends new SpeechBubble to the End of the LinkedList
@@ -122,8 +124,8 @@ public class SpeechBubbleController : ISpeechBubbleController
     {
         _currentSpeaker ??= wordToken.Speaker;
     }
-   
-   
+
+
     /// <summary>
     /// Sends an asynchronous request to the frontend via SignalR.
     /// The frontend can then subscribe to incoming Objects and handle them accordingly.
@@ -134,7 +136,8 @@ public class SpeechBubbleController : ISpeechBubbleController
         try
         {
             await _hubContext.Clients.All.SendAsync("newBubble", speechBubble);
-        } catch (Exception)
+        }
+        catch (Exception)
         {
             await Console.Error.WriteAsync("Failed to transmit to Frontend.");
         }
