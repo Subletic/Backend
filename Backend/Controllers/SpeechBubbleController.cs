@@ -1,5 +1,6 @@
 ﻿using Backend.Data;
 using Backend.Hubs;
+using Backend.Services;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Backend.Controllers;

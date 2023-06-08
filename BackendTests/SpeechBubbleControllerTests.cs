@@ -1,6 +1,7 @@
 ﻿using Backend.Controllers;
 using Backend.Data;
 using Backend.Hubs;
+using Backend.Services;
 using Microsoft.AspNetCore.SignalR;
 using Moq;
 

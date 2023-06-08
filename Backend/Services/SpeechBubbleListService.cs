@@ -43,7 +43,7 @@ public class SpeechBubbleListService : ISpeechBubbleListService
 
             _speechBubbleList.Remove(_speechBubbleList.ElementAt(i));
 
-            if (_speechBubbleList.Count == 0)
+            if (_speechBubbleList.Count == 0 || i == 0)
             {
                 _speechBubbleList.AddFirst(speechBubble);
                 return;

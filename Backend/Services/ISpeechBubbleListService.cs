@@ -1,5 +1,7 @@
 using Backend.Data;
 
+namespace Backend.Services;
+
 public interface ISpeechBubbleListService
 {
     public LinkedList<SpeechBubble> GetSpeechBubbles();
