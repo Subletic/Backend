@@ -13,7 +13,9 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddSignalR();
 
-builder.Services.AddScoped<ISpeechBubbleListService, SpeechBubbleListService>();
+builder.Services.AddSingleton<ISpeechBubbleListService, SpeechBubbleListService>();
+
+builder.Services.AddHostedService<BufferTimeMonitor>();
 
 builder.Services.AddCors(options =>
 {

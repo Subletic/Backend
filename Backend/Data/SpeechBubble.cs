@@ -11,11 +11,13 @@ public struct SpeechBubble
         StartTime = startTime;
         EndTime = endTime;
         SpeechBubbleContent = wordTokens;
+        CreationTime = DateTime.Now;
     }
     
-    public long Id { get; set; }
+    public long Id { get; init; }
     public int Speaker { get; set; }
     public double StartTime { get; set; }
     public double EndTime { get; set; }
+    public DateTime CreationTime { get; set; }
     public List<WordToken> SpeechBubbleContent { get; set; }
 }
