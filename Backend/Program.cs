@@ -12,6 +12,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddSignalR();
 
+builder.Services.AddScoped<ISpeechBubbleListService, SpeechBubbleListService>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngularFrontend",

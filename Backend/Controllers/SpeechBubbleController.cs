@@ -13,7 +13,8 @@ public class SpeechBubbleController : ISpeechBubbleController
 {
     private readonly IHubContext<CommunicationHub> _hubContext;
 
-    private readonly LinkedList<SpeechBubble> _speechBubbleList;
+    private readonly ISpeechBubbleListService _speechBubbleListService;
+
     private readonly List<WordToken> _wordTokenBuffer;
 
     private long _nextSpeechBubbleId;
@@ -24,8 +25,8 @@ public class SpeechBubbleController : ISpeechBubbleController
     /// Initializes with an empty SpeechBubbleList.
     /// Sets needed private attributes to default values.
     /// </summary>
-    public SpeechBubbleController(IHubContext<CommunicationHub> hubContext) {
-        _speechBubbleList = new LinkedList<SpeechBubble>();
+    public SpeechBubbleController(IHubContext<CommunicationHub> hubContext, ISpeechBubbleListService speechBubbleListService) {
+        _speechBubbleListService = speechBubbleListService;
         _wordTokenBuffer = new List<WordToken>();
         _nextSpeechBubbleId = 1;
         _hubContext = hubContext;
@@ -108,7 +109,7 @@ public class SpeechBubbleController : ISpeechBubbleController
 
         _nextSpeechBubbleId++;
         _wordTokenBuffer.Clear();
-        _speechBubbleList.AddLast(nextSpeechBubble);
+        _speechBubbleListService.AddNewSpeechBubble(nextSpeechBubble);
         await SendNewSpeechBubbleMessageToFrontend(nextSpeechBubble);
     }
 
@@ -121,18 +122,8 @@ public class SpeechBubbleController : ISpeechBubbleController
     {
         _currentSpeaker ??= wordToken.Speaker;
     }
-
-    
-    /// <summary>
-    /// Returns a LinkedList containing all SpeechBubbles.
-    /// </summary>
-    /// <returns>LinkedList of all SpeechBubbles</returns>
-    public LinkedList<SpeechBubble> GetSpeechBubbles()
-    {
-        return _speechBubbleList;
-    }
-    
-    
+   
+   
     /// <summary>
     /// Sends an asynchronous request to the frontend via SignalR.
     /// The frontend can then subscribe to incoming Objects and handle them accordingly.
