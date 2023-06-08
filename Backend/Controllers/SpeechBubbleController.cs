@@ -25,11 +25,7 @@ public class SpeechBubbleController : ISpeechBubbleController
     private int? _currentSpeaker;
 
 
-    public SpeechBubbleController(IHubContext<CommunicationHub> hubContext)
-    {
-        _hubContext = hubContext;
-        _speechBubbleList = new LinkedList<SpeechBubble>();
-    }
+
 
     [HttpPost]
     public IActionResult HandleUpdatedSpeechBubble([FromBody] SpeechBubble updatedSpeechBubble)
@@ -42,6 +38,7 @@ public class SpeechBubbleController : ISpeechBubbleController
             existingSpeechBubble.StartTime = updatedSpeechBubble.StartTime;
             existingSpeechBubble.EndTime = updatedSpeechBubble.EndTime;
             existingSpeechBubble.Speaker = updatedSpeechBubble.Speaker;
+            existingSpeechBubble.SpeechBubbleContent = updatedSpeechBubble.SpeechBubbleContent;
 
             // Perform any additional processing or validation if needed
 
