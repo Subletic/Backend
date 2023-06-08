@@ -1,6 +1,7 @@
 ﻿using Backend.Data;
 using Backend.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using System.Collections.Generic;
 
 namespace Backend.Controllers;
 
@@ -9,6 +10,10 @@ namespace Backend.Controllers;
 /// SpeechBubbles are contained in a LinkedList.
 /// Provides the first SpeechBubble when one of the SpeechBubble split conditions is met.
 /// </summary>
+
+[ApiController]
+[Route("api/[controller]")]
+
 public class SpeechBubbleController : ISpeechBubbleController
 {
     private readonly IHubContext<CommunicationHub> _hubContext;
@@ -18,6 +23,37 @@ public class SpeechBubbleController : ISpeechBubbleController
 
     private long _nextSpeechBubbleId;
     private int? _currentSpeaker;
+
+
+    public SpeechBubbleController(IHubContext<CommunicationHub> hubContext)
+    {
+        _hubContext = hubContext;
+        _speechBubbleList = new LinkedList<SpeechBubble>();
+    }
+
+    [HttpPost]
+    public IActionResult HandleUpdatedSpeechBubble([FromBody] SpeechBubble updatedSpeechBubble)
+    {
+        var existingSpeechBubble = _speechBubbleList.Find(s => s.Id == updatedSpeechBubble.Id);
+
+        if (existingSpeechBubble != null)
+        {
+            // Update the existing speech bubble with the new data
+            existingSpeechBubble.StartTime = updatedSpeechBubble.StartTime;
+            existingSpeechBubble.EndTime = updatedSpeechBubble.EndTime;
+            existingSpeechBubble.Speaker = updatedSpeechBubble.Speaker;
+
+            // Perform any additional processing or validation if needed
+
+            // Send the updated speech bubble
+
+            return Ok(_speechBubbleList); // Return the updated _speechBubbleList
+        }
+
+        return NotFound();
+    }
+
+
 
     /// <summary>
     /// Constructor for SpeechBubbleController.
