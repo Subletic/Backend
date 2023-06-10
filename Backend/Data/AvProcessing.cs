@@ -40,7 +40,7 @@ public class AvProcessing {
         string? apiKeyEnvMaybe = Environment.GetEnvironmentVariable (apiKeyVar);
         if (apiKeyEnvMaybe == null) {
             throw new ArgumentException (String.Format (
-                "Requested {0} envvar is not set", apiKeyVar), "apiKeyVar");
+                "Requested {0} envvar is not set", apiKeyVar), nameof (apiKeyVar));
         }
         string apiKeyEnv = (string)apiKeyEnvMaybe;
 
@@ -147,7 +147,6 @@ public class AvProcessing {
             logReceive (responseString);
 
             // FIXME AddTranscript's still arrive after the last AudioAdded confirmation
-            // and apparently, it even issues corrections to previously sent transcriptions?
             if (doneSendingAudio && (sentNum == seqNum)) break;
         }
         Console.WriteLine ("Completed transcription receiving");
@@ -195,16 +194,12 @@ public class AvProcessing {
         seqNum = 0;
         doneSendingAudio = false;
         Task receiveTranscriptions = ReceiveTranscriptions (wsClient);
-        await SendAudio (wsClient, filepath);
         Task sendAudio = SendAudio (wsClient, filepath);
-
-        // TODO how is this getting stopped? needs some cross-Task way of signaling
-        // - end of audio to stream
-        // - stop/termination request
 
         await sendAudio;
         await receiveTranscriptions;
 
+        // TODO move all the rest of this into ReceiveTranscriptions
         // stop recognition
         string endOfStreamMessageFmt = @"{{
   ""message"": ""EndOfStream"",
