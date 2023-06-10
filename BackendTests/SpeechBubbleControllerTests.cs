@@ -2,6 +2,8 @@
 using Backend.Data;
 using Backend.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.Mvc;
+using NUnit.Framework;
 using Moq;
 
 namespace BackendTests;
@@ -115,8 +117,8 @@ public class SpeechBubbleControllerTests
         var controller = new SpeechBubbleController(hubContextMock.Object);
 
         var firstWord = new WordToken(word: "Test", confidence: 0.9f, startTime: 1, endTime: 3, speaker: 1);
-        var secondWord = new WordToken(word: "Test2", confidence: 0.7f, startTime: 4, endTime: 5,speaker: 2);
-        var thirdWord = new WordToken(word: "Test3", confidence: 0.7f, startTime: 6, endTime: 7,speaker: 1);
+        var secondWord = new WordToken(word: "Test2", confidence: 0.7f, startTime: 4, endTime: 5, speaker: 2);
+        var thirdWord = new WordToken(word: "Test3", confidence: 0.7f, startTime: 6, endTime: 7, speaker: 1);
 
         // Act
         controller.HandleNewWord(firstWord);
@@ -155,27 +157,17 @@ public class SpeechBubbleControllerTests
     public void HandleUpdatedSpeechBubble_ExistingSpeechBubble_UpdatesAndReturnsUpdatedList()
     {
         // Arrange
-        var controller = new SpeechBubbleController();
-        var existingSpeechBubble = new SpeechBubble
-        {
-            Id = 1,
-            StartTime = 10.0,
-            EndTime = 15.0,
-            Speaker = 1
-        };
+        var hubContextMock = new Mock<IHubContext<CommunicationHub>>();
+        var controller = new SpeechBubbleController(hubContextMock.Object);
+
+        var existingSpeechBubble = new SpeechBubble(1, 1, 10.0, 15.0, new List<WordToken>());
         var firstWord = new WordToken(word: "Test", confidence: 0.9f, startTime: 1, endTime: 2, speaker: 1);
-        controller.HandleNewWord(existingSpeechBubble, firstWord);
+        controller.HandleNewWord(firstWord);
         controller.AddSpeechBubble(existingSpeechBubble);
 
-        var updatedSpeechBubble = new SpeechBubble
-        {
-            Id = 1,
-            StartTime = 5.0,
-            EndTime = 20.0,
-            Speaker = 2
-        };
+        var updatedSpeechBubble = new SpeechBubble(1, 2, 5.0, 20.0, new List<WordToken>());
         var secondWord = new WordToken(word: "Test2", confidence: 0.7f, startTime: 3, endTime: 4, speaker: 2);
-        controller.HandleNewWord(updatedSpeechBubble, secondWord);
+        controller.HandleNewWord(secondWord);
 
         // Act
         var result = controller.HandleUpdatedSpeechBubble(updatedSpeechBubble);
@@ -183,10 +175,11 @@ public class SpeechBubbleControllerTests
         // Assert
         Assert.That(result, Is.InstanceOf<OkObjectResult>());
         var okResult = (OkObjectResult)result;
-        Assert.That(okResult.Value, Is.EqualTo(controller.GetSpeechBubbleList()));
-        var updatedBubble = controller.GetSpeechBubbleList().Find(b => b.Id == existingSpeechBubble.Id);
+        Assert.That(okResult.Value, Is.EqualTo(controller.GetSpeechBubbles()));
+        SpeechBubble updatedBubble = controller.GetSpeechBubbles().First(b => b.Id == existingSpeechBubble.Id);
         Assert.That(updatedBubble.StartTime, Is.EqualTo(updatedSpeechBubble.StartTime));
         Assert.That(updatedBubble.EndTime, Is.EqualTo(updatedSpeechBubble.EndTime));
         Assert.That(updatedBubble.Speaker, Is.EqualTo(updatedSpeechBubble.Speaker));
         Assert.That(updatedBubble.SpeechBubbleContent, Is.EqualTo(updatedSpeechBubble.SpeechBubbleContent));
     }
+}

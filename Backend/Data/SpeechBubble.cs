@@ -2,7 +2,7 @@
 
 namespace Backend.Data;
 
-public struct SpeechBubble
+public class SpeechBubble
 {
     public SpeechBubble(long id, int speaker, double startTime, double endTime, List<WordToken> wordTokens)
     {

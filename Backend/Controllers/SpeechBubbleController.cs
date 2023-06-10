@@ -36,28 +36,24 @@ namespace Backend.Controllers
         [HttpPost]
         public IActionResult HandleUpdatedSpeechBubble([FromBody] SpeechBubble updatedSpeechBubble)
         {
-            var existingSpeechBubble = _speechBubbleList.Find(s => s.Id == updatedSpeechBubble.Id);
+  
+            SpeechBubble? existingSpeechBubble = _speechBubbleList.First(s => s.Id == updatedSpeechBubble.Id);
 
-            if (existingSpeechBubble != null)
-            {
-                // Update the existing speech bubble with the new data
-                existingSpeechBubble.StartTime = updatedSpeechBubble.StartTime;
-                existingSpeechBubble.EndTime = updatedSpeechBubble.EndTime;
-                existingSpeechBubble.Speaker = updatedSpeechBubble.Speaker;
-                existingSpeechBubble.SpeechBubbleContent = updatedSpeechBubble.SpeechBubbleContent;
+            if (existingSpeechBubble is not null) return NotFound("Speech bubble not found");
 
-                // Perform any additional processing or validation if needed
+            // Update the existing speech bubble with the new data
+            existingSpeechBubble.StartTime = updatedSpeechBubble.StartTime;
+            existingSpeechBubble.EndTime = updatedSpeechBubble.EndTime;
+            existingSpeechBubble.Speaker = updatedSpeechBubble.Speaker;
+            existingSpeechBubble.SpeechBubbleContent = updatedSpeechBubble.SpeechBubbleContent;
 
-                // Send the updated speech bubble
+            // Perform any additional processing or validation if needed
 
-                return Ok(_speechBubbleList); // Return the updated _speechBubbleList
-            }
+            // Send the updated speech bubble
 
-            return NotFound("Speech bubble not found");
+            return Ok(_speechBubbleList); // Return the updated _speechBubbleList
+          
         }
-
-
-
 
         /// <summary>
         /// Constructor for SpeechBubbleController.
@@ -189,6 +185,11 @@ namespace Backend.Controllers
             {
                 await Console.Error.WriteAsync("Failed to transmit to Frontend.");
             }
+        }
+
+        public void AddSpeechBubble(SpeechBubble speechBubble)
+        {
+            _speechBubbleList.AddLast(speechBubble);
         }
     }
 }
