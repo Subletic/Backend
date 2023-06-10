@@ -18,7 +18,7 @@ namespace Backend.Controllers
     [ApiController]
     [Route("api/speechbubble")]
 
-    public class SpeechBubbleController : ISpeechBubbleController
+    public class SpeechBubbleController : ControllerBase, ISpeechBubbleController
     {
         private readonly IHubContext<CommunicationHub> _hubContext;
 
@@ -29,7 +29,9 @@ namespace Backend.Controllers
         private int? _currentSpeaker;
 
 
-
+        /// <summary>
+        /// The HandleUpdatedSpeechBubble function updates an existing speech bubble with new data and returns the updated list.
+        /// </summary>
 
         [HttpPost]
         public IActionResult HandleUpdatedSpeechBubble([FromBody] SpeechBubble updatedSpeechBubble)
