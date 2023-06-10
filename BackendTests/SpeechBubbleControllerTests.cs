@@ -6,6 +6,8 @@ using Moq;
 
 namespace BackendTests;
 
+
+
 public class SpeechBubbleControllerTests
 {
     [Test]
@@ -147,4 +149,44 @@ public class SpeechBubbleControllerTests
         // Assert
         Assert.That(controller.GetSpeechBubbles(), Has.Count.EqualTo(2));
     }
-}
+
+
+    [Test]
+    public void HandleUpdatedSpeechBubble_ExistingSpeechBubble_UpdatesAndReturnsUpdatedList()
+    {
+        // Arrange
+        var controller = new SpeechBubbleController();
+        var existingSpeechBubble = new SpeechBubble
+        {
+            Id = 1,
+            StartTime = 10.0,
+            EndTime = 15.0,
+            Speaker = 1
+        };
+        var firstWord = new WordToken(word: "Test", confidence: 0.9f, startTime: 1, endTime: 2, speaker: 1);
+        controller.HandleNewWord(existingSpeechBubble, firstWord);
+        controller.AddSpeechBubble(existingSpeechBubble);
+
+        var updatedSpeechBubble = new SpeechBubble
+        {
+            Id = 1,
+            StartTime = 5.0,
+            EndTime = 20.0,
+            Speaker = 2
+        };
+        var secondWord = new WordToken(word: "Test2", confidence: 0.7f, startTime: 3, endTime: 4, speaker: 2);
+        controller.HandleNewWord(updatedSpeechBubble, secondWord);
+
+        // Act
+        var result = controller.HandleUpdatedSpeechBubble(updatedSpeechBubble);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
+        var okResult = (OkObjectResult)result;
+        Assert.That(okResult.Value, Is.EqualTo(controller.GetSpeechBubbleList()));
+        var updatedBubble = controller.GetSpeechBubbleList().Find(b => b.Id == existingSpeechBubble.Id);
+        Assert.That(updatedBubble.StartTime, Is.EqualTo(updatedSpeechBubble.StartTime));
+        Assert.That(updatedBubble.EndTime, Is.EqualTo(updatedSpeechBubble.EndTime));
+        Assert.That(updatedBubble.Speaker, Is.EqualTo(updatedSpeechBubble.Speaker));
+        Assert.That(updatedBubble.SpeechBubbleContent, Is.EqualTo(updatedSpeechBubble.SpeechBubbleContent));
+    }
