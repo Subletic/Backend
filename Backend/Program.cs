@@ -1,5 +1,6 @@
 using Backend.Hubs;
 using Backend.Services;
+using Backend.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,5 +52,11 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+AvProcessing avprocessing = await AvProcessing.Init ("SPEECHMATICS_API_KEY");
+// test
+string testAudioFile = "/home/puna/tmp/tagesschau_clip.aac";
+Task<bool> audioTranscription = avprocessing.TranscribeAudio (testAudioFile);
+
 app.Run();
 
+await audioTranscription;
