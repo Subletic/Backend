@@ -45,7 +45,7 @@ public class BufferTimeMonitor : BackgroundService
             var oldestSpeechBubbleCreationTime = oldestSpeechBubble.Value.CreationTime;
             var currentTime = DateTime.Now;
             var timeDifference = currentTime - oldestSpeechBubbleCreationTime;
-
+            /// fix magic number
             const int timeLimitInMinutes = 5;
 
             if (timeDifference.TotalMinutes > timeLimitInMinutes)
