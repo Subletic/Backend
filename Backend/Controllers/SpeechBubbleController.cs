@@ -39,7 +39,8 @@ namespace Backend.Controllers
   
             SpeechBubble? existingSpeechBubble = _speechBubbleList.First(s => s.Id == updatedSpeechBubble.Id);
 
-            if (existingSpeechBubble is not null) return NotFound("Speech bubble not found");
+            if (existingSpeechBubble == null) return NotFound("Speech bubble not found");
+            
 
             // Update the existing speech bubble with the new data
             existingSpeechBubble.StartTime = updatedSpeechBubble.StartTime;
