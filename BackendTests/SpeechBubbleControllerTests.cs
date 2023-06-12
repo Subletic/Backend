@@ -153,6 +153,7 @@ public class SpeechBubbleControllerTests
     }
 
 
+   
     [Test]
     public void HandleUpdatedSpeechBubble_ExistingSpeechBubble_UpdatesAndReturnsUpdatedList()
     {
@@ -160,11 +161,13 @@ public class SpeechBubbleControllerTests
         var hubContextMock = new Mock<IHubContext<CommunicationHub>>();
         var controller = new SpeechBubbleController(hubContextMock.Object);
 
+        // Erstellen der ursprünglichen Speech Bubble
         var existingSpeechBubble = new SpeechBubble(1, 1, 10.0, 15.0, new List<WordToken>());
-        var firstWord = new WordToken(word: "Test", confidence: 0.9f, startTime: 1, endTime: 2, speaker: 1);
+        var firstWord = new WordToken(word: "Test1", confidence: 0.9f, startTime: 1, endTime: 2, speaker: 1);
         controller.HandleNewWord(firstWord);
         controller.AddSpeechBubble(existingSpeechBubble);
 
+        // Erstellen der aktualisierten Speech Bubble
         var updatedSpeechBubble = new SpeechBubble(1, 2, 5.0, 20.0, new List<WordToken>());
         var secondWord = new WordToken(word: "Test2", confidence: 0.7f, startTime: 3, endTime: 4, speaker: 2);
         controller.HandleNewWord(secondWord);
@@ -173,13 +176,29 @@ public class SpeechBubbleControllerTests
         var result = controller.HandleUpdatedSpeechBubble(updatedSpeechBubble);
 
         // Assert
+        // Überprüfen, ob die Rückgabe ein OkObjectResult ist
         Assert.That(result, Is.InstanceOf<OkObjectResult>());
         var okResult = (OkObjectResult)result;
+
+        // Überprüfen, ob die zurückgegebene Liste der Speech Bubbles korrekt ist
         Assert.That(okResult.Value, Is.EqualTo(controller.GetSpeechBubbles()));
+
+        // Überprüfen, ob die ursprüngliche Speech Bubble korrekt aktualisiert wurde
         SpeechBubble updatedBubble = controller.GetSpeechBubbles().First(b => b.Id == existingSpeechBubble.Id);
         Assert.That(updatedBubble.StartTime, Is.EqualTo(updatedSpeechBubble.StartTime));
         Assert.That(updatedBubble.EndTime, Is.EqualTo(updatedSpeechBubble.EndTime));
         Assert.That(updatedBubble.Speaker, Is.EqualTo(updatedSpeechBubble.Speaker));
         Assert.That(updatedBubble.SpeechBubbleContent, Is.EqualTo(updatedSpeechBubble.SpeechBubbleContent));
+
+        // Überprüfen, ob die nicht aktualisierten Speech Bubbles unverändert bleiben
+        var nonUpdatedBubbles = controller.GetSpeechBubbles().Where(b => b.Id != existingSpeechBubble.Id);
+        foreach (var bubble in nonUpdatedBubbles)
+        {
+            Assert.That(bubble.StartTime, Is.Not.EqualTo(updatedSpeechBubble.StartTime));
+            Assert.That(bubble.EndTime, Is.Not.EqualTo(updatedSpeechBubble.EndTime));
+            Assert.That(bubble.Speaker, Is.Not.EqualTo(updatedSpeechBubble.Speaker));
+            Assert.That(bubble.SpeechBubbleContent, Is.Not.EqualTo(updatedSpeechBubble.SpeechBubbleContent));
+        }
     }
+
 }
