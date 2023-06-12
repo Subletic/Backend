@@ -1,10 +1,10 @@
 ﻿namespace Backend.Data;
 
-public struct SpeechmaticsKeyResponse
+public class SpeechmaticsKeyResponse
 {
-    public SpeechmaticsKeyResponse(string? apikeyId, string keyValue) {
-        apikey_id = apikeyId;
-        key_value = keyValue;
+    public SpeechmaticsKeyResponse(string? apikey_id, string key_value) {
+        this.apikey_id = apikey_id;
+        this.key_value = key_value;
     }
 
     public string? apikey_id  { get; set; }

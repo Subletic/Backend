@@ -54,9 +54,10 @@ app.MapControllers();
 
 AvProcessing avprocessing = await AvProcessing.Init ("SPEECHMATICS_API_KEY");
 // test
-string testAudioFile = "/home/puna/tmp/tagesschau_clip.aac";
+string testAudioFile = "./tagesschau_clip.aac";
 Task<bool> audioTranscription = avprocessing.TranscribeAudio (testAudioFile);
 
 app.Run();
 
-await audioTranscription;
+bool transcriptionSuccess = await audioTranscription;
+Console.WriteLine (String.Format ("Speechmatics communication was a {0}", transcriptionSuccess ? "success" : "failure"));
