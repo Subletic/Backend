@@ -44,7 +44,7 @@ public class AvProcessing
         Console.WriteLine (String.Format ("Received from Speechmatics: {0}", message));
     }
 
-    private T DeserializeMessage<T> (string buffer, string messageName, string descriptionOfMessage)
+    private static T DeserializeMessage<T> (string buffer, string messageName, string descriptionOfMessage)
     {
         Console.WriteLine ($"Speechmatics sent {descriptionOfMessage}");
         T? messageMaybe = JsonSerializer.Deserialize<T> (buffer, jsonOptions);
@@ -91,7 +91,7 @@ public class AvProcessing
     }
 
     // request transcription
-    private async Task<bool> SendStartRecognition (ClientWebSocket wsClient)
+    private static async Task<bool> SendStartRecognition (ClientWebSocket wsClient)
     {
         bool success = true;
 
@@ -170,7 +170,7 @@ public class AvProcessing
             do
             {
                 // wide range of possible exceptions
-                readCount = await audioPipeReader.ReadAsync (buffer, offset, buffer.Length - offset);
+                readCount = await audioPipeReader.ReadAsync (buffer.AsMemory (offset, buffer.Length - offset));
                 offset += readCount;
 
                 if (readCount != 0)
