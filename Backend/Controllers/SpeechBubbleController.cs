@@ -46,6 +46,7 @@ namespace Backend.Controllers
         /// The HandleUpdatedSpeechBubble function updates an existing speech bubble with new data and returns the updated list.
         /// </summary>
         [HttpPost]
+        [Route("/update")]
         public IActionResult HandleUpdatedSpeechBubble([FromBody] SpeechBubble updatedSpeechBubble)
         {
             _speechBubbleListService.ReplaceSpeechBubble(updatedSpeechBubble);
@@ -153,9 +154,11 @@ namespace Backend.Controllers
         /// <param name="speechBubble"></param>
         private async Task SendNewSpeechBubbleMessageToFrontend(SpeechBubble speechBubble)
         {
+            var listToSend = new List<SpeechBubble>() { speechBubble };
+            
             try
             {
-                await _hubContext.Clients.All.SendAsync("newBubble", speechBubble);
+                await _hubContext.Clients.All.SendAsync("newBubble", listToSend);
             }
             catch (Exception)
             {
