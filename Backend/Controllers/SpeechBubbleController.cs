@@ -1,73 +1,58 @@
 ﻿using Backend.Data;
 using Backend.Hubs;
-using Microsoft.AspNetCore.SignalR;
-using System.Collections.Generic;
+using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Backend.Controllers
 {
-
     /// <summary>
     /// Controller for handling SpeechBubble interactions.
     /// SpeechBubbles are contained in a LinkedList.
     /// Provides the first SpeechBubble when one of the SpeechBubble split conditions is met.
     /// </summary>
-
-    
     [ApiController]
     [Route("api/speechbubble")]
-
     public class SpeechBubbleController : ControllerBase, ISpeechBubbleController
     {
         private readonly IHubContext<CommunicationHub> _hubContext;
 
-        private readonly LinkedList<SpeechBubble> _speechBubbleList;
+        /// <summary>
+        /// Dependency Injection for accessing the LinkedList of SpeechBubbles and corresponding methods.
+        /// All actions on the SpeechBubbleList are delegated to the SpeechBubbleListService.
+        /// </summary>
+        private readonly ISpeechBubbleListService _speechBubbleListService;
+
         private readonly List<WordToken> _wordTokenBuffer;
 
         private long _nextSpeechBubbleId;
         private int? _currentSpeaker;
-
-
-        /// <summary>
-        /// The HandleUpdatedSpeechBubble function updates an existing speech bubble with new data and returns the updated list.
-        /// </summary>
-
-        [HttpPost]
-        public IActionResult HandleUpdatedSpeechBubble([FromBody] SpeechBubble updatedSpeechBubble)
-        {
-  
-            SpeechBubble? existingSpeechBubble = _speechBubbleList.First(s => s.Id == updatedSpeechBubble.Id);
-
-            if (existingSpeechBubble == null) return NotFound("Speech bubble not found");
-            
-
-            // Update the existing speech bubble with the new data
-            existingSpeechBubble.StartTime = updatedSpeechBubble.StartTime;
-            existingSpeechBubble.EndTime = updatedSpeechBubble.EndTime;
-            existingSpeechBubble.Speaker = updatedSpeechBubble.Speaker;
-            existingSpeechBubble.SpeechBubbleContent = updatedSpeechBubble.SpeechBubbleContent;
-
-            // Perform any additional processing or validation if needed
-
-            // Send the updated speech bubble
-
-            return Ok(_speechBubbleList); // Return the updated _speechBubbleList
-          
-        }
 
         /// <summary>
         /// Constructor for SpeechBubbleController.
         /// Initializes with an empty SpeechBubbleList.
         /// Sets needed private attributes to default values.
         /// </summary>
-        public SpeechBubbleController(IHubContext<CommunicationHub> hubContext)
+        public SpeechBubbleController(IHubContext<CommunicationHub> hubContext,
+            ISpeechBubbleListService speechBubbleListService)
         {
-            _speechBubbleList = new LinkedList<SpeechBubble>();
+            _speechBubbleListService = speechBubbleListService;
             _wordTokenBuffer = new List<WordToken>();
             _nextSpeechBubbleId = 1;
             _hubContext = hubContext;
         }
+
+        /// <summary>
+        /// The HandleUpdatedSpeechBubble function updates an existing speech bubble with new data and returns the updated list.
+        /// </summary>
+        [HttpPost]
+        public IActionResult HandleUpdatedSpeechBubble([FromBody] SpeechBubble updatedSpeechBubble)
+        {
+            _speechBubbleListService.ReplaceSpeechBubble(updatedSpeechBubble);
+
+            return Ok(); // Return the updated _speechBubbleList
+        }
+
 
         /// <summary>
         /// Handles new WordToken given by the Speech-Recognition Software or Mock-Server.
@@ -118,7 +103,7 @@ namespace Backend.Controllers
 
             if (_wordTokenBuffer.Count > 0)
             {
-                var lastBufferElementTimeStamp = _wordTokenBuffer.Last().StartTime;
+                var lastBufferElementTimeStamp = _wordTokenBuffer.Last().EndTime;
                 var newWordTokenTimeStamp = wordToken.StartTime;
                 var timeDifference = newWordTokenTimeStamp - lastBufferElementTimeStamp;
 
@@ -146,7 +131,7 @@ namespace Backend.Controllers
 
             _nextSpeechBubbleId++;
             _wordTokenBuffer.Clear();
-            _speechBubbleList.AddLast(nextSpeechBubble);
+            _speechBubbleListService.AddNewSpeechBubble(nextSpeechBubble);
             await SendNewSpeechBubbleMessageToFrontend(nextSpeechBubble);
         }
 
@@ -158,16 +143,6 @@ namespace Backend.Controllers
         private void SetSpeakerIfSpeakerIsNull(WordToken wordToken)
         {
             _currentSpeaker ??= wordToken.Speaker;
-        }
-
-
-        /// <summary>
-        /// Returns a LinkedList containing all SpeechBubbles.
-        /// </summary>
-        /// <returns>LinkedList of all SpeechBubbles</returns>
-        public LinkedList<SpeechBubble> GetSpeechBubbles()
-        {
-            return _speechBubbleList;
         }
 
 
@@ -186,11 +161,6 @@ namespace Backend.Controllers
             {
                 await Console.Error.WriteAsync("Failed to transmit to Frontend.");
             }
-        }
-
-        public void AddSpeechBubble(SpeechBubble speechBubble)
-        {
-            _speechBubbleList.AddLast(speechBubble);
         }
     }
 }
