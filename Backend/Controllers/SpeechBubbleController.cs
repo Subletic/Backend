@@ -46,15 +46,46 @@ namespace Backend.Controllers
         /// The HandleUpdatedSpeechBubble function updates an existing speech bubble with new data and returns the updated list.
         /// </summary>
         [HttpPost]
-        [Route("/update")]
+        [Route("update")]
         public IActionResult HandleUpdatedSpeechBubble([FromBody] SpeechBubble updatedSpeechBubble)
         {
             _speechBubbleListService.ReplaceSpeechBubble(updatedSpeechBubble);
 
             return Ok(); // Return the updated _speechBubbleList
         }
+       
+        
+        [HttpPost]
+        [Route("send-new-bubble")]
+        public async Task<IActionResult> SendNewSpeechBubble()
+        {
+            // Erstellen Sie hier Ihre neue SpeechBubble und rufen Sie die entsprechende Logik auf
 
+            // Beispiel:
 
+            var newWordToken = new WordToken
+            {
+                Word = "NeuesWort",
+                Confidence = 0.8f,
+                StartTime = 3,
+                EndTime = 4,
+                Speaker = 1
+            };
+            var existingSpeechBubble = new SpeechBubble(
+                id: 1,
+                speaker: 1,
+                startTime: 10.0,
+                endTime: 15.0,
+                wordTokens: new List<WordToken> { newWordToken }
+            );
+
+            // Senden Sie die neue SpeechBubble an das Frontend
+            await SendNewSpeechBubbleMessageToFrontend(existingSpeechBubble);
+
+            return Ok();
+        }
+
+        
         /// <summary>
         /// Handles new WordToken given by the Speech-Recognition Software or Mock-Server.
         /// WordTokens are added to a local buffer, which is flushed when the conditions for a new SpeechBubble are met.
