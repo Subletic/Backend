@@ -64,14 +64,15 @@ public class AvProcessingService : IAvProcessingService
     }
 
     // apiKeyVar: envvar that contains the api key to send to speechmatics
-    public async Task Init(string apiKeyVar)
+    public async Task<bool> Init(string apiKeyVar)
     {
         // TODO is it safer to only read a file path to the secret from envvar?
         string? apiKeyEnvMaybe = Environment.GetEnvironmentVariable (apiKeyVar);
         if (apiKeyEnvMaybe == null)
         {
-            throw new ArgumentException (String.Format (
+            Console.WriteLine (String.Format (
                 "Requested {0} envvar is not set", apiKeyVar), nameof (apiKeyVar));
+            return false;
         }
         string apiKeyEnv = (string)apiKeyEnvMaybe;
 
@@ -97,6 +98,7 @@ public class AvProcessingService : IAvProcessingService
 
         // FIXME don't print this outside of debugging
         Console.WriteLine ($"Key: {apiKey}");
+        return true;
     }
 
     // request transcription
