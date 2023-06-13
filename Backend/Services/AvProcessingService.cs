@@ -11,9 +11,12 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 
-namespace Backend.Data;
+using Backend.Controllers;
+using Backend.Data;
 
-public class AvProcessing
+namespace Backend.Services;
+
+public class AvProcessingService : IAvProcessingService
 {
     private static readonly string urlRequestKey = "https://mp.speechmatics.com/v1/api_keys?type=rt";
     private static readonly string urlRecognitionTemplate = "wss://eu2.rt.speechmatics.com/v2/de?jwt={0}";
@@ -25,13 +28,20 @@ public class AvProcessing
         IncludeFields = true,
     };
 
-    private string apiKey;
+    /// <summary>
+    /// Dependency Injection for accessing the LinkedList of SpeechBubbles and corresponding methods.
+    /// Received transcripts are pushed into the speechbubble list
+    /// </summary>
+    private readonly SpeechBubbleController _speechBubbleController;
+
+    private string? apiKey;
     private ulong sentNum;
     private ulong seqNum;
 
-    private AvProcessing(string apikey)
+    public AvProcessingService (SpeechBubbleController speechBubbleController)
     {
-        apiKey = apikey;
+        _speechBubbleController = speechBubbleController;
+        Console.WriteLine("AvProcessingService is started!");
     }
 
     private static void logSend (string message)
@@ -54,7 +64,7 @@ public class AvProcessing
     }
 
     // apiKeyVar: envvar that contains the api key to send to speechmatics
-    public static async Task<AvProcessing> Init(string apiKeyVar)
+    public async Task Init(string apiKeyVar)
     {
         // TODO is it safer to only read a file path to the secret from envvar?
         string? apiKeyEnvMaybe = Environment.GetEnvironmentVariable (apiKeyVar);
@@ -83,11 +93,10 @@ public class AvProcessing
         SpeechmaticsKeyResponse? keyResponseParsed = JsonSerializer.Deserialize<SpeechmaticsKeyResponse> (
             keyResponseString, jsonOptions);
         if (keyResponseParsed is null) throw new InvalidOperationException ("failed to deserialize key request response");
+        apiKey = ((SpeechmaticsKeyResponse)keyResponseParsed).key_value;
 
         // FIXME don't print this outside of debugging
-        Console.WriteLine ($"Key: {((SpeechmaticsKeyResponse)keyResponseParsed).key_value}");
-
-        return new AvProcessing (((SpeechmaticsKeyResponse)keyResponseParsed).key_value);
+        Console.WriteLine ($"Key: {apiKey}");
     }
 
     // request transcription
@@ -133,7 +142,7 @@ public class AvProcessing
             }
             await FFMpegArguments
                 .FromFileInput (filepath, true, options => options
-                    .WithDuration(TimeSpan.FromSeconds(10)) // TODO just 10 seconds for now
+                    .WithDuration(TimeSpan.FromSeconds(60)) // TODO just 10 seconds for now
                 )
                 .OutputToPipe (new StreamPipeSink (audioPipe.AsStream ()), outputOptions)
                 .ProcessAsynchronously();
@@ -298,6 +307,17 @@ public class AvProcessing
                         "AddTranscript", "a transcription of our audio");
 
                     Console.WriteLine ($"Received transcript: {message.metadata.transcript}");
+                    foreach (SpeechmaticsAddTranscript_result transcript in message.results)
+                    {
+                        _speechBubbleController.HandleNewWord (new WordToken(
+                            // docs say this sends a list, I've only ever seen it send 1 result
+                            transcript.alternatives[0].content,
+                            (float) transcript.alternatives[0].confidence,
+                            transcript.start_time,
+                            transcript.end_time,
+                            // api sends a string?
+                            1));
+                    }
                 }
 
                 if (responseString.Contains ("EndOfTranscript")) {
@@ -320,6 +340,12 @@ public class AvProcessing
 
     // TODO handle errors
     public async Task<bool> TranscribeAudio (string filepath) {
+        if (apiKey is null)
+        {
+            Console.WriteLine ("AvProcessingService.Init needs to be called first, we need to have a valid Speechmatics API key!");
+            return false;
+        }
+
         bool successSending = true;
         bool successReceiving = true;
 
