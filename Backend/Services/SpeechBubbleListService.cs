@@ -69,6 +69,9 @@ public class SpeechBubbleListService : ISpeechBubbleListService
             if (currentSpeechBubble.Value.Id == speechBubble.Id)
             {
                 // Replace the object in the linked list
+                var oldSpeechBubbleCreationTime = currentSpeechBubble.Value.CreationTime;
+                speechBubble.CreationTime = oldSpeechBubbleCreationTime;
+                
                 _speechBubbleList.AddAfter(currentSpeechBubble, speechBubble);
                 _speechBubbleList.Remove(currentSpeechBubble);
                 return;

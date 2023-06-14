@@ -185,5 +185,25 @@ namespace BackendTests
             var speechBubbles = _speechBubbleListService.GetSpeechBubbles();
             Assert.That(speechBubbles, Has.Count.EqualTo(1));
         }
+        
+        [Test]
+        public void ReplaceSpeechBubble_CreationTimeDoesntChange()
+        {
+            var creationTime = _testSpeechBubble1.CreationTime;
+            var newSpeechBubble = new SpeechBubble(
+                _testSpeechBubble1.Id, _testSpeechBubble1.Speaker, _testSpeechBubble1.StartTime,
+                _testSpeechBubble1.EndTime, _testSpeechBubble1.SpeechBubbleContent);
+            
+            newSpeechBubble.CreationTime += TimeSpan.FromMinutes(2);
+            
+            _speechBubbleListService.ReplaceSpeechBubble(_testSpeechBubble1);
+            _speechBubbleListService.ReplaceSpeechBubble(newSpeechBubble);
+
+            var speechBubbles = _speechBubbleListService.GetSpeechBubbles();
+            
+            Assert.That(speechBubbles.First!.Value.CreationTime, Is.EqualTo(creationTime));
+        }
+        
+        
     }
 }
