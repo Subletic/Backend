@@ -191,8 +191,8 @@ public partial class AvProcessingService : IAvProcessingService
       *  <see cref="System.Text.Json.JsonSerializer.Deserialize{T}" />
       *  </summary>
       */
-    private static T DeserializeMessage<T> (string buffer, string messageName = typeof(T).ToString(),
-        string descriptionOfMessage = $"a message of type {messageName}")
+    private static T DeserializeMessage<T> (string buffer, string messageName = "unknown",
+        string descriptionOfMessage = "a message")
     {
         T? messageMaybe = JsonSerializer.Deserialize<T> (buffer, jsonOptions);
         if (messageMaybe is null)
@@ -386,7 +386,7 @@ public partial class AvProcessingService : IAvProcessingService
         bool success = true;
         Pipe audioPipe = new Pipe ();
         Stream audioPipeReader = audioPipe.Reader.AsStream (false);
-        Task<bool> audioProcessor = ProcessAudioToStream (filepath, audioPipe.Writer, audioType);
+        Task<bool> audioProcessor = ProcessAudioToStream (filepath, audioPipe.Writer);
 
         int offset = 0;
         int readCount;
@@ -501,7 +501,7 @@ public partial class AvProcessingService : IAvProcessingService
         Console.WriteLine ("Starting message receiving");
         bool success = true;
         bool doneReceivingMessages = false;
-        byte[] responseBuffer = new byte[16 * 1024];
+        byte[] responseBuffer = new byte[16 * 1024]; // 16 kiB, AddTranscript messages can be extremely long
         string responseString;
 
         Console.WriteLine ("Started message receiving");
@@ -619,7 +619,27 @@ public partial class AvProcessingService : IAvProcessingService
         return success;
     }
 
-    // TODO handle errors
+    /**
+      *  <summary>
+      *  Send an audio file to the Speechmatics RT API over a WebSocket to transcribe it.
+      *  The returned transcriptions will be pushed into the <c>SpeechBubbleController</c>.
+      *
+      *  The <c>apiKey</c> needs to be initialised with a call of the <c>Init</c> method first.
+      *
+      *  <param name="filepath">A path to a media file to transcribe.</param>
+      *
+      *  <returns>
+      *  An <c>await</c>able <c>Task{bool}</c> indicating if all phases of the transcription
+      *  process went well.
+      *  </returns>
+      *
+      *  <see cref="Init" />
+      *  <seealso cref="ReceiveMessages" />
+      *  <seealso cref="SendStartRecognition" />
+      *  <seealso cref="SendAudio" />
+      *  <seealso cref="SendEndOfStream" />
+      *  </summary>
+      */
     public async Task<bool> TranscribeAudio (string filepath) {
         if (apiKey is null)
         {
@@ -635,7 +655,7 @@ public partial class AvProcessingService : IAvProcessingService
             new Uri (String.Format (urlRecognitionTemplate, apiKey)),
             CancellationToken.None);
 
-        // track sent & confirmed audio packet counts
+        // start tracking sent & confirmed audio packet counts
         sentNum = 0;
         seqNum = 0;
 
@@ -643,7 +663,7 @@ public partial class AvProcessingService : IAvProcessingService
 
         successSending = await SendStartRecognition (wsClient);
         if (successSending)
-            successSending = await SendAudio (wsClient, filepath, audioType);
+            successSending = await SendAudio (wsClient, filepath);
         if (successSending)
             successSending = await SendEndOfStream (wsClient);
 
