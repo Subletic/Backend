@@ -19,55 +19,209 @@ using Backend.Data.SpeechmaticsMessages;
 
 namespace Backend.Services;
 
+/**
+  *  <summary>
+  *  Service that takes some A(/V) stream, runs its audio against the Speechmatics realtime API
+  *  and pushes the received transcripts into the <c>SpeechBubbleController</c> for storage
+  *  and the Backend <-> Frontend data exchange.
+  *  <example>
+  *  For example:
+  *  <code>
+  *  AvProcessingService avp = new AvProcessingService();
+  *  bool canUse = await avp.Init ("NAME_OF_ENVVAR_WITH_API_KEY");
+  *  if (canUse)
+  *  {
+  *      Task<bool> audioTranscription = avp.TranscribeAudio ("/path/to/media.file");
+  *      // do other things
+  *      bool atSuccess = await audioTranscription;
+  *  }
+  *  </code>
+  *  will initialise the service with your personal Speechmatics API key, and run some media file
+  *  through the RT API.
+  *  </example>
+  *  </summary>
+  */
 public partial class AvProcessingService : IAvProcessingService
 {
+    /**
+      *  <summary>
+      *  The Speechmatics URL we'll send the API key to in order to request a RT API access token.
+      *  </summary>
+      */
     private static readonly string urlRequestKey = "https://mp.speechmatics.com/v1/api_keys?type=rt";
+
+    /**
+      *  <summary>
+      *  A URL template for the Speechmatics RT API.
+      *  The received RT API access token shall be filled in to get the URL we'll need to use.
+      *  </summary>
+      */
     private static readonly string urlRecognitionTemplate = "wss://eu2.rt.speechmatics.com/v2/de?jwt={0}";
-    private static readonly HttpClient httpClient = new HttpClient();
-    private static readonly StartRecognitionMessage_AudioType audioType = new StartRecognitionMessage_AudioType (
-        "raw", "pcm_s16le", 48000);
+
+    /**
+      *  <summary>
+      *  A description of the audio format we'll send to the RT API.
+      *  <see cref="StartRecognitionMessage_AudioType" />
+      *  </summary>
+      */
+    private static readonly StartRecognitionMessage_AudioType audioType =
+        new StartRecognitionMessage_AudioType ("raw", "pcm_s16le", 48000);
+
+    /**
+      *  <summary>
+      *  Options to use for all Object -> JSON serialisations
+      *  <see cref="JsonSerializerOptions" />
+      *  </summary>
+      */
     private static readonly JsonSerializerOptions jsonOptions = new()
     {
         IncludeFields = true,
     };
+
+    /**
+      *  <summary>
+      *  A regular expression to identify what type of message Speechmatics sent us.
+      *  Based on this captured type string, the message will get deserialised to an object
+      *  of the corresponding message class.
+      *  Matches: <c>"message" : "(SomeMessageType)"</c>
+      *  </summary>
+      */
     [GeneratedRegex(@"""message""\s*:\s*""([^""]+)""")]
     private static partial Regex messageTypeRegex();
 
-    /// <summary>
-    /// Dependency Injection for calling HandleNewWord to register words from received transcript
-    /// </summary>
+    /**
+      *  <summary>
+      *  Dependency Injection to get an instance of the <c>SpeechBubbleController</c>.
+      *  This is needed to call its <c>HandleNewWord</c> method, to push words from the received
+      *  transcript messages into our system.
+      *  <see cref="SpeechBubbleController.HandleNewWord" />
+      *  </summary>
+      */
     private readonly SpeechBubbleController _speechBubbleController;
 
+    /**
+      *  <summary>
+      *  The Speechmatics RT API key this instance shall use for the RT transcription.
+      *  <see cref="Init" />
+      *  </summary>
+      */
     private string? apiKey;
+
+    /**
+      *  <summary>
+      *  A tracker for the number of <c>AddAudioMessage</c>s this instance has sent to the RT API.
+      *  This is used to identify how many <c>AudioAddedMessage</c>s we should await from the API
+      *  before we should properly terminate the line of communication.
+      *  <see cref="seqNum" />
+      *  <see cref="AddAudioMessage" />
+      *  <see cref="AudioAddedMessage" />
+      */
     private ulong sentNum;
+
+    /**
+      *  <summary>
+      *  A tracker for the number of <c>AudioAddedMessage</c>s this instance has received from the RT API.
+      *  This is used to identify how many <c>AudioAddedMessage</c>s we should await from the API
+      *  before we should properly terminate the line of communication.
+      *
+      *  Additionally, the final <c>EndOfStreamMessage</c> we use to terminate the transcription
+      *  must include the sequence number of the last <c>AddedaudioMessage</c> we've received from the API.
+      *  <see cref="sentNum" />
+      *  <see cref="AudioAddedMessage" />
+      *  <see cref="EndOfStreamMessage" />
+      *  </summary>
+      */
     private ulong seqNum;
 
+    /**
+      *  <summary>
+      *  Constructor of the service.
+      *  <param name="speechBubbleController">The <c>SpeechBubbleController</c> to push new words into</param>
+      *  </summary>
+      */
     public AvProcessingService (SpeechBubbleController speechBubbleController)
     {
         _speechBubbleController = speechBubbleController;
         Console.WriteLine("AvProcessingService is started!");
     }
 
+    /**
+      *  <summary>
+      *  Log outgoing RT API message.
+      *  <see cref="logReceive" />
+      *  </summary>
+      */
     private static void logSend (string message)
     {
         Console.WriteLine ($"Sending to Speechmatics: {message}");
     }
 
+    /**
+      *  <summary>
+      *  Log incoming RT API message.
+      *  <see cref="logSend" />
+      *  </summary>
+      */
     private static void logReceive (string message)
     {
         Console.WriteLine ($"Received from Speechmatics: {message}");
     }
 
-    private static T DeserializeMessage<T> (string buffer, string messageName, string descriptionOfMessage)
+    /**
+      *  <summary>
+      *  Attempt to deserialise the message in <paramref name="buffer" /> into a Message type.
+      *  The caller can add a <paramref name="messageName" /> and <paramref name="descriptionOfMessage" />
+      *  for logging purposes.
+      *
+      *  <typeparam name="T">The message class to deserialise the message into.</typeparam>
+      *
+      *  <param name="buffer">A <c>string</c> buffer that holds a JSON message.</param>
+      *  <param name="messageName">A pretty name for the message, for logging.</param>
+      *  <param name="descriptionOfMessage">A pretty description for what the message is for, for logging.</param>
+      *
+      *  <returns>An instance of the requested message class</returns>
+      *
+      *  <exception cref="InvalidOperationException">
+      *  <c>JsonSerializer.Deserialize{T}</c> returned <c>null</c>. Microsoft documentation does not indicate why this
+      *  would happen, I'm assuming when <paramref name="buffer" /> is <c>"null"</c>?
+      *  </exception>
+      *  <exception cref="ArgumentNullException">Passed through from <c>JsonSerializer.Deserialize{T}</c></exception>
+      *  <exception cref="JsonException">Passed through from <c>JsonSerializer.Deserialize{T}</c></exception>
+      *  <exception cref="NotSupportedException">Passed through from <c>JsonSerializer.Deserialize{T}</c></exception>
+      *  <see cref="System.Text.Json.JsonSerializer.Deserialize{T}" />
+      *  </summary>
+      */
+    private static T DeserializeMessage<T> (string buffer, string messageName = typeof(T).ToString(),
+        string descriptionOfMessage = $"a message of type {messageName}")
     {
-        Console.WriteLine ($"Speechmatics sent {descriptionOfMessage}");
         T? messageMaybe = JsonSerializer.Deserialize<T> (buffer, jsonOptions);
         if (messageMaybe is null)
-            throw new InvalidOperationException ($"Failed to deserialize {messageName} message");
+            throw new InvalidOperationException ($"Failed to deserialize {messageName} message "
+                + $"into type {typeof(T).ToString()}");
+
+        Console.WriteLine ($"Speechmatics sent {descriptionOfMessage}");
         return messageMaybe!;
     }
 
-    // apiKeyVar: envvar that contains the api key to send to speechmatics
+    /**
+      *  <summary>
+      *  Initialise the RT API access token held in <c>apiKey</c>.
+      *
+      *  <param name="apiKeyVar">The name of the environment variable that holds your API key.</param>
+      *
+      *  <returns>
+      *  An <c>await</c>able <c>Task{bool}</c> indicating if the envvar was set and we got an RT API access token.
+      *  </returns>
+      *
+      *  <exception cref="InvalidOperationException">
+      *  1. If the request to Speechmatics returned an unexpected (unsuccessful) status code.
+      *  2. If the response from Speechmatics deserialised into <c>null</c>.
+      *  <see cref="DeserializeMessage{T}" />
+      *  </exception>
+      *
+      *  <see cref="apiKey" />
+      *  </summary>
+      */
     public async Task<bool> Init(string apiKeyVar)
     {
         // TODO is it safer to only read a file path to the secret from envvar?
@@ -87,11 +241,12 @@ public partial class AvProcessingService : IAvProcessingService
             Encoding.UTF8,
             new MediaTypeHeaderValue ("application/json"));
 
-        var keyResponse = await httpClient.SendAsync (keyRequest);
+        var keyResponse = await new HttpClient().SendAsync (keyRequest);
         string keyResponseString = await keyResponse.Content.ReadAsStringAsync();
 
         if (!keyResponse.IsSuccessStatusCode)
         {
+            // TODO maybe just log and return false instead
             throw new InvalidOperationException (String.Format (
                 "Speechmatics key request returned unexpected code {0}: {1}",
                 keyResponse.StatusCode, keyResponseString));
@@ -109,7 +264,21 @@ public partial class AvProcessingService : IAvProcessingService
         return true;
     }
 
-    // request transcription
+    /**
+      *  <summary>
+      *  Sends a <c>StartRecognitionMessage</c> message to the RT API.
+      *  This will start the recognition and transcription process on the server.
+      *
+      *  <param name="wsClient">A <c>ClientWebSocket</c> to send the message over.</param>
+      *
+      *  <returns>
+      *  An <c>await</c>able <c>Task{bool}</c> indicating if the serialisation and transmission went well.
+      *  </returns>
+      *
+      *  <see cref="StartRecognitionMessage" />
+      *  <seealso cref="TranscribeAudio" />
+      *  </summary>
+      */
     private static async Task<bool> SendStartRecognition (ClientWebSocket wsClient)
     {
         bool success = true;
@@ -137,8 +306,30 @@ public partial class AvProcessingService : IAvProcessingService
         return success;
     }
 
-    private async Task<bool> ProcessAudioToStream (string filepath, PipeWriter audioPipe,
-        StartRecognitionMessage_AudioType audioType)
+    /**
+      *  <summary>
+      *  Uses FFMpeg to process a file into the required audio format and push the data
+      *  into the input side of a <c>Pipe</c>.
+      *
+      *  Internally launched and <c>await</c>ed by <c>SendAudio</c>.
+      *
+      *  At the end of the processing, no matter whether or not an error occurred,
+      *  the <paramref name="audioPipe" /> is always flushed and closed.
+      *
+      *  To not exhaust our API keys during development, we only push up to 1 minute of audio into the pipe.
+      *
+      *  <param name="filepath">A path to a media file to run through FFMpeg.</param>
+      *  <param name="audioPipe">A <c>PipeWriter</c> to push the data into.</param>
+      *
+      *  <returns>
+      *  An <c>await</c>able <c>Task{bool}</c> indicating if the processing went well.
+      *  </returns>
+      *
+      *  <seealso cref="SendAudio" />
+      *  <seealso cref="TranscribeAudio" />
+      *  </summary>
+      */
+    private async Task<bool> ProcessAudioToStream (string filepath, PipeWriter audioPipe)
     {
         Console.WriteLine ("Started audio processing");
         bool success = true;
@@ -170,8 +361,25 @@ public partial class AvProcessingService : IAvProcessingService
         return success;
     }
 
-    private async Task<bool> SendAudio (ClientWebSocket wsClient, string filepath,
-        StartRecognitionMessage_AudioType audioType)
+    /**
+      *  <summary>
+      *  Accumulates the data from <c>ProcessAudioToStream</c> and sends buffers of a suitable size
+      *  to the Speechmatics RT API for recognition and transcription.
+      *
+      *  Internally launches and <c>await</c>s <c>ProcessAudioToStream</c>.
+      *
+      *  <param name="wsClient">A <c>ClientWebSocket</c> to send the <c>AddAudio</c> messages (the buffers) over.</param>
+      *  <param name="filepath">A path to a media file to run through FFMpeg.</param>
+      *
+      *  <returns>
+      *  An <c>await</c>able <c>Task{bool}</c> indicating if the processing and sending went well.
+      *  </returns>
+      *
+      *  <seealso cref="ProcessAudioToStream" />
+      *  <seealso cref="TranscribeAudio" />
+      *  </summary>
+      */
+    private async Task<bool> SendAudio (ClientWebSocket wsClient, string filepath)
     {
         Console.WriteLine ("Starting audio sending");
 
@@ -236,6 +444,20 @@ public partial class AvProcessingService : IAvProcessingService
         return success;
     }
 
+    /**
+      *  <summary>
+      *  Sends an <c>EndOfStreamMessage</c> message to the RT API.
+      *  This will end the recognition and transcription process on the server.
+      *
+      *  <param name="wsClient">A <c>ClientWebSocket</c> to send the message over.</param>
+      *
+      *  <returns>
+      *  An <c>await</c>able <c>Task{bool}</c> indicating if the serialisation and transmission went well.
+      *  </returns>
+      *
+      *  <see cref="EndOfStreamMessage" />
+      *  </summary>
+      */
     private async Task<bool> SendEndOfStream (ClientWebSocket wsClient)
     {
         bool success = true;
@@ -262,6 +484,19 @@ public partial class AvProcessingService : IAvProcessingService
         return success;
     }
 
+    /**
+      *  <summary>
+      *  Listens for and acts upon messages from the RT API.
+      *  All sorts of messages from the <c>Backend.Data.SpeechmaticsMessages</c> namespace can be received and handled.
+      *
+      *  <param name="wsClient">A <c>ClientWebSocket</c> to receive messages over.</param>
+      *
+      *  <returns>
+      *  An <c>await</c>able <c>Task{bool}</c> indicating if the receiving and deserialisations went well,
+      *  no unknown messages were received and the RT API never reported any problems.
+      *  </returns>
+      *  </summary>
+      */
     private async Task<bool> ReceiveMessages (ClientWebSocket wsClient) {
         Console.WriteLine ("Starting message receiving");
         bool success = true;
@@ -354,7 +589,10 @@ public partial class AvProcessingService : IAvProcessingService
                                 (float) transcript.alternatives![0].confidence,
                                 transcript.start_time,
                                 transcript.end_time,
-                                // TODO api sends a string, what does it mean?
+                                // TODO api sends a string, extract a number from it
+                                // https://docs.speechmatics.com/features/diarization#speaker-diarization
+                                // speaker identified: "S<speaker-id>"
+                                // not identified: "UU"
                                 1));
                         }
                         break;
