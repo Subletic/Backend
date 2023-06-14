@@ -9,7 +9,7 @@ var frontend_url = Environment.GetEnvironmentVariable("FRONTEND_URL");
 
 if (frontend_url == null)
 {
-    frontend_url = "localhost:4200";
+    frontend_url = "http://localhost:4200";
 }
 
 // Add services to the container.
