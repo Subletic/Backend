@@ -62,6 +62,7 @@ namespace Backend.Controllers
         /// <param name="wordToken">The Word Token that should be appended to a SpeechBubble</param>
         public void HandleNewWord(WordToken wordToken)
         {
+            Console.WriteLine ($"New word: {wordToken.Word}, confidence {wordToken.Confidence}");
             SetSpeakerIfSpeakerIsNull(wordToken);
 
             // Add new word Token to current Speech Bubble
