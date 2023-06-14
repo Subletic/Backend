@@ -47,16 +47,7 @@ public class SpeechBubbleListService : ISpeechBubbleListService
     {
         _speechBubbleList.RemoveFirst();
     }
-
-
-    //Test
-    public string GetSpeechBubblesTest()
-    {
-        var speechBubbles = _speechBubbleList.Select(sb => JsonConvert.SerializeObject(sb)).ToList();
-        return string.Join(", ", speechBubbles);
-    }
-
-
+    
     /// <summary>
     /// Replaces a SpeechBubble in the LinkedList with a new SpeechBubble.
     /// The SpeechBubble with the same ID as the new SpeechBubble is replaced.
@@ -65,12 +56,8 @@ public class SpeechBubbleListService : ISpeechBubbleListService
     /// <param name="speechBubble">The SpeechBubble that changed.</param>
     public void ReplaceSpeechBubble(SpeechBubble speechBubble)
     {
-        Console.Write("replaceSpeechBubble betreten Stringo: " + GetSpeechBubblesTest());
-
         if (_speechBubbleList.Count == 0)
         {
-            Console.Write(" Count = 0 " + GetSpeechBubblesTest());
-
             _speechBubbleList.AddFirst(speechBubble);
             return;
         }
@@ -79,21 +66,13 @@ public class SpeechBubbleListService : ISpeechBubbleListService
 
         while (currentSpeechBubble != null)
         {
-            Console.Write("While betreten:  " + GetSpeechBubblesTest());
-
             if (currentSpeechBubble.Value.Id == speechBubble.Id)
             {
                 // Replace the object in the linked list
                 _speechBubbleList.AddAfter(currentSpeechBubble, speechBubble);
                 _speechBubbleList.Remove(currentSpeechBubble);
-
-                Console.Write(" Neue SpeechBubble Liste " + GetSpeechBubblesTest());
-
                 return;
             }
-
-            Console.Write(" Neue SpeechBubble Liste 2 " + GetSpeechBubblesTest());
-
             currentSpeechBubble = currentSpeechBubble.Next; // Move to the next node
         }
     }
