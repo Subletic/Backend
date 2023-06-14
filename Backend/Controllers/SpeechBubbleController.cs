@@ -211,12 +211,13 @@ namespace Backend.Controllers
                 speaker: (int)_currentSpeaker!,
                 startTime: _wordTokenBuffer.First().StartTime,
                 endTime: _wordTokenBuffer.Last().EndTime,
-                wordTokens: _wordTokenBuffer
+                wordTokens: new List<WordToken>(_wordTokenBuffer)
             );
 
             _nextSpeechBubbleId++;
-            _wordTokenBuffer.Clear();
             _speechBubbleListService.AddNewSpeechBubble(nextSpeechBubble);
+            _wordTokenBuffer.Clear();
+            
             await SendNewSpeechBubbleMessageToFrontend(nextSpeechBubble);
         }
 
