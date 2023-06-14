@@ -113,13 +113,13 @@ namespace Backend.Controllers
             // Beispiel:
 
             var newWordToken = new WordToken
-            {
-                Word = "NeuesWort",
-                Confidence = 0.8f,
-                StartTime = 3,
-                EndTime = 4,
-                Speaker = 1
-            };
+            (
+                "NeuesWort",
+                0.8f,
+                3,
+                4,
+                1
+            );
             var existingSpeechBubble = new SpeechBubble(
                 id: 1,
                 speaker: 1,
@@ -134,7 +134,7 @@ namespace Backend.Controllers
             return Ok();
         }
 
-        
+
         /// <summary>
         /// Handles new WordToken given by the Speech-Recognition Software or Mock-Server.
         /// WordTokens are added to a local buffer, which is flushed when the conditions for a new SpeechBubble are met.
@@ -144,6 +144,23 @@ namespace Backend.Controllers
         public void HandleNewWord(WordToken wordToken)
         {
             SetSpeakerIfSpeakerIsNull(wordToken);
+
+            // Append point or comma to last WordToken
+            if (wordToken.Word is "." or ",")
+            {
+                switch (_wordTokenBuffer.Count)
+                {
+                    case 0 when _speechBubbleListService.GetSpeechBubbles().Count > 0:
+                    {
+                        var lastSpeechBubble = _speechBubbleListService.GetSpeechBubbles().Last();
+                        lastSpeechBubble.SpeechBubbleContent.Last().Word += wordToken.Word;
+                        return;
+                    }
+                    case > 0:
+                        _wordTokenBuffer.Last().Word += wordToken.Word;
+                        return;
+                }
+            }
 
             // Add new word Token to current Speech Bubble
             if (_currentSpeaker != null && _currentSpeaker == wordToken.Speaker)
@@ -235,7 +252,7 @@ namespace Backend.Controllers
         private async Task SendNewSpeechBubbleMessageToFrontend(SpeechBubble speechBubble)
         {
             var listToSend = new List<SpeechBubble>() { speechBubble };
-            
+
             try
             {
                 await _hubContext.Clients.All.SendAsync("newBubble", listToSend);

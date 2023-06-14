@@ -3,8 +3,6 @@ using Backend.Data;
 using Backend.Hubs;
 using Backend.Services;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.AspNetCore.Mvc;
-using NUnit.Framework;
 using Moq;
 
 namespace BackendTests;
@@ -29,7 +27,7 @@ public class SpeechBubbleControllerTests
 
 
     [Test]
-    public void SpeechBubbleController_Insert19NewWords_SpeechBubbleListEmpty()
+    public void Insert19NewWords_SpeechBubbleListEmpty()
     {
         // Arrange
         var controller = new SpeechBubbleController(_hubContextMock.Object, _speechBubbleListService.Object);
@@ -47,7 +45,7 @@ public class SpeechBubbleControllerTests
     }
 
     [Test]
-    public void SpeechBubbleController_Insert20NewWords_FirstSpeechBubbleAvailable()
+    public void Insert20NewWords_FirstSpeechBubbleAvailable()
     {
         // Arrange
         var controller = new SpeechBubbleController(_hubContextMock.Object, _speechBubbleListService.Object);
@@ -66,7 +64,7 @@ public class SpeechBubbleControllerTests
 
 
     [Test]
-    public void SpeechBubbleController_Insert40NewWords_SpeechBubbleListContains2Bubbles()
+    public void Insert40NewWords_SpeechBubbleListContains2Bubbles()
     {
         // Arrange
         var controller = new SpeechBubbleController(_hubContextMock.Object, _speechBubbleListService.Object);
@@ -84,7 +82,7 @@ public class SpeechBubbleControllerTests
     }
 
     [Test]
-    public void SpeechBubbleController_Insert120NewWords_SpeechBubbleListContains6Bubbles()
+    public void Insert120NewWords_SpeechBubbleListContains6Bubbles()
     {
         // Arrange
         var controller = new SpeechBubbleController(_hubContextMock.Object, _speechBubbleListService.Object);
@@ -102,7 +100,7 @@ public class SpeechBubbleControllerTests
     }
 
     [Test]
-    public void SpeechBubbleController_Insert3WordsSeperated6Seconds_SpeechBubbleListContains2Bubbles()
+    public void Insert3WordsSeperated6Seconds_SpeechBubbleListContains2Bubbles()
     {
         // Arrange
         var controller = new SpeechBubbleController(_hubContextMock.Object, _speechBubbleListService.Object);
@@ -121,7 +119,7 @@ public class SpeechBubbleControllerTests
     }
 
     [Test]
-    public void SpeechBubbleController_Insert3WordsDifferentSpeakers_SpeechBubbleListContains2Bubbles()
+    public void Insert3WordsDifferentSpeakers_SpeechBubbleListContains2Bubbles()
     {
         // Arrange
         var controller = new SpeechBubbleController(_hubContextMock.Object, _speechBubbleListService.Object);
@@ -140,8 +138,7 @@ public class SpeechBubbleControllerTests
     }
 
     [Test]
-    public void
-        SpeechBubbleController_Insert4WordsDifferentTimeStampsDifferentSpeakers_SpeechBubbleListContains2Bubbles()
+    public void Insert4WordsDifferentTimeStampsDifferentSpeakers_SpeechBubbleListContains2Bubbles()
     {
         // Arrange
         var controller = new SpeechBubbleController(_hubContextMock.Object, _speechBubbleListService.Object);
@@ -160,4 +157,24 @@ public class SpeechBubbleControllerTests
         // Assert
         _speechBubbleListService.Verify(sl => sl.AddNewSpeechBubble(It.IsAny<SpeechBubble>()), Times.Exactly(2));
     }
+
+    [Test]
+    public void InsertCommaAfterWord_OneSpeechBubbleGenerated()
+    {
+        // Arrange
+        var controller = new SpeechBubbleController(_hubContextMock.Object, _speechBubbleListService.Object);
+        
+        var firstWord = new WordToken(word: "Test", confidence: 0.9f, startTime: 1, endTime: 2, speaker: 1);
+        var secondWord = new WordToken(word: ",", confidence: 0.7f, startTime: 7, endTime: 9, speaker: 1);
+        var thirdWord = new WordToken(word: "Test2", confidence: 0.7f, startTime: 15, endTime: 17, speaker: 1);
+        
+        // Act
+        controller.HandleNewWord(firstWord);
+        controller.HandleNewWord(secondWord);
+        controller.HandleNewWord(thirdWord);
+        
+        // Assert
+        _speechBubbleListService.Verify(sl => sl.AddNewSpeechBubble(It.IsAny<SpeechBubble>()), Times.Exactly(1));
+    }
+    
 }
