@@ -215,9 +215,9 @@ namespace Backend.Controllers
             );
 
             _nextSpeechBubbleId++;
-            _wordTokenBuffer.Clear();
             _speechBubbleListService.AddNewSpeechBubble(nextSpeechBubble);
             await SendNewSpeechBubbleMessageToFrontend(nextSpeechBubble);
+            _wordTokenBuffer.Clear();
         }
 
         /// <summary>
