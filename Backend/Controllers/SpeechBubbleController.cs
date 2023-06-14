@@ -12,7 +12,7 @@ namespace Backend.Controllers
     /// Provides the first SpeechBubble when one of the SpeechBubble split conditions is met.
     /// </summary>
     [ApiController]
-    [Route("api/speechbubble")]
+    [Route("api/speechbubble/")]
     public class SpeechBubbleController : ControllerBase, ISpeechBubbleController
     {
         private readonly IHubContext<CommunicationHub> _hubContext;
@@ -42,15 +42,82 @@ namespace Backend.Controllers
             _hubContext = hubContext;
         }
 
+        
         /// <summary>
-        /// The HandleUpdatedSpeechBubble function updates an existing speech bubble with new data and returns the updated list.
+        /// The HandleUpdatedSpeechBubble function updates an existing speech bubble with new data.
+        /// It accepts a list of speech bubbles.
         /// </summary>
+        /// <returns>HTTP Status Code</returns>
         [HttpPost]
-        public IActionResult HandleUpdatedSpeechBubble([FromBody] SpeechBubble updatedSpeechBubble)
+        [Route("update")]
+        public IActionResult HandleUpdatedSpeechBubble([FromBody] SpeechBubbleChainJson json)
         {
-            _speechBubbleListService.ReplaceSpeechBubble(updatedSpeechBubble);
+            if (json.SpeechbubbleChain == null) return BadRequest(); // Return the updated _speechBubbleList
+
+            var receivedSpeechBubbles = new List<SpeechBubble>();
+            
+            // Parse incoming JSON to SpeechBubble objects
+            foreach (var currentSpeechBubble in json.SpeechbubbleChain)
+            {
+                var receivedWordTokens = new List<WordToken>();
+                foreach (var currentWordToken in currentSpeechBubble.SpeechBubbleContent)
+                {
+                    receivedWordTokens.Add(new WordToken(
+                        currentWordToken.Word,
+                        currentWordToken.Confidence,
+                        currentWordToken.StartTime,
+                        currentWordToken.EndTime,
+                        currentWordToken.Speaker
+                    ));
+                }
+
+                receivedSpeechBubbles.Add(new SpeechBubble(
+                    currentSpeechBubble.Id,
+                    currentSpeechBubble.Speaker,
+                    currentSpeechBubble.StartTime,
+                    currentSpeechBubble.EndTime,
+                    receivedWordTokens
+                ));
+            }
+
+            // Replace all received SpeechBubbles
+            foreach (var receivedSpeechBubble in receivedSpeechBubbles)
+            {
+                _speechBubbleListService.ReplaceSpeechBubble(receivedSpeechBubble);
+            }
 
             return Ok(); // Return the updated _speechBubbleList
+        }
+
+
+        /// <summary>
+        /// Methode zum Testen für Frontend-Funktionalität.
+        /// </summary>
+        /// <returns>HTTP Status Code</returns>
+        [HttpPost]
+        [Route("send-new-bubble")]
+        public async Task<IActionResult> SendNewSpeechBubble()
+        {
+            var newWordToken = new WordToken
+            (
+                "NeuesWort",
+                0.8f,
+                3,
+                4,
+                1
+            );
+            var existingSpeechBubble = new SpeechBubble(
+                id: 1,
+                speaker: 1,
+                startTime: 10.0,
+                endTime: 15.0,
+                wordTokens: new List<WordToken> { newWordToken }
+            );
+
+            // Senden Sie die neue SpeechBubble an das Frontend
+            await SendNewSpeechBubbleMessageToFrontend(existingSpeechBubble);
+
+            return Ok();
         }
 
 
@@ -64,6 +131,23 @@ namespace Backend.Controllers
         {
             Console.WriteLine ($"New word: {wordToken.Word}, confidence {wordToken.Confidence}");
             SetSpeakerIfSpeakerIsNull(wordToken);
+
+            // Append point or comma to last WordToken
+            if (wordToken.Word is "." or ",")
+            {
+                switch (_wordTokenBuffer.Count)
+                {
+                    case 0 when _speechBubbleListService.GetSpeechBubbles().Count > 0:
+                    {
+                        var lastSpeechBubble = _speechBubbleListService.GetSpeechBubbles().Last();
+                        lastSpeechBubble.SpeechBubbleContent.Last().Word += wordToken.Word;
+                        return;
+                    }
+                    case > 0:
+                        _wordTokenBuffer.Last().Word += wordToken.Word;
+                        return;
+                }
+            }
 
             // Add new word Token to current Speech Bubble
             if (_currentSpeaker != null && _currentSpeaker == wordToken.Speaker)
@@ -154,9 +238,11 @@ namespace Backend.Controllers
         /// <param name="speechBubble"></param>
         private async Task SendNewSpeechBubbleMessageToFrontend(SpeechBubble speechBubble)
         {
+            var listToSend = new List<SpeechBubble>() { speechBubble };
+
             try
             {
-                await _hubContext.Clients.All.SendAsync("newBubble", speechBubble);
+                await _hubContext.Clients.All.SendAsync("newBubble", listToSend);
             }
             catch (Exception)
             {

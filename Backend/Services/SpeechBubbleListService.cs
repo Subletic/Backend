@@ -1,4 +1,5 @@
 using Backend.Data;
+using Newtonsoft.Json;
 
 namespace Backend.Services;
 
@@ -46,7 +47,7 @@ public class SpeechBubbleListService : ISpeechBubbleListService
     {
         _speechBubbleList.RemoveFirst();
     }
-
+    
     /// <summary>
     /// Replaces a SpeechBubble in the LinkedList with a new SpeechBubble.
     /// The SpeechBubble with the same ID as the new SpeechBubble is replaced.
@@ -68,12 +69,13 @@ public class SpeechBubbleListService : ISpeechBubbleListService
             if (currentSpeechBubble.Value.Id == speechBubble.Id)
             {
                 // Replace the object in the linked list
+                var oldSpeechBubbleCreationTime = currentSpeechBubble.Value.CreationTime;
+                speechBubble.CreationTime = oldSpeechBubbleCreationTime;
+                
                 _speechBubbleList.AddAfter(currentSpeechBubble, speechBubble);
                 _speechBubbleList.Remove(currentSpeechBubble);
-
                 return;
             }
-
             currentSpeechBubble = currentSpeechBubble.Next; // Move to the next node
         }
     }

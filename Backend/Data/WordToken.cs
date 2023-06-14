@@ -1,6 +1,6 @@
 ﻿namespace Backend.Data;
 
-public struct WordToken
+public class WordToken
 {
     public WordToken(string word, float confidence, double startTime, double endTime, int speaker)
     {

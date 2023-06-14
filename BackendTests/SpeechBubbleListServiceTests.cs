@@ -20,20 +20,22 @@ namespace BackendTests
             var fourthWord = new WordToken(word: "Test4", confidence: 0.7f, startTime: 12, endTime: 14, speaker: 2);
 
             _testSpeechBubble1 = new SpeechBubble
-            {
-                Id = 1, Speaker = 1,
-                SpeechBubbleContent = new List<WordToken> { firstWord, secondWord, thirdWord, fourthWord },
-                StartTime = 1,
-                EndTime = 1
-            };
+            (
+                1, 
+                1,
+                1,
+                1,
+                new List<WordToken> { firstWord, secondWord, thirdWord, fourthWord }
+            );
 
             _testSpeechBubble2 = new SpeechBubble
-            {
-                Id = 2, Speaker = 1,
-                SpeechBubbleContent = new List<WordToken> { firstWord, secondWord, thirdWord, fourthWord },
-                StartTime = 1,
-                EndTime = 1
-            };
+            (
+                2, 
+                1,
+                1,
+                1,
+                new List<WordToken> { firstWord, secondWord, thirdWord, fourthWord }
+            );
         }
 
         [SetUp]
@@ -79,29 +81,32 @@ namespace BackendTests
             var fourthWord = new WordToken(word: "Test4", confidence: 0.7f, startTime: 12, endTime: 14, speaker: 2);
 
             var testSpeechBubble1 = new SpeechBubble
-            {
-                Id = 1, Speaker = 1,
-                SpeechBubbleContent = new List<WordToken> {fourthWord },
-                StartTime = 1,
-                EndTime = 1
-            };
+            (
+                1, 
+                1,
+                1,
+                1,
+                new List<WordToken> { fourthWord }
+            );
 
             var testSpeechBubble2 = new SpeechBubble
-            {
-                Id = 2, Speaker = 1,
-                SpeechBubbleContent = new List<WordToken> { fourthWord },
-                StartTime = 1,
-                EndTime = 1
-            };
+            (
+                2, 
+                1,
+                1,
+                1,
+                new List<WordToken> { fourthWord }
+            );
 
             var testSpeechBubble3 = new SpeechBubble
-            {
-                Id = 1, Speaker = 1,
-                SpeechBubbleContent = new List<WordToken> { fourthWord },
-                StartTime = 1,
-                EndTime = 1
-            };
-            
+            (
+                1, 
+                1,
+                1,
+                1,
+                new List<WordToken> { fourthWord }
+            );
+
             _speechBubbleListService.AddNewSpeechBubble(testSpeechBubble1);
             _speechBubbleListService.AddNewSpeechBubble(testSpeechBubble2);
 
@@ -115,44 +120,48 @@ namespace BackendTests
                 Assert.That(speechBubbles.Last!.Value, Is.EqualTo(testSpeechBubble2));
             });
         }
-        
+
         [Test]
         public void ReplaceSpeechBubble_ReplacesSpeechBubbleWithSameIdHighSpeechBubbleCount()
         {
             var fourthWord = new WordToken(word: "Test4", confidence: 0.7f, startTime: 12, endTime: 14, speaker: 2);
 
             var testSpeechBubble1 = new SpeechBubble
-            {
-                Id = 1, Speaker = 1,
-                SpeechBubbleContent = new List<WordToken> {fourthWord },
-                StartTime = 1,
-                EndTime = 1
-            };
+            (
+                1, 
+                1,
+                1,
+                1,
+                new List<WordToken> { fourthWord }
+            );
 
             var testSpeechBubble2 = new SpeechBubble
-            {
-                Id = 2, Speaker = 1,
-                SpeechBubbleContent = new List<WordToken> { fourthWord },
-                StartTime = 1,
-                EndTime = 1
-            };
+            (
+                2, 
+                1,
+                1,
+                1,
+                new List<WordToken> { fourthWord }
+            );
 
             var testSpeechBubble3 = new SpeechBubble
-            {
-                Id = 3, Speaker = 1,
-                SpeechBubbleContent = new List<WordToken> { fourthWord },
-                StartTime = 1,
-                EndTime = 1
-            };
-            
+            (
+                3, 
+                1,
+                1,
+                1,
+                new List<WordToken> { fourthWord }
+            );
+
             var testSpeechBubble4 = new SpeechBubble
-            {
-                Id = 2, Speaker = 1,
-                SpeechBubbleContent = new List<WordToken> { fourthWord },
-                StartTime = 1,
-                EndTime = 1
-            };
-            
+            (
+                2, 
+                1,
+                1,
+                1,
+                new List<WordToken> { fourthWord }
+            );
+
             _speechBubbleListService.AddNewSpeechBubble(testSpeechBubble1);
             _speechBubbleListService.AddNewSpeechBubble(testSpeechBubble2);
             _speechBubbleListService.AddNewSpeechBubble(testSpeechBubble3);
@@ -176,5 +185,25 @@ namespace BackendTests
             var speechBubbles = _speechBubbleListService.GetSpeechBubbles();
             Assert.That(speechBubbles, Has.Count.EqualTo(1));
         }
+        
+        [Test]
+        public void ReplaceSpeechBubble_CreationTimeDoesntChange()
+        {
+            var creationTime = _testSpeechBubble1.CreationTime;
+            var newSpeechBubble = new SpeechBubble(
+                _testSpeechBubble1.Id, _testSpeechBubble1.Speaker, _testSpeechBubble1.StartTime,
+                _testSpeechBubble1.EndTime, _testSpeechBubble1.SpeechBubbleContent);
+            
+            newSpeechBubble.CreationTime += TimeSpan.FromMinutes(2);
+            
+            _speechBubbleListService.ReplaceSpeechBubble(_testSpeechBubble1);
+            _speechBubbleListService.ReplaceSpeechBubble(newSpeechBubble);
+
+            var speechBubbles = _speechBubbleListService.GetSpeechBubbles();
+            
+            Assert.That(speechBubbles.First!.Value.CreationTime, Is.EqualTo(creationTime));
+        }
+        
+        
     }
 }
