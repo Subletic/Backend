@@ -1,9 +1,9 @@
-﻿namespace Backend.Data;
+﻿namespace Backend.Data.SpeechmaticsMessages;
 
-public class SpeechmaticsAddTranscript
+public class AddTranscriptMessage
 {
-    public SpeechmaticsAddTranscript (string format, SpeechmaticsAddTranscript_metadata metadata,
-        List<SpeechmaticsAddTranscript_result> results)
+    public AddTranscriptMessage (string format, AddTranscriptMessage_metadata metadata,
+        List<AddTranscriptMessage_result> results)
     {
         this.format = format;
         this.metadata = metadata;
@@ -26,14 +26,14 @@ public class SpeechmaticsAddTranscript
     }
 
     public string format { get; set; }
-    public SpeechmaticsAddTranscript_metadata metadata { get; set; }
-    public List<SpeechmaticsAddTranscript_result> results { get; set; }
+    public AddTranscriptMessage_metadata metadata { get; set; }
+    public List<AddTranscriptMessage_result> results { get; set; }
 }
 
-public class SpeechmaticsAddTranscript_result
+public class AddTranscriptMessage_result
 {
-    public SpeechmaticsAddTranscript_result (string type, double start_time, double end_time, bool? is_eos = null,
-      string? attaches_to = null, List<SpeechmaticsAddTranscript_result_alternative>? alternatives = null)
+    public AddTranscriptMessage_result (string type, double start_time, double end_time, bool? is_eos = null,
+      string? attaches_to = null, List<AddTranscriptMessage_result_alternative>? alternatives = null)
     {
         this.type = type;
         this.start_time = start_time;
@@ -51,12 +51,12 @@ public class SpeechmaticsAddTranscript_result
     public bool? is_eos { get; set; }
     public string? attaches_to { get; set; }
 
-    public List<SpeechmaticsAddTranscript_result_alternative>? alternatives { get; set; }
+    public List<AddTranscriptMessage_result_alternative>? alternatives { get; set; }
 }
 
-public class SpeechmaticsAddTranscript_result_alternative
+public class AddTranscriptMessage_result_alternative
 {
-    public SpeechmaticsAddTranscript_result_alternative (string content, double confidence, string? language = null,
+    public AddTranscriptMessage_result_alternative (string content, double confidence, string? language = null,
         string? speaker = null)
     {
         this.content = content;
@@ -72,9 +72,9 @@ public class SpeechmaticsAddTranscript_result_alternative
     public string? speaker { get; set; }
 }
 
-public class SpeechmaticsAddTranscript_metadata
+public class AddTranscriptMessage_metadata
 {
-    public SpeechmaticsAddTranscript_metadata (string transcript, double start_time, double end_time)
+    public AddTranscriptMessage_metadata (string transcript, double start_time, double end_time)
     {
         this.transcript = transcript;
         this.start_time = start_time;

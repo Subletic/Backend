@@ -61,9 +61,11 @@ string testAudioFile = "./tagesschau_clip.aac";
 Task<bool> audioTranscription = avprocessing.TranscribeAudio (testAudioFile);
 */
 
-// TODO testing
-IAvProcessingService avp = app.Services.GetService<IAvProcessingService>();
-bool doShowcase = await avp.Init ("SPEECHMATICS_API_KEY");
+// TODO manually kick off a transcription, for testing
+IAvProcessingService? avp = app.Services.GetService<IAvProcessingService>();
+if (avp is null)
+    throw new InvalidOperationException ($"Failed to find a registered {typeof (IAvProcessingService).Name} service");
+bool doShowcase = await avp!.Init ("SPEECHMATICS_API_KEY");
 Console.WriteLine (String.Format (
     "{0} the Speechmatics API showcase", doShowcase ? "Doing" : "Not doing"));
 

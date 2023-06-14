@@ -1,8 +1,8 @@
-﻿namespace Backend.Data;
+﻿namespace Backend.Data.SpeechmaticsMessages;
 
-public class SpeechmaticsEndOfTranscript
+public class EndOfTranscriptMessage
 {
-    public SpeechmaticsEndOfTranscript () { }
+    public EndOfTranscriptMessage () { }
 
     private static readonly string _message = "EndOfTranscript";
 

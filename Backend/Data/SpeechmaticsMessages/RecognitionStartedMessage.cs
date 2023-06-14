@@ -1,8 +1,8 @@
-﻿namespace Backend.Data;
+﻿namespace Backend.Data.SpeechmaticsMessages;
 
-public class SpeechmaticsRecognitionStarted
+public class RecognitionStartedMessage
 {
-    public SpeechmaticsRecognitionStarted (string id, SpeechmaticsRecognitionStarted_LanguagePackInfo language_pack_info)
+    public RecognitionStartedMessage (string id, RecognitionStartedMessage_LanguagePackInfo language_pack_info)
     {
         this.id = id;
         this.language_pack_info = language_pack_info;
@@ -23,12 +23,12 @@ public class SpeechmaticsRecognitionStarted
         }
     }
     public string id { get; set; }
-    public SpeechmaticsRecognitionStarted_LanguagePackInfo language_pack_info { get; set; }
+    public RecognitionStartedMessage_LanguagePackInfo language_pack_info { get; set; }
 }
 
-public class SpeechmaticsRecognitionStarted_LanguagePackInfo
+public class RecognitionStartedMessage_LanguagePackInfo
 {
-    public SpeechmaticsRecognitionStarted_LanguagePackInfo (bool adapted, bool itn, string language_description,
+    public RecognitionStartedMessage_LanguagePackInfo (bool adapted, bool itn, string language_description,
         string word_delimiter, string writing_direction)
     {
         this.adapted = adapted;

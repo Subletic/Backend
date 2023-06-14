@@ -1,13 +1,15 @@
-﻿namespace Backend.Data;
+﻿namespace Backend.Data.SpeechmaticsMessages;
 
-public class SpeechmaticsEndOfStream
+public class ErrorMessage
 {
-    public SpeechmaticsEndOfStream (ulong last_seq_no = 0)
+    public ErrorMessage (int? code, string type, string reason)
     {
-        this.last_seq_no = last_seq_no;
+        this.code = code;
+        this.type = type;
+        this.reason = reason;
     }
 
-    private static readonly string _message = "EndOfStream";
+    private static readonly string _message = "Error";
 
     // for JSON deserialising never actually let this be written, just verify
     public string message
@@ -21,5 +23,7 @@ public class SpeechmaticsEndOfStream
                     _message, value));
         }
     }
-    public ulong last_seq_no { get; set; }
+    public int? code { get; set; }
+    public string type { get; set; }
+    public string reason { get; set; }
 }

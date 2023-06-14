@@ -1,8 +1,8 @@
-﻿namespace Backend.Data;
+﻿namespace Backend.Data.SpeechmaticsMessages;
 
-public class SpeechmaticsAudioAdded
+public class AudioAddedMessage
 {
-    public SpeechmaticsAudioAdded (ulong seq_no = 0)
+    public AudioAddedMessage (ulong seq_no = 0)
     {
         this.seq_no = seq_no;
     }

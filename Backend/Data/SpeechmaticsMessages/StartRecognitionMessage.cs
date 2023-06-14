@@ -1,17 +1,17 @@
-﻿namespace Backend.Data;
+﻿namespace Backend.Data.SpeechmaticsMessages;
 
-public class SpeechmaticsStartRecognition
+public class StartRecognitionMessage
 {
-    public SpeechmaticsStartRecognition (
-        SpeechmaticsStartRecognition_AudioType? audio_format = null,
-        SpeechmaticsStartRecognition_TranscriptionConfig? transcription_config = null)
+    public StartRecognitionMessage (
+        StartRecognitionMessage_AudioType? audio_format = null,
+        StartRecognitionMessage_TranscriptionConfig? transcription_config = null)
     {
         this.audio_format = (audio_format is not null)
-            ? (SpeechmaticsStartRecognition_AudioType) audio_format
-            : new SpeechmaticsStartRecognition_AudioType();
+            ? (StartRecognitionMessage_AudioType) audio_format
+            : new StartRecognitionMessage_AudioType();
         this.transcription_config = (transcription_config is not null)
-            ? (SpeechmaticsStartRecognition_TranscriptionConfig) transcription_config
-            : new SpeechmaticsStartRecognition_TranscriptionConfig();
+            ? (StartRecognitionMessage_TranscriptionConfig) transcription_config
+            : new StartRecognitionMessage_TranscriptionConfig();
     }
 
     private static readonly string _message = "StartRecognition";
@@ -28,15 +28,15 @@ public class SpeechmaticsStartRecognition
                     _message, value));
         }
     }
-    public SpeechmaticsStartRecognition_AudioType audio_format { get; set; }
-    public SpeechmaticsStartRecognition_TranscriptionConfig transcription_config { get; set; }
+    public StartRecognitionMessage_AudioType audio_format { get; set; }
+    public StartRecognitionMessage_TranscriptionConfig transcription_config { get; set; }
     // TODO add? irrelevant for our purposes
-    // public SpeechmaticsStartRecognition_TranslationConfig? translation_config { get; set; }
+    // public StartRecognitionMessage_TranslationConfig? translation_config { get; set; }
 }
 
-public class SpeechmaticsStartRecognition_AudioType
+public class StartRecognitionMessage_AudioType
 {
-    public SpeechmaticsStartRecognition_AudioType (
+    public StartRecognitionMessage_AudioType (
         string type = "raw",
         string? encoding = "pcm_s16le",
         int? sample_rate = 48000)
@@ -157,9 +157,9 @@ public class SpeechmaticsStartRecognition_AudioType
     }
 }
 
-public class SpeechmaticsStartRecognition_TranscriptionConfig
+public class StartRecognitionMessage_TranscriptionConfig
 {
-    public SpeechmaticsStartRecognition_TranscriptionConfig (string language = "de", bool? enable_partials = false)
+    public StartRecognitionMessage_TranscriptionConfig (string language = "de", bool? enable_partials = false)
     {
         this.language = language;
         this.enable_partials = enable_partials;
