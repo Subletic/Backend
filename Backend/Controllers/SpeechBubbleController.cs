@@ -3,6 +3,7 @@ using Backend.Hubs;
 using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Newtonsoft.Json;
 
 namespace Backend.Controllers
 {
@@ -42,23 +43,71 @@ namespace Backend.Controllers
             _hubContext = hubContext;
         }
 
+
+        //Test
+        public class SpeechBubbleChainRequest
+        {
+            public List<SpeechBubble>? SpeechbubbleChain { get; set; }
+
+            public SpeechBubbleChainRequest()
+            {
+                SpeechbubbleChain = new List<SpeechBubble>();
+            }
+        }
+
         /// <summary>
         /// The HandleUpdatedSpeechBubble function updates an existing speech bubble with new data and returns the updated list.
         /// </summary>
+        /*
         [HttpPost]
         [Route("update")]
-        public IActionResult HandleUpdatedSpeechBubble([FromBody] SpeechBubble updatedSpeechBubble)
+        public IActionResult HandleUpdatedSpeechBubble([FromBody] SpeechBubbleChainRequest request)
         {
-            _speechBubbleListService.ReplaceSpeechBubble(updatedSpeechBubble);
+            Console.WriteLine("Received SpeechBubbleChainRequest:");
+            Console.WriteLine(JsonConvert.SerializeObject(request));
+
+            if (request.SpeechbubbleChain != null)
+            {
+                Console.WriteLine(JsonConvert.SerializeObject("Betreten 1"));
+                foreach (var speechBubble in request.SpeechbubbleChain)
+                {
+                    Console.WriteLine(JsonConvert.SerializeObject("Betreten 2"));
+                    _speechBubbleListService.ReplaceSpeechBubble(speechBubble);
+                }
+            }
 
             return Ok(); // Return the updated _speechBubbleList
         }
-       
-        
+        */
+        [HttpPost]
+        [Route("update")]
+        public IActionResult HandleUpdatedSpeechBubble([FromBody] SpeechBubbleChainRequest request)
+        {
+            Console.WriteLine("Received SpeechBubbleChainRequest:");
+            Console.WriteLine(JsonConvert.SerializeObject(request));
+
+            if (request.SpeechbubbleChain != null)
+            {
+                Console.WriteLine(JsonConvert.SerializeObject("Betreten 1"));
+                foreach (var speechBubbleData in request.SpeechbubbleChain)
+                {
+                    Console.WriteLine(JsonConvert.SerializeObject("Betreten 2"));
+                    var wordTokens = speechBubbleData.SpeechBubbleContent.Select(w => new WordToken(w.Word, w.Confidence, w.StartTime, w.EndTime, w.Speaker)).ToList();
+                    var speechBubble = new SpeechBubble(0, speechBubbleData.Speaker, speechBubbleData.StartTime, speechBubbleData.EndTime, wordTokens);
+                    _speechBubbleListService.ReplaceSpeechBubble(speechBubble);
+                }
+            }
+
+            return Ok(); // Return the updated _speechBubbleList
+        }
+
+
         [HttpPost]
         [Route("send-new-bubble")]
         public async Task<IActionResult> SendNewSpeechBubble()
         {
+            //Console.WriteLine("Received SpeechBubbleSendRequest:");
+
             // Erstellen Sie hier Ihre neue SpeechBubble und rufen Sie die entsprechende Logik auf
 
             // Beispiel:
