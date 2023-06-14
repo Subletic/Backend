@@ -1,7 +1,16 @@
+using System;
+using System.IO;
+
 using Backend.Hubs;
 using Backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+var frontend_url = Environment.GetEnvironmentVariable("FRONTEND_URL");
+
+if (frontend_url == null)
+{
+    frontend_url = "localhost:8081";
+}
 
 // Add services to the container.
 
@@ -25,7 +34,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAngularFrontend",
         builder =>
         {
-            builder.WithOrigins("http://localhost:4200") // Replace with your Angular app URL
+            builder.WithOrigins(frontend_url) // Replace with your Angular app URL
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();
