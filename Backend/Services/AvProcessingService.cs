@@ -19,7 +19,7 @@ using Backend.Data.SpeechmaticsMessages;
 
 namespace Backend.Services;
 
-public class AvProcessingService : IAvProcessingService
+public partial class AvProcessingService : IAvProcessingService
 {
     private static readonly string urlRequestKey = "https://mp.speechmatics.com/v1/api_keys?type=rt";
     private static readonly string urlRecognitionTemplate = "wss://eu2.rt.speechmatics.com/v2/de?jwt={0}";
@@ -30,8 +30,8 @@ public class AvProcessingService : IAvProcessingService
     {
         IncludeFields = true,
     };
-    private static readonly Regex messageTypeRegex = new Regex (@"""message""\s*:\s*""([^""]+)""",
-        RegexOptions.Compiled);
+    [GeneratedRegex(@"""message""\s*:\s*""([^""]+)""")]
+    private static partial Regex messageTypeRegex();
 
     /// <summary>
     /// Dependency Injection for calling HandleNewWord to register words from received transcript
@@ -279,7 +279,7 @@ public class AvProcessingService : IAvProcessingService
                 responseString = Encoding.UTF8.GetString (responseBuffer, 0, response.Count);
                 logReceive (responseString);
 
-                MatchCollection messageMatches = messageTypeRegex.Matches (responseString);
+                MatchCollection messageMatches = messageTypeRegex().Matches (responseString);
                 if (messageMatches.Count != 1)
                     throw new InvalidOperationException (
                         $"Found unexpected amount of message type matches: {messageMatches.Count}");
