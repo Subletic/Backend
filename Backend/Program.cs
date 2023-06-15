@@ -63,13 +63,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-/*
-AvProcessing avprocessing = await AvProcessing.Init ("SPEECHMATICS_API_KEY");
-// test
-string testAudioFile = "./tagesschau_clip.aac";
-Task<bool> audioTranscription = avprocessing.TranscribeAudio (testAudioFile);
-*/
-
 // TODO manually kick off a transcription, for testing
 IAvProcessingService? avp = app.Services.GetService<IAvProcessingService>();
 if (avp is null)
