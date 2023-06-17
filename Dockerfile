@@ -25,8 +25,13 @@ WORKDIR /app
 # Kopiere das Build-Ergebnis der vorherigen Phase in das Arbeitsverzeichnis
 COPY --from=build-env /app/out .
 
+# Installiere FFmpeg Dependency
+RUN apt-get -y update
+RUN apt-get -y upgrade
+RUN apt-get install -y ffmpeg
+
 # Setze den Port, auf dem die API lauscht
-EXPOSE 80
+EXPOSE 5003
 
 # Starte die ASP.NET API
 ENTRYPOINT ["dotnet", "Backend.dll"]
