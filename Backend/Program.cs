@@ -1,21 +1,13 @@
-using System;
-using System.IO;
-
 using Backend.Hubs;
 using Backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-var frontend_url = Environment.GetEnvironmentVariable("FRONTEND_URL");
 
-if (frontend_url == null)
-{
-    frontend_url = "http://localhost:4200";
-}
+// If frontend URL is not specified, use default value (localhost:4200)
+var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:4200";
 
 // Add services to the container.
-
-// TODO this used to be Services.AddControllers(). is it bad to do this instead?
-builder.Services.AddMvc().AddControllersAsServices();
+builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 
@@ -27,6 +19,8 @@ builder.Services.AddSingleton<ISpeechBubbleListService, SpeechBubbleListService>
 
 builder.Services.AddSingleton<IAvProcessingService, AvProcessingService>();
 
+builder.Services.AddSingleton<IWordProcessingService, WordProcessingService>();
+
 builder.Services.AddHostedService<BufferTimeMonitor>();
 
 builder.Services.AddCors(options =>
@@ -34,7 +28,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAngularFrontend",
         builder =>
         {
-            builder.WithOrigins(frontend_url) // Replace with your Angular app URL
+            builder.WithOrigins(frontendUrl) // Replace with your Angular app URL
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();

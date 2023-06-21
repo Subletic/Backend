@@ -1,8 +1,8 @@
 ﻿using Backend.Data;
 
-namespace Backend.Controllers;
+namespace Backend.Services;
 
-public interface ISpeechBubbleController
+public interface IWordProcessingService
 {
     public void HandleNewWord(WordToken wordToken);
 }

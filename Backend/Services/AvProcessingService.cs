@@ -91,13 +91,13 @@ public partial class AvProcessingService : IAvProcessingService
 
     /**
       *  <summary>
-      *  Dependency Injection to get an instance of the <c>SpeechBubbleController</c>.
+      *  Dependency Injection to get an instance of the <c>WordProcessingService</c>.
       *  This is needed to call its <c>HandleNewWord</c> method, to push words from the received
       *  transcript messages into our system.
-      *  <see cref="SpeechBubbleController.HandleNewWord" />
+      *  <see cref="WordProcessingService.HandleNewWord" />
       *  </summary>
       */
-    private readonly SpeechBubbleController _speechBubbleController;
+    private readonly IWordProcessingService _wordProcessingService;
 
     /**
       *  <summary>
@@ -136,12 +136,12 @@ public partial class AvProcessingService : IAvProcessingService
     /**
       *  <summary>
       *  Constructor of the service.
-      *  <param name="speechBubbleController">The <c>SpeechBubbleController</c> to push new words into</param>
+      *  <param name="wordProcessingService">The <c>SpeechBubbleController</c> to push new words into</param>
       *  </summary>
       */
-    public AvProcessingService (SpeechBubbleController speechBubbleController)
+    public AvProcessingService (IWordProcessingService wordProcessingService)
     {
-        _speechBubbleController = speechBubbleController;
+        _wordProcessingService = wordProcessingService;
         Console.WriteLine("AvProcessingService is started!");
     }
 
@@ -583,7 +583,7 @@ public partial class AvProcessingService : IAvProcessingService
                                     + "Specifications say this is a possibility, but what is its purpose? "
                                     + $"Analyse: {responseString}");
 
-                            _speechBubbleController.HandleNewWord (new WordToken(
+                            _wordProcessingService.HandleNewWord (new WordToken(
                                 // docs say this sends a list, I've only ever seen it send 1 result
                                 transcript.alternatives![0].content,
                                 (float) transcript.alternatives![0].confidence,
