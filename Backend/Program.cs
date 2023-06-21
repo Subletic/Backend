@@ -2,11 +2,12 @@ using Backend.Hubs;
 using Backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// If frontend URL in is not specified, use default value (localhost:4200)
 var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:4200";
 
 // Add services to the container.
-// TODO this used to be Services.AddControllers(). is it bad to do this instead?
-builder.Services.AddMvc().AddControllersAsServices();
+builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 
