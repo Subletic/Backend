@@ -5,9 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Backend.Controllers
 {
     /// <summary>
-    /// Controller for handling SpeechBubble interactions.
-    /// SpeechBubbles are contained in a LinkedList.
-    /// Provides the first SpeechBubble when one of the SpeechBubble split conditions is met.
+    /// The SpeechBubbleController handles all incoming requests from the frontend.
     /// </summary>
     [ApiController]
     [Route("api/speechbubble/")]
@@ -22,8 +20,7 @@ namespace Backend.Controllers
 
         /// <summary>
         /// Constructor for SpeechBubbleController.
-        /// Initializes with an empty SpeechBubbleList.
-        /// Sets needed private attributes to default values.
+        /// Gets instance of SpeechBubbleListService via Dependency Injection.
         /// </summary>
         public SpeechBubbleController(ISpeechBubbleListService speechBubbleListService)
         {

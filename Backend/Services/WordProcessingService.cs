@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Backend.Services;
 
+/// <summary>
+/// Service used for inserting new WordTokens into data-structure
+/// </summary>
 public class WordProcessingService : IWordProcessingService
 {
     /// <summary>
