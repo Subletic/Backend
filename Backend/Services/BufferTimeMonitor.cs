@@ -58,9 +58,7 @@ public class BufferTimeMonitor : BackgroundService
                 // Export timed-out speech bubbles as webvtt
                 using (var outputStream = new MemoryStream())
                 {
-                    _webVttExporter.ExportSpeechBubbles(_timedOutSpeechBubbles);
-                    outputStream.Seek(0, SeekOrigin.Begin);
-                    await outputStream.CopyToAsync(/* pass the output stream for the audio */);
+                    // TODO: Implement the conversion logic
                 }
             }
         }
