@@ -62,12 +62,8 @@ namespace Backend.Services
         /// <returns>The formatted time string.</returns>
         private string FormatTime(double time)
         {
-            int hours = (int)(time / 3600);
-            int minutes = (int)((time % 3600) / 60);
-            int seconds = (int)(time % 60);
-            int milliseconds = (int)((time - Math.Truncate(time)) * 1000);
-
-            return $"{hours:D2}:{minutes:D2}:{seconds:D2}.{milliseconds:D3}";
+            TimeSpan timeSpan = TimeSpan.FromMilliseconds(time * 1000);
+            return timeSpan.ToString(@"hh\:mm\:ss\.fff");
         }
 
         /// <summary>
