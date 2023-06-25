@@ -40,7 +40,21 @@ namespace Backend.Services
         /// <returns>The WebVTT-formatted content.</returns>
         private string ConvertToWebVttFormat(List<SpeechBubble> speechBubbles)
         {
-            // TODO: Implement the conversion logic
+            StringBuilder webVttBuilder = new StringBuilder();
+
+            webVttBuilder.AppendLine("WEBVTT");
+
+            foreach (var speechBubble in speechBubbles)
+            {
+                string startTime = FormatTime(speechBubble.StartTime);
+                string endTime = FormatTime(speechBubble.EndTime);
+
+                webVttBuilder.AppendLine();
+                webVttBuilder.AppendLine($"{startTime} --> {endTime}");
+                webVttBuilder.AppendLine(speechBubble.Word);
+            }
+
+            return webVttBuilder.ToString();
         }
 
         /// <summary>
