@@ -60,6 +60,7 @@ public class BufferTimeMonitor : BackgroundService
                 {
                     _webVttExporter.ExportSpeechBubbles(_timedOutSpeechBubbles);
                     outputStream.Seek(0, SeekOrigin.Begin);
+                    _webVttExporter.WriteToStream(outputStream, /* pass the output stream for the webvtt */);
                     await outputStream.CopyToAsync(/* pass the output stream for the audio */);
                 }
             }
