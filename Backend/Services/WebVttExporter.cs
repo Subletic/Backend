@@ -49,11 +49,16 @@ namespace Backend.Services
                 string endTime = FormatTime(speechBubble.EndTime);
                 webVttBuilder.AppendLine();
                 webVttBuilder.AppendLine($"{startTime} --> {endTime}");
-                webVttBuilder.AppendLine(wordToken.Word);
+
+                foreach (var wordToken in speechBubble.SpeechBubbleContent)
+                {
+                    webVttBuilder.AppendLine(wordToken.Word);
+                }
             }
 
             return webVttBuilder.ToString();
         }
+
 
         /// <summary>
         /// Formats the time in WebVTT format (hh:mm:ss.mmm).
