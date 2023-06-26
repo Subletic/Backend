@@ -141,7 +141,7 @@ public class WordProcessingService : IWordProcessingService
     }
 
     /// <summary>
-    /// Sends an asynchronous request to the frontend via SignalR.
+    /// Sends an asynchronous request to the frontend via SignalR, to publish a new Speechbubble.
     /// The frontend can then subscribe to incoming Objects and handle them accordingly.
     /// </summary>
     /// <param name="speechBubble"></param>
