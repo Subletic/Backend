@@ -49,7 +49,7 @@ namespace Backend.Services
                 string endTime = FormatTime(speechBubble.EndTime);
                 webVttBuilder.AppendLine();
                 webVttBuilder.AppendLine($"{startTime} --> {endTime}");
-                webVttBuilder.AppendLine(speechBubble.Word);
+                webVttBuilder.AppendLine(wordToken.Word);
             }
 
             return webVttBuilder.ToString();
