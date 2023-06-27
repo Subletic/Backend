@@ -1,0 +1,128 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO.Pipelines;
+using System.Runtime.InteropServices;
+
+namespace Backend.Data;
+
+/**
+  *  <summary>
+  *  An observable service that buffers chunks of audio, and eventually evicts them back into a <c>Pipe</c>.
+  *  </summary>
+  */
+public class AudioQueue : IObservable<short[]>
+{
+    // IObservable implementation stuff
+
+    /**
+      *  <summary>
+      *  TODO
+      *  </summary>
+      */
+    private readonly HashSet<IObserver<short[]>> observers = new();
+
+    /**
+      *  <summary>
+      *  TODO
+      *  </summary>
+      */
+    public IDisposable Subscribe(IObserver<short[]> observer)
+    {
+        observers.Add(observer);
+        return new AudioQueueUnsubscriber(observers, observer);
+    }
+
+    // class stuff
+
+    /**
+      *  <summary>
+      *  Max queue size. If size would be exceeded, old audio is dequeued into the pipe.
+      *  </summary>
+      */
+    private const int maxQueueCount = 3;
+
+    /**
+      *  <summary>
+      *  The internal queue that this class wraps, initialised to the maximum size we expect to hold.
+      *  </summary>
+      */
+    private Queue<short[]> audioQueue = new Queue<short[]>(maxQueueCount);
+
+    /**
+      *  <summary>
+      *  The writing end of a pipe that dequeued audio data will get written to for further processing.
+      *
+      *  Must be initialised via <c>Init</c>.
+      *  </summary>
+      */
+    private PipeWriter? outPipe = null;
+
+    /**
+      *  <summary>
+      *  TODO
+      *  </summary>
+      */
+    public void Init (PipeWriter _outPipe)
+    {
+        outPipe = _outPipe;
+        audioQueue.Clear();
+    }
+
+    /**
+      *  <summary>
+      *  TODO
+      *  </summary>
+      */
+    private void checkPipe()
+    {
+        if (outPipe is null) throw new InvalidOperationException ("outPipe not configured yet");
+    }
+
+    // WRAPPED METHODS
+
+    /**
+      *  <summary>
+      *  TODO
+      *  </summary>
+      */
+    public async Task Enqueue(short[] audioBuffer)
+    {
+        checkPipe();
+
+        // TODO how do we plan to really handle this? with a timed background service?
+        // while queue is full, evict oldest buffers back to pipe
+        while (audioQueue.Count == maxQueueCount)
+        {
+            await Dequeue();
+        }
+
+        audioQueue.Enqueue (audioBuffer);
+
+        Console.WriteLine ("New audio added to AudioQueue");
+
+        foreach (IObserver<short[]> observer in observers)
+        {
+            observer.OnNext(audioBuffer);
+        }
+    }
+
+    /**
+      *  <summary>
+      *  TODO
+      *  </summary>
+      */
+    public async Task Dequeue()
+    {
+        checkPipe();
+
+        short[] audioBuffer = audioQueue.Dequeue();
+
+        Console.WriteLine ("Old audio evicted from AudioQueue");
+
+        // TODO inefficient copy of audio data
+        byte[] bufferForWriting = new byte[audioBuffer.Length * 2]; // 16-bit short
+        Buffer.BlockCopy (audioBuffer, 0, bufferForWriting, 0, bufferForWriting.Length);
+
+        await outPipe.WriteAsync (bufferForWriting);
+    }
+}

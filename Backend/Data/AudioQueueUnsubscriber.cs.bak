@@ -1,0 +1,15 @@
+﻿using System;
+
+namespace Backend.Data;
+
+class AudioQueueUnsubscriber : IDisposable
+{
+    private readonly ISet<IObserver<short[]>> observers;
+    private readonly IObserver<short[]> observer;
+
+    public AudioQueueUnsubscriber(
+        ISet<IObserver<short[]>> _observers,
+        IObserver<short[]> _observer) => (observers, observer) = (_observers, _observer);
+
+    public void Dispose() => observers.Remove(observer);
+}
