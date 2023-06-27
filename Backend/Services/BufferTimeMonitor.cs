@@ -31,7 +31,7 @@ public class BufferTimeMonitor : BackgroundService
         _speechBubbleListService = speechBubbleListService;
         _hubContext = hubContext;
         _timedOutSpeechBubbles = new List<SpeechBubble>();
-        _timeLimitInMinutes = 5; // move to a constant or configuration file
+        _timeLimitInMinutes = 1; // move to a constant or configuration file
     }
 
     /// <summary>
@@ -70,7 +70,7 @@ public class BufferTimeMonitor : BackgroundService
     /// Sends an asynchronous request to the frontend via SignalR, to inform the frontend that a Speechbubble, identified by id, has to be deleted. 
     /// The frontend can then subscribe to incoming Objects and handle them accordingly.
     /// </summary>
-    /// <param name="speechBubble"></param>
+    /// <param name="id"></param>
     private async Task DeleteSpeechBubbleMessageToFrontend(long id)
     {
         try
