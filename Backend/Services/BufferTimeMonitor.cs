@@ -58,10 +58,10 @@ public class BufferTimeMonitor : BackgroundService
                 _speechBubbleListService.DeleteOldestSpeechBubble();
 
 
-                // Export timed-out speech bubbles as webvtt
+                // Export timed-out speech bubble as webvtt
                 using (var outputStream = new MemoryStream())
                 {
-                    _webVttExporter.ExportSpeechBubbles(_timedOutSpeechBubbles);
+                    _webVttExporter.ExportSpeechBubble(oldestSpeechBubble.Value);
                     outputStream.Seek(0, SeekOrigin.Begin);
                     // Here you can use the outputStream, for example, to save the WebVTT
                 }

@@ -27,9 +27,9 @@ namespace Backend.Services
         /// Exports the speech bubbles to WebVTT format and writes the content to the output stream.
         /// </summary>
         /// <param name="speechBubbles">The list of speech bubbles to export.</param>
-        public void ExportSpeechBubbles(List<SpeechBubble> speechBubbles)
+        public void ExportSpeechBubble(SpeechBubble speechBubble)
         {
-            string webVttContent = ConvertToWebVttFormat(speechBubbles);
+            string webVttContent = ConvertToWebVttFormat(speechBubble);
             WriteToStream(webVttContent);
         }
 
@@ -38,22 +38,21 @@ namespace Backend.Services
         /// </summary>
         /// <param name="speechBubbles">The list of speech bubbles to convert.</param>
         /// <returns>The WebVTT-formatted content.</returns>
-        private string ConvertToWebVttFormat(List<SpeechBubble> speechBubbles)
+        private string ConvertToWebVttFormat(SpeechBubble speechBubble)
         {
             StringBuilder webVttBuilder = new StringBuilder();
-            webVttBuilder.AppendLine("WEBVTT");
+            webVttBuilder.Append("WEBVTT");
 
-            foreach (var speechBubble in speechBubbles)
+            string startTime = FormatTime(speechBubble.StartTime);
+            string endTime = FormatTime(speechBubble.EndTime);
+            webVttBuilder.AppendLine();
+            webVttBuilder.AppendLine();
+            webVttBuilder.Append($"{startTime} --> {endTime}");
+
+            foreach (var wordToken in speechBubble.SpeechBubbleContent)
             {
-                string startTime = FormatTime(speechBubble.StartTime);
-                string endTime = FormatTime(speechBubble.EndTime);
                 webVttBuilder.AppendLine();
-                webVttBuilder.AppendLine($"{startTime} --> {endTime}");
-
-                foreach (var wordToken in speechBubble.SpeechBubbleContent)
-                {
-                    webVttBuilder.AppendLine(wordToken.Word);
-                }
+                webVttBuilder.Append(wordToken.Word);
             }
 
             return webVttBuilder.ToString();
