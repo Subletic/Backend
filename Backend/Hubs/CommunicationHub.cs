@@ -19,7 +19,7 @@ namespace Backend.Hubs
             await Clients.All.SendAsync("ReceiveMessage", "hallo welt");
         }
 
-        private IEnumerable<short> genExampleData(ulong hz, double freq)
+        static private IEnumerable<short> genExampleData(ulong hz, double freq)
         {
             double doublePiFreq = 2 * Math.PI * freq;
             double amp = 0.75d;
