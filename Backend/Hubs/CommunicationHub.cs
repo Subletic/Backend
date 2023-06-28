@@ -1,6 +1,11 @@
 using Microsoft.AspNetCore.SignalR;
 
+using System;
+using System.Collections.Concurrent;
+using System.IO.Pipelines;
 using System.Runtime.CompilerServices;
+
+using Backend.Services;
 
 namespace Backend.Hubs
 {
@@ -9,6 +14,20 @@ namespace Backend.Hubs
     /// </summary>
     public class CommunicationHub : Hub
     {
+        /// TODO
+        private readonly SendingAudioService _sendingAudioService;
+
+        /// TODO
+        public CommunicationHub (SendingAudioService sendingAudioService)
+        {
+            _sendingAudioService = sendingAudioService;
+        }
+
+        /// <summary>
+        /// TODO
+        /// </summary>
+        public static readonly ConcurrentQueue<byte[]> SendQueue = new ConcurrentQueue<byte[]>();
+
         /// <summary>
         /// Not actually used.
         /// Should contain Methods which are called from the Frontend.
@@ -19,17 +38,6 @@ namespace Backend.Hubs
             await Clients.All.SendAsync("ReceiveMessage", "hallo welt");
         }
 
-        static private IEnumerable<short> genExampleData(ulong hz, double freq)
-        {
-            double doublePiFreq = 2 * Math.PI * freq;
-            double amp = 0.75d;
-            for (ulong step = 0; step < hz; ++step)
-            {
-                yield return (short) (short.MaxValue * (
-                    amp * Math.Sin (doublePiFreq * ((double)step / (double)hz))));
-            }
-        }
-
         /// <summary>
         /// Frontend subscription to the extracted audio stream.
         /// </summary>
@@ -37,23 +45,20 @@ namespace Backend.Hubs
         [EnumeratorCancellation]
         CancellationToken cancellationToken)
         {
-            // TODO "subscribe" to the audio buffer, send whenever there's new audio
-            // currently generating & sending dummy data (440Hz sine)
+            Console.WriteLine ("ReceiveAudioStream started");
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                // some signal from the audio queue to know when new data is available
-                short[] outData = new short[48000];
-                ulong i = 0;
-                foreach (short volValue in genExampleData (48000, 440.0d))
-                {
-                    outData[i++] = volValue;
+                short[]? receivedData;
+                if (_sendingAudioService.TryDequeue(out receivedData)) {
+                    Console.WriteLine ("Sending data");
+                    yield return receivedData!;
                 }
-                yield return outData;
 
-                await Task.Delay(1000, cancellationToken);
+                await Task.Delay (100);
             }
+            Console.WriteLine ("ReceiveAudioStream done");
         }
     }
 }

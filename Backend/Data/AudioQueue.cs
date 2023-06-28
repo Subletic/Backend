@@ -7,39 +7,24 @@ namespace Backend.Data;
 
 /**
   *  <summary>
-  *  An observable service that buffers chunks of audio, and eventually evicts them back into a <c>Pipe</c>.
+  *  A queue that buffers chunks of audio while they are relevant, and eventually evict them back into a <c>PipeWriter</c> when they are deemed too old.
   *  </summary>
   */
-public class AudioQueue : IObservable<short[]>
+public class AudioQueue
 {
-    // IObservable implementation stuff
-
     /**
       *  <summary>
-      *  TODO
+      *  A name for this queue, for logging
       *  </summary>
       */
-    private readonly HashSet<IObserver<short[]>> observers = new();
-
-    /**
-      *  <summary>
-      *  TODO
-      *  </summary>
-      */
-    public IDisposable Subscribe(IObserver<short[]> observer)
-    {
-        observers.Add(observer);
-        return new AudioQueueUnsubscriber(observers, observer);
-    }
-
-    // class stuff
+    private string name;
 
     /**
       *  <summary>
       *  Max queue size. If size would be exceeded, old audio is dequeued into the pipe.
       *  </summary>
       */
-    private const int maxQueueCount = 3;
+    private const int maxQueueCount = 3; // TODO 120 in production
 
     /**
       *  <summary>
@@ -55,30 +40,21 @@ public class AudioQueue : IObservable<short[]>
       *  Must be initialised via <c>Init</c>.
       *  </summary>
       */
-    private PipeWriter? outPipe = null;
+    private PipeWriter outPipe;
 
     /**
       *  <summary>
       *  TODO
       *  </summary>
       */
-    public void Init (PipeWriter _outPipe)
+    public AudioQueue (PipeWriter outPipe, string name = "GeneralAudioQueue")
     {
-        outPipe = _outPipe;
+        this.outPipe = outPipe;
+        this.name = name;
         audioQueue.Clear();
     }
 
-    /**
-      *  <summary>
-      *  TODO
-      *  </summary>
-      */
-    private void checkPipe()
-    {
-        if (outPipe is null) throw new InvalidOperationException ("outPipe not configured yet");
-    }
-
-    // WRAPPED METHODS
+    // wrapped Queue methods
 
     /**
       *  <summary>
@@ -87,23 +63,16 @@ public class AudioQueue : IObservable<short[]>
       */
     public async Task Enqueue(short[] audioBuffer)
     {
-        checkPipe();
-
-        // TODO how do we plan to really handle this? with a timed background service?
-        // while queue is full, evict oldest buffers back to pipe
-        while (audioQueue.Count == maxQueueCount)
+        // TODO how do we plan to really handle this? with the timed background service?
+        // while queue is deemed full, evict oldest buffers back to pipe
+        while (audioQueue.Count >= maxQueueCount)
         {
             await Dequeue();
         }
 
         audioQueue.Enqueue (audioBuffer);
 
-        Console.WriteLine ("New audio added to AudioQueue");
-
-        foreach (IObserver<short[]> observer in observers)
-        {
-            observer.OnNext(audioBuffer);
-        }
+        Console.WriteLine ($"New audio added to {name}");
     }
 
     /**
@@ -113,11 +82,9 @@ public class AudioQueue : IObservable<short[]>
       */
     public async Task Dequeue()
     {
-        checkPipe();
-
         short[] audioBuffer = audioQueue.Dequeue();
 
-        Console.WriteLine ("Old audio evicted from AudioQueue");
+        Console.WriteLine ($"Old audio evicted from {name}");
 
         // TODO inefficient copy of audio data
         byte[] bufferForWriting = new byte[audioBuffer.Length * 2]; // 16-bit short

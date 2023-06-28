@@ -2,6 +2,8 @@ using FFMpegCore;
 using FFMpegCore.Enums;
 using FFMpegCore.Pipes;
 
+using Microsoft.AspNetCore.SignalR;
+
 using System;
 using System.IO;
 using System.IO.Pipelines;
@@ -101,6 +103,13 @@ public partial class AvProcessingService : IAvProcessingService
 
     /**
       *  <summary>
+      *  TODO
+      *  </summary>
+      */
+    private readonly SendingAudioService _sendingAudioService;
+
+    /**
+      *  <summary>
       *  The Speechmatics RT API key this instance shall use for the RT transcription.
       *  <see cref="Init" />
       *  </summary>
@@ -135,13 +144,21 @@ public partial class AvProcessingService : IAvProcessingService
 
     /**
       *  <summary>
+      *  A buffer for the audio we'll need to send back in 2 minutes.
+      *  </summary>
+      */
+    //private AudioQueue
+
+    /**
+      *  <summary>
       *  Constructor of the service.
       *  <param name="wordProcessingService">The <c>SpeechBubbleController</c> to push new words into</param>
       *  </summary>
       */
-    public AvProcessingService (IWordProcessingService wordProcessingService)
+    public AvProcessingService (IWordProcessingService wordProcessingService, SendingAudioService sendingAudioService)
     {
         _wordProcessingService = wordProcessingService;
+        _sendingAudioService = sendingAudioService;
         Console.WriteLine("AvProcessingService is started!");
     }
 
@@ -422,6 +439,14 @@ public partial class AvProcessingService : IAvProcessingService
                     WebSocketMessageType.Binary,
                     true,
                     CancellationToken.None);
+
+                if (lastWithLeftovers) {
+                    sendBuffer = new byte[buffer.Length];
+                    Array.Copy (buffer, 0, sendBuffer, 0, buffer.Length);
+                }
+                short[] sendShortBuffer = new short[audioType.getCheckedSampleRate()];
+                Buffer.BlockCopy (sendBuffer, 0, sendShortBuffer, 0, sendBuffer.Length);
+                _sendingAudioService.Enqueue (sendShortBuffer);
 
                 sentNum += 1;
                 offset = 0;
