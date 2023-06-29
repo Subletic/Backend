@@ -14,13 +14,19 @@ public class BufferTimeMonitor : BackgroundService
 
     private readonly ISpeechBubbleListService _speechBubbleListService;
 
+    private readonly WebVttExporter _webVttExporter;
+
+    private readonly Stream _outputStream;
+
     /// <summary>
     /// Initializes the Dependency Injection and the List of timed out SpeechBubbles.
     /// </summary>
     /// <param name="speechBubbleListService">Service given by the DI</param>
-    public BufferTimeMonitor(ISpeechBubbleListService speechBubbleListService)
+    public BufferTimeMonitor(ISpeechBubbleListService speechBubbleListService, WebVttExporter webVttExporter, Stream outputStream)
     {
         _speechBubbleListService = speechBubbleListService;
+        _webVttExporter = webVttExporter;
+        _outputStream = outputStream;
         _timedOutSpeechBubbles = new List<SpeechBubble>();
     }
 
@@ -53,6 +59,15 @@ public class BufferTimeMonitor : BackgroundService
             {
                 _timedOutSpeechBubbles.Add(oldestSpeechBubble.Value);
                 _speechBubbleListService.DeleteOldestSpeechBubble();
+
+
+                // Export timed-out speech bubble as webvtt
+                using (var outputStream = new MemoryStream())
+                {
+                    _webVttExporter.ExportSpeechBubble(oldestSpeechBubble.Value);
+                    outputStream.Seek(0, SeekOrigin.Begin);
+                    await outputStream.CopyToAsync(_outputStream, stoppingToken);
+                }
             }
         }
     }
