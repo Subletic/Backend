@@ -64,7 +64,7 @@ namespace Backend.Services
         /// </summary>
         /// <param name="time">The time value to format.</param>
         /// <returns>The formatted time string.</returns>
-        private string FormatTime(double time)
+        static private string FormatTime(double time)
         {
             TimeSpan timeSpan = TimeSpan.FromMilliseconds(time * 1000);
             return timeSpan.ToString(@"hh\:mm\:ss\.fff");

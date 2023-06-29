@@ -66,7 +66,7 @@ public class BufferTimeMonitor : BackgroundService
                 {
                     _webVttExporter.ExportSpeechBubble(oldestSpeechBubble.Value);
                     outputStream.Seek(0, SeekOrigin.Begin);
-                    await outputStream.CopyToAsync(_outputStream);
+                    await outputStream.CopyToAsync(_outputStream, stoppingToken);
                 }
             }
         }
