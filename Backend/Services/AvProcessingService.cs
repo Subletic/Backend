@@ -144,6 +144,20 @@ public partial class AvProcessingService : IAvProcessingService
 
     /**
       *  <summary>
+      *  A Pipe through which we'll get buffered 1s audio snippets back for the final re-muxing.
+      *  </summary>
+      */
+    private static Pipe audioMuxingPipe = new Pipe();
+
+    /**
+      *  <summary>
+      *  A Queue that buffers the decoded audio until it is needed for the final re-muxing.
+      *  </summary>
+      */
+    private static AudioQueue audioQueue = new AudioQueue (audioMuxingPipe.Writer);
+
+    /**
+      *  <summary>
       *  Constructor of the service.
       *  <param name="wordProcessingService">The <c>SpeechBubbleController</c> to push new words into</param>
       *  </summary>
@@ -433,6 +447,12 @@ public partial class AvProcessingService : IAvProcessingService
                     true,
                     CancellationToken.None);
 
+                // store only decoded audio
+                short[] storeShortBuffer = new short[buffer.Length / 2];
+                Buffer.BlockCopy (sendBuffer, 0, storeShortBuffer, 0, (sendBuffer.Length / 2) * 2);
+                Task storingAudioBuffer = audioQueue.Enqueue (storeShortBuffer);
+
+                // play back with zero padding
                 if (lastWithLeftovers) {
                     sendBuffer = new byte[buffer.Length];
                     Array.Copy (buffer, 0, sendBuffer, 0, buffer.Length);
@@ -444,6 +464,7 @@ public partial class AvProcessingService : IAvProcessingService
                 sentNum += 1;
                 offset = 0;
 
+                await storingAudioBuffer;
                 // TODO remove when we handle an actual livestream
                 // processing a local file is much faster than receiving networked A/V in realtime, simulate the delay
                 await Task.Delay (1000);

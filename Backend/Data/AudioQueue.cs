@@ -64,7 +64,7 @@ public class AudioQueue
         // FIXME TOC/TOU race, but maxQueueCount is not a critical limit so not really harmful
         audioQueue.Enqueue (audioBuffer);
 
-        Console.WriteLine ($"New audio added to audio queue");
+        Console.WriteLine ($"New audio ({audioBuffer.Length} samples) added to audio queue");
     }
 
     /**
@@ -78,7 +78,7 @@ public class AudioQueue
     {
         short[] audioBuffer = audioQueue.Dequeue();
 
-        Console.WriteLine ($"Old audio evicted from audio queue");
+        Console.WriteLine ($"Old audio ({audioBuffer.Length} samples) evicted from audio queue");
 
         byte[] bufferForWriting = new byte[audioBuffer.Length * (sizeof (short) / sizeof (byte))];
         Buffer.BlockCopy (audioBuffer, 0, bufferForWriting, 0, bufferForWriting.Length);
