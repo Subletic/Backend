@@ -1,18 +1,25 @@
 ﻿using Backend.Data;
+using Backend.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
-namespace Backend.Services;
+    namespace Backend.Services;
 
 /// <summary>
 /// Service that monitors the time of the oldest SpeechBubble in the list.
 /// </summary>
 public class BufferTimeMonitor : BackgroundService
 {
+    
+    private readonly IHubContext<CommunicationHub> _hubContext;
+    
     /// <summary>
     /// List containing all SpeechBubbles that have timed out.
     /// </summary>
     private readonly List<SpeechBubble> _timedOutSpeechBubbles;
 
     private readonly ISpeechBubbleListService _speechBubbleListService;
+    
+    private readonly int _timeLimitInMinutes;
 
     private readonly WebVttExporter _webVttExporter;
 
@@ -28,6 +35,7 @@ public class BufferTimeMonitor : BackgroundService
         _webVttExporter = webVttExporter;
         _outputStream = outputStream;
         _timedOutSpeechBubbles = new List<SpeechBubble>();
+        _timeLimitInMinutes = 1; // move to a constant or configuration file
     }
 
     /// <summary>
@@ -38,8 +46,10 @@ public class BufferTimeMonitor : BackgroundService
     /// <param name="stoppingToken">Token used to stop the Task</param>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        
         while (!stoppingToken.IsCancellationRequested)
         {
+            
             await Task.Delay(1000, stoppingToken);
 
             var oldestSpeechBubble = _speechBubbleListService.GetSpeechBubbles().First;
@@ -48,15 +58,16 @@ public class BufferTimeMonitor : BackgroundService
                 continue;
             }
             
-            var oldestSpeechBubbleCreationTime = oldestSpeechBubble.Value.CreationTime;
             var currentTime = DateTime.Now;
+            var oldestSpeechBubbleCreationTime = oldestSpeechBubble.Value.CreationTime;
             var timeDifference = currentTime - oldestSpeechBubbleCreationTime;
             
-            // fix magic number
-            const int timeLimitInMinutes = 5;
-
-            if (timeDifference.TotalMinutes > timeLimitInMinutes)
+            
+            if (timeDifference.TotalMinutes > _timeLimitInMinutes)
             {
+                
+                await DeleteSpeechBubbleMessageToFrontend(oldestSpeechBubble.Value.Id);
+                
                 _timedOutSpeechBubbles.Add(oldestSpeechBubble.Value);
                 _speechBubbleListService.DeleteOldestSpeechBubble();
 
@@ -69,6 +80,24 @@ public class BufferTimeMonitor : BackgroundService
                     await outputStream.CopyToAsync(_outputStream, stoppingToken);
                 }
             }
+ 
+        }
+    }
+
+    /// <summary>
+    /// Sends an asynchronous request to the frontend via SignalR, to inform the frontend that a Speechbubble, identified by id, has to be deleted. 
+    /// The frontend can then subscribe to incoming Objects and handle them accordingly.
+    /// </summary>
+    /// <param name="id"></param>
+    private async Task DeleteSpeechBubbleMessageToFrontend(long id)
+    {
+        try
+        {
+            await _hubContext.Clients.All.SendAsync("deleteBubble", id);
+        }
+        catch (Exception)
+        {
+            await Console.Error.WriteAsync("Failed to transmit id of deleted Speechbubble to Frontend.");
         }
     }
 }
