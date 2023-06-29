@@ -38,5 +38,43 @@ world
 !";
             Assert.AreEqual(expectedContent, exportedContent);
         }
+
+        [TestCase("Hello", "world!")]
+        [TestCase("", "")]
+        public void ConvertToWebVttFormat_ReturnsCorrectWebVttContent(string word1, string word2)
+        {
+            // Arrange
+            var exporter = new WebVttExporter(null!); // Use null output stream for testing purposes
+            var speechBubble = new SpeechBubble(1, 0, 0.0, 1.0, new List<WordToken>
+            {
+                new WordToken(word1, 0.9f, 0.0, 0.5, 1),
+                new WordToken(word2, 0.9f, 0.5, 1.0, 1)
+            });
+
+            // Act
+            var webVttContent = exporter.ConvertToWebVttFormat(speechBubble);
+
+            // Assert
+            Assert.NotNull(webVttContent);
+            Assert.IsNotEmpty(webVttContent);
+        }
+
+        [Test]
+        public void WriteToStream_WritesContentToOutputStream()
+        {
+            // Arrange
+            var outputStream = new MemoryStream();
+            var exporter = new WebVttExporter(outputStream);
+            var content = "Test content";
+
+            // Act
+            exporter.WriteToStream(content);
+            outputStream.Position = 0;
+            var reader = new StreamReader(outputStream);
+            var writtenContent = reader.ReadToEnd();
+
+            // Assert
+            Assert.AreEqual(content, writtenContent);
+        }
     }
 }

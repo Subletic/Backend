@@ -38,7 +38,7 @@ namespace Backend.Services
         /// </summary>
         /// <param name="speechBubbles">The list of speech bubbles to convert.</param>
         /// <returns>The WebVTT-formatted content.</returns>
-        private string ConvertToWebVttFormat(SpeechBubble speechBubble)
+        public string ConvertToWebVttFormat(SpeechBubble speechBubble)
         {
             StringBuilder webVttBuilder = new StringBuilder();
             webVttBuilder.Append("WEBVTT");
@@ -74,7 +74,7 @@ namespace Backend.Services
         /// Writes the content to the output stream.
         /// </summary>
         /// <param name="content">The content to write.</param>
-        private void WriteToStream(string content)
+        public void WriteToStream(string content)
         {
             using (var writer = new StreamWriter(_outputStream, Encoding.UTF8, 4096, true))
             {
