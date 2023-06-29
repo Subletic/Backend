@@ -55,8 +55,7 @@ world
             var webVttContent = exporter.ConvertToWebVttFormat(speechBubble);
 
             // Assert
-            Assert.NotNull(webVttContent);
-            Assert.IsNotEmpty(webVttContent);
+            Assert.IsFalse(string.IsNullOrEmpty(webVttContent));
         }
 
         [Test]
@@ -76,5 +75,44 @@ world
             // Assert
             Assert.AreEqual(content, writtenContent);
         }
+
+        [Test]
+        public void ExportSpeechBubble_WithMultipleLines_WritesCorrectWebVttContentToStream()
+        {
+            // Arrange
+            var outputStream = new MemoryStream();
+            var exporter = new WebVttExporter(outputStream);
+            var speechBubble = new SpeechBubble(1, 0, 1.0, 3.5, new List<WordToken>
+    {
+        new WordToken("This", 0.9f, 1.0, 1.2, 1),
+        new WordToken("is", 0.9f, 1.3, 1.5, 1),
+        new WordToken("a", 0.9f, 1.6, 1.8, 1),
+        new WordToken("multiline", 0.9f, 2.0, 2.5, 2),
+        new WordToken("speech", 0.9f, 2.6, 2.8, 2),
+        new WordToken("bubble", 0.9f, 2.9, 3.2, 2),
+        new WordToken("!", 0.9f, 3.3, 3.5, 2)
+    });
+
+            // Act
+            exporter.ExportSpeechBubble(speechBubble);
+            outputStream.Position = 0;
+            var reader = new StreamReader(outputStream);
+            var exportedContent = reader.ReadToEnd();
+
+            // Assert
+            var expectedContent =
+                @"WEBVTT
+
+00:00:01.000 --> 00:00:03.500
+This
+is
+a
+multiline
+speech
+bubble
+!";
+            Assert.AreEqual(expectedContent, exportedContent);
+        }
+
     }
 }
