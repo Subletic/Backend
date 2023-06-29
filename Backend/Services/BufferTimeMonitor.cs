@@ -42,9 +42,10 @@ public class BufferTimeMonitor : BackgroundService
     /// <param name="stoppingToken">Token used to stop the Task</param>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var currentTime = DateTime.Now;
+        
         while (!stoppingToken.IsCancellationRequested)
         {
+            
             await Task.Delay(1000, stoppingToken);
 
             var oldestSpeechBubble = _speechBubbleListService.GetSpeechBubbles().First;
@@ -52,15 +53,21 @@ public class BufferTimeMonitor : BackgroundService
             {
                 continue;
             }
+            
+            var currentTime = DateTime.Now;
             var oldestSpeechBubbleCreationTime = oldestSpeechBubble.Value.CreationTime;
             var timeDifference = currentTime - oldestSpeechBubbleCreationTime;
             
+            
             if (timeDifference.TotalMinutes > _timeLimitInMinutes)
             {
+                
+                await DeleteSpeechBubbleMessageToFrontend(oldestSpeechBubble.Value.Id);
+                
                 _timedOutSpeechBubbles.Add(oldestSpeechBubble.Value);
                 _speechBubbleListService.DeleteOldestSpeechBubble();
                 
-                await DeleteSpeechBubbleMessageToFrontend(oldestSpeechBubble.Value.Id);
+                
             }
  
         }
