@@ -23,7 +23,7 @@ public class FrontendAudioQueueServiceTests
     public void BufferSize_RejectsWrong()
     {
         short[][] buffers = new short[][] {
-            new short[0],
+            Array.Empty<short>(),
             new short[48000 - 1],
             new short[48000 + 1],
             new short[9999999],
