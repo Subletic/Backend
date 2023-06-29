@@ -57,7 +57,7 @@ namespace Backend.Hubs
                     yield return receivedData!;
                 }
 
-                await Task.Delay (200);
+                await Task.Delay (200, cancellationToken);
             }
         }
     }
