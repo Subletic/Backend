@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.SignalR;
 
 using System;
 using System.Collections.Concurrent;
-using System.IO.Pipelines;
 using System.Runtime.CompilerServices;
 
 using Backend.Services;
@@ -14,19 +13,19 @@ namespace Backend.Hubs
     /// </summary>
     public class CommunicationHub : Hub
     {
-        /// TODO
-        private readonly SendingAudioService _sendingAudioService;
+        /// <summary>
+        /// Dependency Injection of a queue of audio buffers.
+        /// <see cref="ReceiveAudioStream" />
+        /// </summary>
+        private readonly FrontendAudioQueueService _sendingAudioService;
 
-        /// TODO
-        public CommunicationHub (SendingAudioService sendingAudioService)
+        /// <summary>
+        /// Constructor for Dependency Injection.
+        /// </summary>
+        public CommunicationHub (FrontendAudioQueueService sendingAudioService)
         {
             _sendingAudioService = sendingAudioService;
         }
-
-        /// <summary>
-        /// TODO
-        /// </summary>
-        public static readonly ConcurrentQueue<byte[]> SendQueue = new ConcurrentQueue<byte[]>();
 
         /// <summary>
         /// Not actually used.
@@ -40,6 +39,8 @@ namespace Backend.Hubs
 
         /// <summary>
         /// Frontend subscription to the extracted audio stream.
+        ///
+        /// Uses <c>FrontendAudioQueueService</c> to receive decoded audio from <c>AvProcessingService</c>.
         /// </summary>
         public async IAsyncEnumerable<short[]> ReceiveAudioStream(
         [EnumeratorCancellation]
@@ -52,13 +53,12 @@ namespace Backend.Hubs
 
                 short[]? receivedData;
                 if (_sendingAudioService.TryDequeue(out receivedData)) {
-                    Console.WriteLine ("Sending data");
+                    Console.WriteLine ("Sending audio data to frontend");
                     yield return receivedData!;
                 }
 
-                await Task.Delay (100);
+                await Task.Delay (200);
             }
-            Console.WriteLine ("ReceiveAudioStream done");
         }
     }
 }

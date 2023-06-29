@@ -2,8 +2,6 @@ using FFMpegCore;
 using FFMpegCore.Enums;
 using FFMpegCore.Pipes;
 
-using Microsoft.AspNetCore.SignalR;
-
 using System;
 using System.IO;
 using System.IO.Pipelines;
@@ -103,10 +101,12 @@ public partial class AvProcessingService : IAvProcessingService
 
     /**
       *  <summary>
-      *  TODO
+      *  Dependency Injection to get the queue via which <c>CommunicationHub.ReceiveAudioStream</c>
+      *  will send audio buffers to the frontend.
+      *  <see cref="CommunicationHub" />
       *  </summary>
       */
-    private readonly SendingAudioService _sendingAudioService;
+    private readonly FrontendAudioQueueService _frontendAudioQueueService;
 
     /**
       *  <summary>
@@ -144,21 +144,14 @@ public partial class AvProcessingService : IAvProcessingService
 
     /**
       *  <summary>
-      *  A buffer for the audio we'll need to send back in 2 minutes.
-      *  </summary>
-      */
-    //private AudioQueue
-
-    /**
-      *  <summary>
       *  Constructor of the service.
       *  <param name="wordProcessingService">The <c>SpeechBubbleController</c> to push new words into</param>
       *  </summary>
       */
-    public AvProcessingService (IWordProcessingService wordProcessingService, SendingAudioService sendingAudioService)
+    public AvProcessingService (IWordProcessingService wordProcessingService, FrontendAudioQueueService sendingAudioService)
     {
         _wordProcessingService = wordProcessingService;
-        _sendingAudioService = sendingAudioService;
+        _frontendAudioQueueService = sendingAudioService;
         Console.WriteLine("AvProcessingService is started!");
     }
 
@@ -446,7 +439,7 @@ public partial class AvProcessingService : IAvProcessingService
                 }
                 short[] sendShortBuffer = new short[audioType.getCheckedSampleRate()];
                 Buffer.BlockCopy (sendBuffer, 0, sendShortBuffer, 0, sendBuffer.Length);
-                _sendingAudioService.Enqueue (sendShortBuffer);
+                _frontendAudioQueueService.Enqueue (sendShortBuffer);
 
                 sentNum += 1;
                 offset = 0;
