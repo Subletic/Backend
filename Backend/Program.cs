@@ -21,6 +21,8 @@ builder.Services.AddSingleton<IAvProcessingService, AvProcessingService>();
 
 builder.Services.AddSingleton<IWordProcessingService, WordProcessingService>();
 
+builder.Services.AddSingleton<FrontendAudioQueueService, FrontendAudioQueueService>();
+
 builder.Services.AddHostedService<BufferTimeMonitor>();
 
 builder.Services.AddCors(options =>
