@@ -25,9 +25,10 @@ public class BufferTimeMonitor : BackgroundService
     /// Initializes the Dependency Injection and the List of timed out SpeechBubbles.
     /// </summary>
     /// <param name="speechBubbleListService">Service given by the DI</param>
-    public BufferTimeMonitor(ISpeechBubbleListService speechBubbleListService)
+    public BufferTimeMonitor(IHubContext<CommunicationHub> hubContext, ISpeechBubbleListService speechBubbleListService)
     {
         _speechBubbleListService = speechBubbleListService;
+        _hubContext = hubContext;
         _timedOutSpeechBubbles = new List<SpeechBubble>();
         _timeLimitInMinutes = 1; // move to a constant or configuration file
     }
