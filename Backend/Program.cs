@@ -23,6 +23,8 @@ builder.Services.AddSingleton<IWordProcessingService, WordProcessingService>();
 
 builder.Services.AddSingleton<FrontendAudioQueueService, FrontendAudioQueueService>();
 
+builder.Services.AddSingleton<WebVttExporter>();
+
 builder.Services.AddHostedService<BufferTimeMonitor>();
 
 builder.Services.AddCors(options =>
