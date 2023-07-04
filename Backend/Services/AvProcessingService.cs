@@ -158,14 +158,22 @@ public partial class AvProcessingService : IAvProcessingService
 
     /**
       *  <summary>
+      *  Private field to store an instance of WebVttExporter
+      *  </summary>
+    */
+    private readonly WebVttExporter _webVttExporter;
+
+    /**
+      *  <summary>
       *  Constructor of the service.
       *  <param name="wordProcessingService">The <c>SpeechBubbleController</c> to push new words into</param>
       *  </summary>
       */
-    public AvProcessingService (IWordProcessingService wordProcessingService, FrontendAudioQueueService sendingAudioService)
+    public AvProcessingService (IWordProcessingService wordProcessingService, FrontendAudioQueueService sendingAudioService, WebVttExporter webVttExporter)
     {
         _wordProcessingService = wordProcessingService;
         _frontendAudioQueueService = sendingAudioService;
+        _webVttExporter = webVttExporter;
         Console.WriteLine("AvProcessingService is started!");
     }
 

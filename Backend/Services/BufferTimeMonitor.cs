@@ -1,8 +1,11 @@
 ﻿using Backend.Data;
 using Backend.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using System.IO;
 
-    namespace Backend.Services;
+
+
+namespace Backend.Services;
 
 /// <summary>
 /// Service that monitors the time of the oldest SpeechBubble in the list.
@@ -21,16 +24,22 @@ public class BufferTimeMonitor : BackgroundService
     
     private readonly int _timeLimitInMinutes;
 
+    private readonly WebVttExporter _webVttExporter;
+
+    private readonly MemoryStream _outputStream;
+
     /// <summary>
     /// Initializes the Dependency Injection and the List of timed out SpeechBubbles.
     /// </summary>
     /// <param name="speechBubbleListService">Service given by the DI</param>
-    public BufferTimeMonitor(IHubContext<CommunicationHub> hubContext, ISpeechBubbleListService speechBubbleListService)
+    public BufferTimeMonitor(IHubContext<CommunicationHub> hubContext, ISpeechBubbleListService speechBubbleListService, WebVttExporter webVttExporter)
     {
         _speechBubbleListService = speechBubbleListService;
         _hubContext = hubContext;
         _timedOutSpeechBubbles = new List<SpeechBubble>();
         _timeLimitInMinutes = 1; // move to a constant or configuration file
+        _webVttExporter = webVttExporter;
+        _outputStream = new MemoryStream();
     }
 
     /// <summary>
@@ -65,6 +74,14 @@ public class BufferTimeMonitor : BackgroundService
                 
                 _timedOutSpeechBubbles.Add(oldestSpeechBubble.Value);
                 _speechBubbleListService.DeleteOldestSpeechBubble();
+
+                // Export timed-out speech bubble as webvtt
+                using (var outputStream = new MemoryStream())
+                {
+                    _webVttExporter.ExportSpeechBubble(oldestSpeechBubble.Value);
+                    outputStream.Seek(0, SeekOrigin.Begin);
+                    await outputStream.CopyToAsync(_outputStream, stoppingToken);
+                }
             }
  
         }
