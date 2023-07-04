@@ -10,7 +10,7 @@ namespace Backend.Services;
 /// <summary>
 /// Class responsible for exporting speech bubbles to WebVTT format.
 /// </summary>
-public class WebVttExporter 
+public class WebVttExporter
 {
     private readonly Stream _outputStream;
 
@@ -21,6 +21,9 @@ public class WebVttExporter
     public WebVttExporter(Stream outputStream)
     {
         _outputStream = outputStream;
+
+        // header
+        WriteToStream("WEBVTT");
     }
 
     /// <summary>
@@ -41,7 +44,6 @@ public class WebVttExporter
     public string ConvertToWebVttFormat(SpeechBubble speechBubble)
     {
         StringBuilder webVttBuilder = new StringBuilder();
-        webVttBuilder.Append("WEBVTT");
 
         string startTime = FormatTime(speechBubble.StartTime);
         string endTime = FormatTime(speechBubble.EndTime);
