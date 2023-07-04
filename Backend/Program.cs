@@ -23,7 +23,7 @@ builder.Services.AddSingleton<IWordProcessingService, WordProcessingService>();
 
 builder.Services.AddSingleton<FrontendAudioQueueService, FrontendAudioQueueService>();
 
-builder.Services.AddSingleton< WebVttExporter>();
+builder.Services.AddSingleton<WebVttExporter>();
 
 builder.Services.AddSingleton<Stream>(new MemoryStream());
 
