@@ -14,23 +14,20 @@ namespace Backend.Controllers
         /// <summary>
         /// Dependency Injection for accessing needed Services.
         /// All actions on the SpeechBubbleList are delegated to the SpeechBubbleListService.
-        /// avProcessingService is used to restart the transcription when the frontend calls for a restart.
+        /// ApplicationLifetime is used to stop the application when the frontend calls for a restart.
         /// </summary>
         private readonly ISpeechBubbleListService _speechBubbleListService;
 
         private readonly IHostApplicationLifetime _applicationLifetime;
-        private readonly IAvProcessingService _avProcessingService;
-
 
         /// <summary>
         /// Constructor for SpeechBubbleController.
         /// Gets instance of SpeechBubbleListService via Dependency Injection.
         /// </summary>
         public SpeechBubbleController(ISpeechBubbleListService speechBubbleListService,
-            IAvProcessingService avProcessingService, IHostApplicationLifetime applicationLifetime)
+            IHostApplicationLifetime applicationLifetime)
         {
             _speechBubbleListService = speechBubbleListService;
-            _avProcessingService = avProcessingService;
             _applicationLifetime = applicationLifetime;
         }
 
@@ -56,12 +53,13 @@ namespace Backend.Controllers
 
             return Ok(); // Return the updated _speechBubbleList
         }
-        
-        
+
+
         /// <summary>
-        /// Endpoint for restarting the transcription.
+        /// Endpoint for restarting the application.
+        /// Application needs to be started manually again after calling this endpoint.
         /// </summary>
-        /// <returns>Ok if Transcription was successfully started</returns>
+        /// <returns>Ok</returns>
         [HttpPost]
         [Route("restart")]
         public IActionResult HandleRestartRequest()
@@ -79,7 +77,7 @@ namespace Backend.Controllers
         public static List<SpeechBubble> ParseFrontendResponseToSpeechBubbleList(SpeechBubbleChainJson receivedList)
         {
             var receivedSpeechBubbles = new List<SpeechBubble>();
-            
+
             foreach (var currentSpeechBubble in receivedList.SpeechbubbleChain!)
             {
                 var receivedWordTokens = new List<WordToken>();

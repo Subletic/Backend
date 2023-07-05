@@ -43,7 +43,7 @@ public class WordProcessingService : IWordProcessingService
         SetSpeakerIfSpeakerIsNull(wordToken);
 
         // Append point or comma to last WordToken
-        if (wordToken.Word is "." or ",")
+        if (wordToken.Word is "." or "," or "!" or "?")
         {
             switch (_wordTokenBuffer.Count)
             {
