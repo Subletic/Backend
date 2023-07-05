@@ -64,4 +64,27 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// TODO manually kick off a transcription, for testing
+var avp = app.Services.GetService<IAvProcessingService>();
+
+if (avp is null)
+    throw new InvalidOperationException($"Failed to find a registered {typeof(IAvProcessingService).Name} service");
+
+var doShowcase = await avp.Init("SPEECHMATICS_API_KEY");
+
+Console.WriteLine($"{(doShowcase ? "Doing" : "Not doing")} the Speechmatics API showcase");
+
+// stressed and exhausted, the compiler is forcing my hand:
+// errors on this variable being unset at the later await, even though it will definitely be set when it needs to await it
+// thus initialise to null and cast away nullness during the await
+Task<bool>? audioTranscription = null;
+if (doShowcase)
+    audioTranscription = avp.TranscribeAudio("./tagesschau_clip.aac");
+
 app.Run();
+
+if (doShowcase)
+{
+    var transcriptionSuccess = await audioTranscription!;
+    Console.WriteLine($"Speechmatics communication was a {(transcriptionSuccess ? "success" : "failure")}");
+}

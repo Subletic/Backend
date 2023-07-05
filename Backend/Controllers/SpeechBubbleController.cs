@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.Tracing;
-using Backend.Data;
+﻿using Backend.Data;
 using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,6 +18,7 @@ namespace Backend.Controllers
         /// </summary>
         private readonly ISpeechBubbleListService _speechBubbleListService;
 
+        private readonly IHostApplicationLifetime _applicationLifetime;
         private readonly IAvProcessingService _avProcessingService;
 
 
@@ -27,10 +27,11 @@ namespace Backend.Controllers
         /// Gets instance of SpeechBubbleListService via Dependency Injection.
         /// </summary>
         public SpeechBubbleController(ISpeechBubbleListService speechBubbleListService,
-            IAvProcessingService avProcessingService)
+            IAvProcessingService avProcessingService, IHostApplicationLifetime applicationLifetime)
         {
             _speechBubbleListService = speechBubbleListService;
             _avProcessingService = avProcessingService;
+            _applicationLifetime = applicationLifetime;
         }
 
 
@@ -55,7 +56,8 @@ namespace Backend.Controllers
 
             return Ok(); // Return the updated _speechBubbleList
         }
-
+        
+        
         /// <summary>
         /// Endpoint for restarting the transcription.
         /// </summary>
@@ -64,7 +66,7 @@ namespace Backend.Controllers
         [Route("restart")]
         public IActionResult HandleRestartRequest()
         {
-            StartTranscription();
+            _applicationLifetime.StopApplication();
             return Ok();
         }
 
@@ -102,37 +104,6 @@ namespace Backend.Controllers
             }
 
             return receivedSpeechBubbles;
-        }
-
-
-        /// <summary>
-        /// Starts the transcription of the audio file.
-        /// </summary>
-        /// <exception cref="InvalidOperationException">Thrown when avProcessingService was not initialized</exception>
-        private async void StartTranscription()
-        {
-            if (_avProcessingService is null)
-                throw new InvalidOperationException(
-                    $"Failed to find a registered {nameof(IAvProcessingService)} service");
-
-            var doShowcase = await _avProcessingService.Init("SPEECHMATICS_API_KEY");
-
-            Console.WriteLine($"{(doShowcase ? "Doing" : "Not doing")} the Speechmatics API showcase");
-
-            // stressed and exhausted, the compiler is forcing my hand:
-            // errors on this variable being unset at the later await, even though it will definitely be set when it needs to await it
-            // thus initialise to null and cast away nullness during the await
-            Task<bool>? audioTranscription;
-            
-            if (doShowcase)
-            {
-                audioTranscription = _avProcessingService.TranscribeAudio("./tagesschau_clip.aac");
-            }
-            else return;
-
-            var transcriptionSuccess = await audioTranscription;
-            
-            Console.WriteLine($"Speechmatics communication was a {(transcriptionSuccess ? "success" : "failure")}");
         }
     }
 }
