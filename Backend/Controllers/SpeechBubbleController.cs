@@ -8,23 +8,27 @@ namespace Backend.Controllers
     /// The SpeechBubbleController handles all incoming requests from the frontend.
     /// </summary>
     [ApiController]
-    [Route("api/speechbubble/")]
+    [Route("api/")]
     public class SpeechBubbleController : ControllerBase
     {
         /// <summary>
-        /// Dependency Injection for accessing the LinkedList of SpeechBubbles and corresponding methods.
+        /// Dependency Injection for accessing needed Services.
         /// All actions on the SpeechBubbleList are delegated to the SpeechBubbleListService.
+        /// ApplicationLifetime is used to stop the application when the frontend calls for a restart.
         /// </summary>
         private readonly ISpeechBubbleListService _speechBubbleListService;
 
+        private readonly IHostApplicationLifetime _applicationLifetime;
 
         /// <summary>
         /// Constructor for SpeechBubbleController.
         /// Gets instance of SpeechBubbleListService via Dependency Injection.
         /// </summary>
-        public SpeechBubbleController(ISpeechBubbleListService speechBubbleListService)
+        public SpeechBubbleController(ISpeechBubbleListService speechBubbleListService,
+            IHostApplicationLifetime applicationLifetime)
         {
             _speechBubbleListService = speechBubbleListService;
+            _applicationLifetime = applicationLifetime;
         }
 
 
@@ -34,7 +38,7 @@ namespace Backend.Controllers
         /// </summary>
         /// <returns>HTTP Status Code</returns>
         [HttpPost]
-        [Route("update")]
+        [Route("speechbubble/update")]
         public IActionResult HandleUpdatedSpeechBubble([FromBody] SpeechBubbleChainJson receivedList)
         {
             if (receivedList.SpeechbubbleChain == null) return BadRequest(); // Return the updated _speechBubbleList
@@ -50,7 +54,21 @@ namespace Backend.Controllers
             return Ok(); // Return the updated _speechBubbleList
         }
 
-        
+
+        /// <summary>
+        /// Endpoint for restarting the application.
+        /// Application needs to be started manually again after calling this endpoint.
+        /// </summary>
+        /// <returns>Ok</returns>
+        [HttpPost]
+        [Route("restart")]
+        public IActionResult HandleRestartRequest()
+        {
+            _applicationLifetime.StopApplication();
+            return Ok();
+        }
+
+
         /// <summary>
         /// Parses incoming JSON from the frontend to a list of backend-compatible SpeechBubbles.
         /// </summary>
@@ -59,7 +77,7 @@ namespace Backend.Controllers
         public static List<SpeechBubble> ParseFrontendResponseToSpeechBubbleList(SpeechBubbleChainJson receivedList)
         {
             var receivedSpeechBubbles = new List<SpeechBubble>();
-            
+
             foreach (var currentSpeechBubble in receivedList.SpeechbubbleChain!)
             {
                 var receivedWordTokens = new List<WordToken>();

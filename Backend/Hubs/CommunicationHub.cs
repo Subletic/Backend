@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
 
-using System;
-using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 
 using Backend.Services;
@@ -25,16 +23,6 @@ namespace Backend.Hubs
         public CommunicationHub (FrontendAudioQueueService sendingAudioService)
         {
             _sendingAudioService = sendingAudioService;
-        }
-
-        /// <summary>
-        /// Not actually used.
-        /// Should contain Methods which are called from the Frontend.
-        /// </summary>
-        /// <param name="message"></param>
-        public async Task SendMessage(string message)
-        {
-            await Clients.All.SendAsync("ReceiveMessage", "hallo welt");
         }
 
         /// <summary>
