@@ -1,7 +1,6 @@
 ﻿using Backend.Data;
 using Moq;
 using System;
-using System.Diagnostics;
 using System.IO.Pipelines;
 
 namespace BackendTests;
