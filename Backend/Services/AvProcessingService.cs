@@ -376,7 +376,7 @@ public partial class AvProcessingService : IAvProcessingService
             }
             await FFMpegArguments
                 .FromFileInput (filepath, true, options => options
-                    .WithDuration(TimeSpan.FromSeconds(60)) // TODO just 1 minute for now
+                    .WithDuration(TimeSpan.FromMinutes(5)) // TODO just 5 minutes for now, capped just to be sure
                 )
                 .OutputToPipe (new StreamPipeSink (audioPipe.AsStream ()), outputOptions)
                 .ProcessAsynchronously();
