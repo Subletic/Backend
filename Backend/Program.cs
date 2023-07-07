@@ -25,7 +25,7 @@ builder.Services.AddSingleton<FrontendAudioQueueService, FrontendAudioQueueServi
 
 builder.Services.AddSingleton<WebVttExporter>();
 
-builder.Services.AddSingleton<Stream>(new MemoryStream());
+builder.Services.AddSingleton<Stream>(File.Open("output.vtt", FileMode.Create));
 
 builder.Services.AddHostedService<StartupService>();
 
