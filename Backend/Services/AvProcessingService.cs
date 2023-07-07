@@ -376,7 +376,7 @@ public partial class AvProcessingService : IAvProcessingService
             }
             await FFMpegArguments
                 .FromFileInput (filepath, true, options => options
-                    .WithDuration(TimeSpan.FromSeconds(60)) // TODO just 1 minute for now
+                    .WithDuration(TimeSpan.FromMinutes(5)) // TODO just 5 minutes for now, capped just to be sure
                 )
                 .OutputToPipe (new StreamPipeSink (audioPipe.AsStream ()), outputOptions)
                 .ProcessAsynchronously();
@@ -458,7 +458,7 @@ public partial class AvProcessingService : IAvProcessingService
                 // store only decoded audio
                 short[] storeShortBuffer = new short[buffer.Length / 2];
                 Buffer.BlockCopy (sendBuffer, 0, storeShortBuffer, 0, (sendBuffer.Length / 2) * 2);
-                Task storingAudioBuffer = audioQueue.Enqueue (storeShortBuffer);
+                // Task storingAudioBuffer = audioQueue.Enqueue (storeShortBuffer);
 
                 // play back with zero padding
                 if (lastWithLeftovers) {
@@ -472,7 +472,7 @@ public partial class AvProcessingService : IAvProcessingService
                 sentNum += 1;
                 offset = 0;
 
-                await storingAudioBuffer;
+                // await storingAudioBuffer;
                 // TODO remove when we handle an actual livestream
                 // processing a local file is much faster than receiving networked A/V in realtime, simulate the delay
                 await Task.Delay (1000);
