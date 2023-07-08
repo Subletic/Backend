@@ -68,11 +68,32 @@ lint:
 test:
   stage: test
   image: mcr.microsoft.com/dotnet/sdk:7.0
+  variables:
+    CONFIGURATION: 'Debug'
+    COVERAGE_FLAG: 'XPlat Code Coverage'
+    LOGGER_FLAG: 'junit;LogFilePath=..\artifacts\{assembly}-test-result.xml;MethodFormat=Class;FailureBodyFormat=Verbose'
+  before_script:
+    - dotnet tool install dotnet-reportgenerator-globaltool --tool-path tools
   script:
     - echo "Running Unit Tests..."
-    - dotnet test
+    - 'dotnet test 
+        --collect:"$COVERAGE_FLAG" 
+        --test-adapter-path:. 
+        --logger:"$LOGGER_FLAG"'
+    - ./tools/reportgenerator "-reports:${TESTS_PATH}/**/coverage.cobertura.xml" "-targetdir:Reports_Coverage" -reportTypes:TextSummary;
+    - ./tools/reportgenerator "-reports:${TESTS_PATH}/**/coverage.cobertura.xml" "-targetdir:Reports_Coverage" -reportTypes:Html;
+    - cat ./Reports_Coverage/Summary.txt
+    - echo 'End Summary'
+  coverage: /Line coverage[\s\S].+%/
   artifacts:
+    when: always
     paths:
-      - $TEST_PATH/bin/Debug/net7.0/
-
-
+      - $TESTS_PATH/bin/Debug/net7.0/
+      - ./**/*test-result.xml
+      - ./**/*coverage.cobertura.xml
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: ./**/*/coverage.cobertura.xml
+      junit:
+        - ./**/*test-result.xml
