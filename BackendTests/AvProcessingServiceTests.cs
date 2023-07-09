@@ -44,6 +44,22 @@ namespace BackendTests
         }
         
         [Test]
+        public async Task Init_WithNoApiKey_ReturnsFalse()
+        {
+            // Arrange
+            var avProcessingService = new AvProcessingService(_wordProcessingServiceMock.Object,
+                _frontendAudioQueueServiceMock.Object, new WebVttExporter(new MemoryStream()));
+            const string apiKeyVar = "API_KEY";
+            Environment.SetEnvironmentVariable(apiKeyVar, null);
+
+            // Act
+            var result = await avProcessingService.Init(apiKeyVar);
+
+            // Assert
+            Assert.That(result, Is.False);
+        }
+        
+        [Test]
         public async Task TranscribeAudio_WithInvalidApiKey_ReturnsFalse()
         {
             // Arrange
