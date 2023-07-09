@@ -15,7 +15,7 @@
       "applicationUrl": "http://localhost:5003",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "SPEECHMATICS_API_KEY": "eHbFYSRbfbTyORS3cs3HmguSCL9XMbbv"
+        "SPEECHMATICS_API_KEY": "u3Bju1pVUqqdlL6VSAoAbQk6Up9ipahs"
       }
     },
     "https": {
