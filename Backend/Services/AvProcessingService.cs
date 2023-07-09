@@ -158,7 +158,7 @@ public partial class AvProcessingService : IAvProcessingService
 
     /**
       *  <summary>
-      *  Private field to store an instance of WebVttExporter
+      *  Unused private field to store an instance of WebVttExporter
       *  </summary>
     */
     private readonly WebVttExporter _webVttExporter;
@@ -167,6 +167,8 @@ public partial class AvProcessingService : IAvProcessingService
       *  <summary>
       *  Constructor of the service.
       *  <param name="wordProcessingService">The <c>SpeechBubbleController</c> to push new words into</param>
+      *  <param name="sendingAudioService">The <c>FrontendAudioQueueService</c> to push new audio into for the Frontend</param>
+      *  <param name="WebVttExporter">Unused <c>WebVttExporter</c></param>
       *  </summary>
       */
     public AvProcessingService (IWordProcessingService wordProcessingService, FrontendAudioQueueService sendingAudioService, WebVttExporter webVttExporter)
@@ -247,10 +249,11 @@ public partial class AvProcessingService : IAvProcessingService
       *
       *  <exception cref="InvalidOperationException">
       *  1. If the request to Speechmatics returned an unexpected (unsuccessful) status code.
-      *  2. If the response from Speechmatics deserialised into <c>null</c>.
-      *  <see cref="DeserializeMessage{T}" />
+      *  2. If the response from Speechmatics deserialised into <c>null</c>. See <c>DeserializeMessage{T}</c> for
+      *  details.
       *  </exception>
       *
+      *  <see cref="DeserializeMessage{T}" />
       *  <see cref="apiKey" />
       *  </summary>
       */
@@ -533,14 +536,38 @@ public partial class AvProcessingService : IAvProcessingService
 
     /**
       *  <summary>
-      *  TODO
+      *  Attempts to identify and deserialise a received Speechmatics message, and handles it in whatever way we need
+      *  to.
+      *
+      *  All sorts of messages from the <c>Backend.Data.SpeechmaticsMessages</c> namespace can be received and handled.
+      *
+      *  <param name="responseString">The full response that was received.</param>
+      *
+      *  <returns>
+      *  A bool indicating if a EndOfTranscript was received, after which
+      *  communication from the Server for this transcription is over.
+      *  </returns>
+      *
+      *  <exception cref="ArgumentException">
+      *  Failed to identify the message type of the response, or malformed response.
+      *  </exception>
+      *  <exception cref="InvalidOperationException">
+      *  Message signaled a critical error, or passed through from <c>JsonSerializer.Deserialize{T}</c>. See
+      *  <c>DeserializeMessage{T}</c> for details on the latter.
+      *  </exception>
+      *  <exception cref="ArgumentNullException">Passed through from <c>JsonSerializer.Deserialize{T}</c></exception>
+      *  <exception cref="JsonException">Passed through from <c>JsonSerializer.Deserialize{T}</c></exception>
+      *  <exception cref="NotSupportedException">Passed through from <c>JsonSerializer.Deserialize{T}</c></exception>
+      *
+      *  <see cref="DeserializeMessage{T}" />
+      *  <see cref="System.Text.Json.JsonSerializer.Deserialize{T}" />
       *  </summary>
       */
     private bool HandleSpeechmaticsResponse (string responseString)
     {
         MatchCollection messageMatches = messageTypeRegex().Matches (responseString);
         if (messageMatches.Count != 1)
-            throw new InvalidOperationException (
+            throw new ArgumentException (
                 $"Found unexpected amount of message type matches: {messageMatches.Count}");
 
         switch (messageMatches[0].Groups[1].ToString())
@@ -550,20 +577,20 @@ public partial class AvProcessingService : IAvProcessingService
                     "Error", "a critical error");
 
                 // the server has stopped the transcription and will close the connection. propagate its error
-                throw new Exception ($"{errorMessage.type}: {errorMessage.reason}");
+                throw new InvalidOperationException ($"{errorMessage.type}: {errorMessage.reason}");
 
             case "Warning":
                 WarningMessage warningMessage = DeserializeMessage<WarningMessage> (responseString,
                     "Warning", "a warning");
 
-                // nothing yet, just nice to have
+                // nothing, just nice to know
                 return false;
 
             case "Info":
                 InfoMessage infoMessage = DeserializeMessage<InfoMessage> (responseString,
                     "Info", "additional information");
 
-                // nothing yet, just nice to have
+                // nothing, just nice to know
                 return false;
 
             case "RecognitionStarted":
@@ -571,14 +598,14 @@ public partial class AvProcessingService : IAvProcessingService
                     responseString, "RecognitionStarted",
                     "a confirmation that it is ready to transcribe our audio");
 
-                // nothing yet, just nice to have
+                // nothing, just nice to know
                 return false;
 
             case "AudioAdded":
                 AudioAddedMessage aaMessage = DeserializeMessage<AudioAddedMessage> (responseString,
                     "AudioAdded", "a confirmation that it received our audio");
 
-                // TODO inform sending side of this class that Speechmatics is still confirming audio receivals
+                // TODO inform sending side of this class that Speechmatics is still confirming audio receivals,
                 // we don't want to end communication too early
                 seqNum += 1;
                 if (aaMessage.seq_no != seqNum)
@@ -612,7 +639,7 @@ public partial class AvProcessingService : IAvProcessingService
                         (float) transcript.alternatives![0].confidence,
                         transcript.start_time,
                         transcript.end_time,
-                        // TODO api sends a string, extract a number from it
+                        // TODO api sends a string if this feature is requested, extract a number from it
                         // https://docs.speechmatics.com/features/diarization#speaker-diarization
                         // speaker identified: "S<speaker-id>"
                         // not identified: "UU"
@@ -627,7 +654,7 @@ public partial class AvProcessingService : IAvProcessingService
                 return true;
 
            default:
-                throw new Exception ($"Unknown Speechmatics message: {responseString}");
+                throw new ArgumentException ($"Unknown Speechmatics message: {responseString}");
         }
     }
 
@@ -642,6 +669,8 @@ public partial class AvProcessingService : IAvProcessingService
       *  An <c>await</c>able <c>Task{bool}</c> indicating if the receiving and deserialisations went well,
       *  no unknown messages were received and the RT API never reported any problems.
       *  </returns>
+      *
+      *  <seealso cref="HandlespeechmaticsResponse" />
       *  </summary>
       */
     private async Task<bool> ReceiveMessages (ClientWebSocket wsClient) {
@@ -661,7 +690,8 @@ public partial class AvProcessingService : IAvProcessingService
                 responseString = Encoding.UTF8.GetString (responseBuffer, 0, response.Count);
                 logReceive (responseString);
 
-                // may throw deserialisation-related exceptions, or on issues with identifying the type of message
+                // may throw deserialisation-related exceptions, or on issues with identifying the type of message,
+                // or on Error message
                 doneReceivingMessages = HandleSpeechmaticsResponse (responseString);
             }
         }
