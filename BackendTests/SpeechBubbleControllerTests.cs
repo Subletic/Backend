@@ -2,7 +2,9 @@
 using Backend.Data;
 using Backend.Hubs;
 using Backend.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Hosting;
 using Moq;
 
 namespace BackendTests;
@@ -18,9 +20,9 @@ public class SpeechBubbleControllerTests
         _speechBubbleListService.Setup(sl => sl.AddNewSpeechBubble(It.IsAny<SpeechBubble>()));
         _testWordList = new List<WordToken>
         {
-            new ("Hello", 1, 1, 10, 4),
-            new ("World", 1, 11, 12, 4),
-            new ("!", 1, 12, 12.5, 4)
+            new("Hello", 1, 1, 10, 4),
+            new("World", 1, 11, 12, 4),
+            new("!", 1, 12, 12.5, 4)
         };
     }
 
@@ -37,14 +39,14 @@ public class SpeechBubbleControllerTests
         var speechBubbleJson = new SpeechBubbleJson(1, 4, 1, 12, _testWordList);
         var speechBubbleChainJson = new SpeechBubbleChainJson(new List<SpeechBubbleJson> { speechBubbleJson });
         var expectedResult = new List<SpeechBubble> { new SpeechBubble(1, 4, 1, 12, _testWordList) };
-        
-        
+
+
         // Act
-        var resultingSpeechBubbleList = SpeechBubbleController.ParseFrontendResponseToSpeechBubbleList(speechBubbleChainJson);
+        var resultingSpeechBubbleList =
+            SpeechBubbleController.ParseFrontendResponseToSpeechBubbleList(speechBubbleChainJson);
         var resultingWordList = resultingSpeechBubbleList.First().SpeechBubbleContent;
-        
-        
-        
+
+
         // Assert
         Assert.Multiple(() =>
         {
@@ -62,5 +64,74 @@ public class SpeechBubbleControllerTests
                 Assert.That(resultingWordList[i].Confidence, Is.EqualTo(_testWordList[i].Confidence));
             }
         });
+    }
+
+
+    [Test]
+    public void HandleUpdatedSpeechBubble_ValidData_ReturnsOkResult()
+    {
+        // Arrange
+        var speechBubbleListServiceMock = new Mock<ISpeechBubbleListService>();
+        var applicationLifetimeMock = new Mock<IHostApplicationLifetime>();
+
+        var controller = new SpeechBubbleController(
+            speechBubbleListServiceMock.Object,
+            applicationLifetimeMock.Object);
+
+        var speechBubbleChainJson = new SpeechBubbleChainJson
+        {
+            SpeechbubbleChain = new List<SpeechBubbleJson>()
+            {
+                new(1, 1, 1, 20, _testWordList)
+            }
+        };
+
+        // Act
+        var result = controller.HandleUpdatedSpeechBubble(speechBubbleChainJson);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<OkResult>());
+    }
+
+    [Test]
+    public void HandleUpdatedSpeechBubble_NullData_ReturnsBadRequestResult()
+    {
+        // Arrange
+        var speechBubbleListServiceMock = new Mock<ISpeechBubbleListService>();
+        var applicationLifetimeMock = new Mock<IHostApplicationLifetime>();
+
+        var controller = new SpeechBubbleController(
+            speechBubbleListServiceMock.Object,
+            applicationLifetimeMock.Object);
+
+        var speechBubbleChainJson = new SpeechBubbleChainJson
+        {
+            SpeechbubbleChain = null
+        };
+
+        // Act
+        var result = controller.HandleUpdatedSpeechBubble(speechBubbleChainJson);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<BadRequestResult>());
+    }
+    
+    [Test]
+    public void HandleRestartRequest_ReturnsOkResult()
+    {
+        // Arrange
+        var speechBubbleListServiceMock = new Mock<ISpeechBubbleListService>();
+        var applicationLifetimeMock = new Mock<IHostApplicationLifetime>();
+
+        var controller = new SpeechBubbleController(
+            speechBubbleListServiceMock.Object,
+            applicationLifetimeMock.Object);
+
+        // Act
+        var result = controller.HandleRestartRequest();
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<OkResult>());
+        applicationLifetimeMock.Verify(x => x.StopApplication(), Times.Once);
     }
 }
