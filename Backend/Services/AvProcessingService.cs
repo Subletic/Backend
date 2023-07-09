@@ -158,7 +158,7 @@ public partial class AvProcessingService : IAvProcessingService
 
     /**
       *  <summary>
-      *  Private field to store an instance of WebVttExporter
+      *  Unused private field to store an instance of WebVttExporter
       *  </summary>
     */
     private readonly WebVttExporter _webVttExporter;
@@ -167,6 +167,8 @@ public partial class AvProcessingService : IAvProcessingService
       *  <summary>
       *  Constructor of the service.
       *  <param name="wordProcessingService">The <c>SpeechBubbleController</c> to push new words into</param>
+      *  <param name="sendingAudioService">The <c>FrontendAudioQueueService</c> to push new audio into for the Frontend</param>
+      *  <param name="WebVttExporter">Unused <c>WebVttExporter</c></param>
       *  </summary>
       */
     public AvProcessingService (IWordProcessingService wordProcessingService, FrontendAudioQueueService sendingAudioService, WebVttExporter webVttExporter)
@@ -247,10 +249,11 @@ public partial class AvProcessingService : IAvProcessingService
       *
       *  <exception cref="InvalidOperationException">
       *  1. If the request to Speechmatics returned an unexpected (unsuccessful) status code.
-      *  2. If the response from Speechmatics deserialised into <c>null</c>.
-      *  <see cref="DeserializeMessage{T}" />
+      *  2. If the response from Speechmatics deserialised into <c>null</c>. See <c>DeserializeMessage{T}</c> for
+      *  details.
       *  </exception>
       *
+      *  <see cref="DeserializeMessage{T}" />
       *  <see cref="apiKey" />
       *  </summary>
       */
@@ -533,6 +536,130 @@ public partial class AvProcessingService : IAvProcessingService
 
     /**
       *  <summary>
+      *  Attempts to identify and deserialise a received Speechmatics message, and handles it in whatever way we need
+      *  to.
+      *
+      *  All sorts of messages from the <c>Backend.Data.SpeechmaticsMessages</c> namespace can be received and handled.
+      *
+      *  <param name="responseString">The full response that was received.</param>
+      *
+      *  <returns>
+      *  A bool indicating if a EndOfTranscript was received, after which
+      *  communication from the Server for this transcription is over.
+      *  </returns>
+      *
+      *  <exception cref="ArgumentException">
+      *  Failed to identify the message type of the response, or malformed response.
+      *  </exception>
+      *  <exception cref="InvalidOperationException">
+      *  Message signaled a critical error, or passed through from <c>JsonSerializer.Deserialize{T}</c>. See
+      *  <c>DeserializeMessage{T}</c> for details on the latter.
+      *  </exception>
+      *  <exception cref="ArgumentNullException">Passed through from <c>JsonSerializer.Deserialize{T}</c></exception>
+      *  <exception cref="JsonException">Passed through from <c>JsonSerializer.Deserialize{T}</c></exception>
+      *  <exception cref="NotSupportedException">Passed through from <c>JsonSerializer.Deserialize{T}</c></exception>
+      *
+      *  <see cref="DeserializeMessage{T}" />
+      *  <see cref="System.Text.Json.JsonSerializer.Deserialize{T}" />
+      *  </summary>
+      */
+    private bool HandleSpeechmaticsResponse (string responseString)
+    {
+        MatchCollection messageMatches = messageTypeRegex().Matches (responseString);
+        if (messageMatches.Count != 1)
+            throw new ArgumentException (
+                $"Found unexpected amount of message type matches: {messageMatches.Count}");
+
+        switch (messageMatches[0].Groups[1].ToString())
+        {
+            case "Error":
+                ErrorMessage errorMessage = DeserializeMessage<ErrorMessage> (responseString,
+                    "Error", "a critical error");
+
+                // the server has stopped the transcription and will close the connection. propagate its error
+                throw new InvalidOperationException ($"{errorMessage.type}: {errorMessage.reason}");
+
+            case "Warning":
+                WarningMessage warningMessage = DeserializeMessage<WarningMessage> (responseString,
+                    "Warning", "a warning");
+
+                // nothing, just nice to know
+                return false;
+
+            case "Info":
+                InfoMessage infoMessage = DeserializeMessage<InfoMessage> (responseString,
+                    "Info", "additional information");
+
+                // nothing, just nice to know
+                return false;
+
+            case "RecognitionStarted":
+                RecognitionStartedMessage rsMessage = DeserializeMessage<RecognitionStartedMessage> (
+                    responseString, "RecognitionStarted",
+                    "a confirmation that it is ready to transcribe our audio");
+
+                // nothing, just nice to know
+                return false;
+
+            case "AudioAdded":
+                AudioAddedMessage aaMessage = DeserializeMessage<AudioAddedMessage> (responseString,
+                    "AudioAdded", "a confirmation that it received our audio");
+
+                // TODO inform sending side of this class that Speechmatics is still confirming audio receivals,
+                // we don't want to end communication too early
+                seqNum += 1;
+                if (aaMessage.seq_no != seqNum)
+                {
+                    Console.WriteLine (String.Format (
+                        "expected seq_no {0}, received {1} - error? copying received one",
+                        seqNum, aaMessage.seq_no));
+                    seqNum = aaMessage.seq_no;
+                }
+                return false;
+
+            case "AddTranscript":
+                AddTranscriptMessage atMessage = DeserializeMessage<AddTranscriptMessage> (responseString,
+                    "AddTranscript", "a transcription of our audio");
+
+                Console.WriteLine ($"Received transcript: {atMessage.metadata.transcript}");
+
+                foreach (AddTranscriptMessage_result transcript in atMessage.results!)
+                {
+                    // the specs say an AddTranscript.results may come without an alternatives list.
+                    // TODO what is its purpose?
+                    if (transcript.alternatives is null)
+                        throw new InvalidOperationException (
+                            "Received a transcript result without an alternatives list. "
+                            + "Specifications say this is a possibility, but what is its purpose? "
+                            + $"Analyse: {responseString}");
+
+                    _wordProcessingService.HandleNewWord (new WordToken(
+                        // docs say this sends a list, I've only ever seen it send 1 result
+                        transcript.alternatives![0].content,
+                        (float) transcript.alternatives![0].confidence,
+                        transcript.start_time,
+                        transcript.end_time,
+                        // TODO api sends a string if this feature is requested, extract a number from it
+                        // https://docs.speechmatics.com/features/diarization#speaker-diarization
+                        // speaker identified: "S<speaker-id>"
+                        // not identified: "UU"
+                        1));
+                }
+                return false;
+
+           case "EndOfTranscript":
+                EndOfTranscriptMessage eotMessage = DeserializeMessage<EndOfTranscriptMessage> (responseString,
+                    "EndOfTranscript", "a confirmation that the current transcription process is now done");
+
+                return true;
+
+           default:
+                throw new ArgumentException ($"Unknown Speechmatics message: {responseString}");
+        }
+    }
+
+    /**
+      *  <summary>
       *  Listens for and acts upon messages from the RT API.
       *  All sorts of messages from the <c>Backend.Data.SpeechmaticsMessages</c> namespace can be received and handled.
       *
@@ -542,6 +669,8 @@ public partial class AvProcessingService : IAvProcessingService
       *  An <c>await</c>able <c>Task{bool}</c> indicating if the receiving and deserialisations went well,
       *  no unknown messages were received and the RT API never reported any problems.
       *  </returns>
+      *
+      *  <seealso cref="HandlespeechmaticsResponse" />
       *  </summary>
       */
     private async Task<bool> ReceiveMessages (ClientWebSocket wsClient) {
@@ -561,99 +690,9 @@ public partial class AvProcessingService : IAvProcessingService
                 responseString = Encoding.UTF8.GetString (responseBuffer, 0, response.Count);
                 logReceive (responseString);
 
-                MatchCollection messageMatches = messageTypeRegex().Matches (responseString);
-                if (messageMatches.Count != 1)
-                    throw new InvalidOperationException (
-                        $"Found unexpected amount of message type matches: {messageMatches.Count}");
-
-                // any of these may throw a deserialisation-related exception
-                // TODO factor all of these out into separate methods
-                switch (messageMatches[0].Groups[1].ToString())
-                {
-                    case "Error":
-                        ErrorMessage errorMessage = DeserializeMessage<ErrorMessage> (responseString,
-                            "Error", "a critical error");
-
-                        // the server has stopped the transcription and will close the connection. propagate its error
-                        throw new Exception ($"{errorMessage.type}: {errorMessage.reason}");
-
-                    case "Warning":
-                        WarningMessage warningMessage = DeserializeMessage<WarningMessage> (responseString,
-                            "Warning", "a warning");
-
-                        // nothing yet, just nice to have
-                        break;
-
-                    case "Info":
-                        InfoMessage infoMessage = DeserializeMessage<InfoMessage> (responseString,
-                            "Info", "additional information");
-
-                        // nothing yet, just nice to have
-                        break;
-
-                    case "RecognitionStarted":
-                        RecognitionStartedMessage rsMessage = DeserializeMessage<RecognitionStartedMessage> (
-                            responseString, "RecognitionStarted",
-                            "a confirmation that it is ready to transcribe our audio");
-
-                        // nothing yet, just nice to have
-                        break;
-
-                    case "AudioAdded":
-                        AudioAddedMessage aaMessage = DeserializeMessage<AudioAddedMessage> (responseString,
-                            "AudioAdded", "a confirmation that it received our audio");
-
-                        // TODO inform sending side of this class that Speechmatics is still confirming audio receivals
-                        // we don't want to end communication too early
-                        seqNum += 1;
-                        if (aaMessage.seq_no != seqNum) {
-                            Console.WriteLine (String.Format (
-                                "expected seq_no {0}, received {1} - error? copying received one",
-                                seqNum, aaMessage.seq_no));
-                            seqNum = aaMessage.seq_no;
-                        }
-                        break;
-
-                    case "AddTranscript":
-                        AddTranscriptMessage atMessage = DeserializeMessage<AddTranscriptMessage> (responseString,
-                            "AddTranscript", "a transcription of our audio");
-
-                        Console.WriteLine ($"Received transcript: {atMessage.metadata.transcript}");
-
-                        foreach (AddTranscriptMessage_result transcript in atMessage.results!)
-                        {
-                            // the specs say an AddTranscript.results may come without an alternatives list.
-                            // TODO what is its purpose?
-                            if (transcript.alternatives is null)
-                                throw new InvalidOperationException (
-                                    "Received a transcript result without an alternatives list. "
-                                    + "Specifications say this is a possibility, but what is its purpose? "
-                                    + $"Analyse: {responseString}");
-
-                            _wordProcessingService.HandleNewWord (new WordToken(
-                                // docs say this sends a list, I've only ever seen it send 1 result
-                                transcript.alternatives![0].content,
-                                (float) transcript.alternatives![0].confidence,
-                                transcript.start_time,
-                                transcript.end_time,
-                                // TODO api sends a string, extract a number from it
-                                // https://docs.speechmatics.com/features/diarization#speaker-diarization
-                                // speaker identified: "S<speaker-id>"
-                                // not identified: "UU"
-                                1));
-                        }
-                        break;
-
-                   case "EndOfTranscript":
-                        EndOfTranscriptMessage eotMessage = DeserializeMessage<EndOfTranscriptMessage> (responseString,
-                            "EndOfTranscript", "a confirmation that the current transcription process is now done");
-
-                        doneReceivingMessages = true;
-                        break;
-
-                   default:
-                        throw new Exception ($"Unknown Speechmatics message: {responseString}");
-                }
+                // may throw deserialisation-related exceptions, or on issues with identifying the type of message,
+                // or on Error message
+                doneReceivingMessages = HandleSpeechmaticsResponse (responseString);
             }
         }
         catch (Exception e)
@@ -699,7 +738,7 @@ public partial class AvProcessingService : IAvProcessingService
 
         ClientWebSocket wsClient = new ClientWebSocket();
         await wsClient.ConnectAsync (
-            new Uri (String.Format (urlRecognitionTemplate, apiKey)),
+            new Uri (String.Format (urlRecognitionTemplate, apiKey!)),
             CancellationToken.None);
 
         // start tracking sent & confirmed audio packet counts
