@@ -64,7 +64,6 @@ lint:
     - /root/.dotnet/tools/roslynator analyze
   dependencies:
     - build
-  allow_failure: true
 
 test:
   stage: test
