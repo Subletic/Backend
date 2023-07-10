@@ -6,6 +6,9 @@
 /// </summary>
 public class StartupService : IHostedService
 {
+    private static readonly Uri showcaseUri = new Uri (
+        "file://" + Environment.CurrentDirectory + Path.DirectorySeparatorChar + "tagesschau_clip.aac");
+
     private readonly IAvProcessingService _avProcessingService;
 
     public StartupService(IAvProcessingService avProcessingService)
@@ -21,7 +24,7 @@ public class StartupService : IHostedService
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         Console.WriteLine("Starting up the transcription service...");
-        
+
         // TODO manually kick off a transcription, for testing
         if (_avProcessingService is null)
             throw new InvalidOperationException(
@@ -38,7 +41,7 @@ public class StartupService : IHostedService
 
         if (doShowcase)
         {
-            var audioTranscription = _avProcessingService.TranscribeAudio("./tagesschau_clip.aac");
+            var audioTranscription = _avProcessingService.TranscribeAudio(showcaseUri);
             // var transcriptionSuccess = await audioTranscription;
             // Console.WriteLine($"Speechmatics communication was a {(transcriptionSuccess ? "success" : "failure")}");
         }

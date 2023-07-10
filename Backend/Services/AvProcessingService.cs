@@ -353,7 +353,7 @@ public partial class AvProcessingService : IAvProcessingService
       *
       *  To not exhaust our API keys during development, we only push up to 1 minute of audio into the pipe.
       *
-      *  <param name="filepath">A path to a media file to run through FFMpeg.</param>
+      *  <param name="mediaUri">A URI to some media to run through FFMpeg.</param>
       *  <param name="audioPipe">A <c>PipeWriter</c> to push the data into.</param>
       *
       *  <returns>
@@ -364,7 +364,7 @@ public partial class AvProcessingService : IAvProcessingService
       *  <seealso cref="TranscribeAudio" />
       *  </summary>
       */
-    private async Task<bool> ProcessAudioToStream (string filepath, PipeWriter audioPipe)
+    private async Task<bool> ProcessAudioToStream (Uri mediaUri, PipeWriter audioPipe)
     {
         Console.WriteLine ("Started audio processing");
         bool success = true;
@@ -378,7 +378,7 @@ public partial class AvProcessingService : IAvProcessingService
                     .WithAudioSamplingRate (audioType.getCheckedSampleRate());
             }
             await FFMpegArguments
-                .FromFileInput (filepath, true, options => options
+                .FromUrlInput (mediaUri, options => options
                     .WithDuration(TimeSpan.FromMinutes(5)) // TODO just 5 minutes for now, capped just to be sure
                 )
                 .OutputToPipe (new StreamPipeSink (audioPipe.AsStream ()), outputOptions)
@@ -404,7 +404,7 @@ public partial class AvProcessingService : IAvProcessingService
       *  Internally launches and <c>await</c>s <c>ProcessAudioToStream</c>.
       *
       *  <param name="wsClient">A <c>ClientWebSocket</c> to send the <c>AddAudio</c> messages (the buffers) over.</param>
-      *  <param name="filepath">A path to a media file to run through FFMpeg.</param>
+      *  <param name="mediaUri">A URI of some media to run through FFMpeg.</param>
       *
       *  <returns>
       *  An <c>await</c>able <c>Task{bool}</c> indicating if the processing and sending went well.
@@ -414,14 +414,14 @@ public partial class AvProcessingService : IAvProcessingService
       *  <seealso cref="TranscribeAudio" />
       *  </summary>
       */
-    private async Task<bool> SendAudio (ClientWebSocket wsClient, string filepath)
+    private async Task<bool> SendAudio (ClientWebSocket wsClient, Uri mediaUri)
     {
         Console.WriteLine ("Starting audio sending");
 
         bool success = true;
         Pipe audioPipe = new Pipe ();
         Stream audioPipeReader = audioPipe.Reader.AsStream (false);
-        Task<bool> audioProcessor = ProcessAudioToStream (filepath, audioPipe.Writer);
+        Task<bool> audioProcessor = ProcessAudioToStream (mediaUri, audioPipe.Writer);
 
         int offset = 0;
         int readCount;
@@ -712,7 +712,7 @@ public partial class AvProcessingService : IAvProcessingService
       *
       *  The <c>apiKey</c> needs to be initialised with a call of the <c>Init</c> method first.
       *
-      *  <param name="filepath">A path to a media file to transcribe.</param>
+      *  <param name="mediaUri">A URI to some media to transcribe.</param>
       *
       *  <returns>
       *  An <c>await</c>able <c>Task{bool}</c> indicating if all phases of the transcription
@@ -726,7 +726,7 @@ public partial class AvProcessingService : IAvProcessingService
       *  <seealso cref="SendEndOfStream" />
       *  </summary>
       */
-    public async Task<bool> TranscribeAudio (string filepath) {
+    public async Task<bool> TranscribeAudio (Uri mediaUri) {
         if (apiKey is null)
         {
             Console.WriteLine ("Valid Speechmatics API key required, call AvProcessingService.Init first");
@@ -749,7 +749,7 @@ public partial class AvProcessingService : IAvProcessingService
 
         successSending = await SendStartRecognition (wsClient);
         if (successSending)
-            successSending = await SendAudio (wsClient, filepath);
+            successSending = await SendAudio (wsClient, mediaUri);
         if (successSending)
             successSending = await SendEndOfStream (wsClient);
 

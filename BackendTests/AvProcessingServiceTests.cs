@@ -42,7 +42,7 @@ namespace BackendTests
             // Assert
             Assert.That(() => avProcessingService.Init(apiKeyVar), Throws.InvalidOperationException);
         }
-        
+
         [Test]
         public async Task Init_WithNoApiKey_ReturnsFalse()
         {
@@ -58,14 +58,14 @@ namespace BackendTests
             // Assert
             Assert.That(result, Is.False);
         }
-        
+
         [Test]
         public async Task TranscribeAudio_WithInvalidApiKey_ReturnsFalse()
         {
             // Arrange
             var avProcessingService = new AvProcessingService(_wordProcessingServiceMock.Object,
                 _frontendAudioQueueServiceMock.Object, new WebVttExporter(new MemoryStream()));
-            const string filePath = "unnecessaryPath";
+            Uri filePath = new Uri ("file://unnecessaryPath");
 
             // Act
             var result = await avProcessingService.TranscribeAudio(filePath);
