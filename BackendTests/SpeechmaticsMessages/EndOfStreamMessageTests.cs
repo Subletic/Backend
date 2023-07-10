@@ -15,7 +15,7 @@ public class EndOfStreamMessageTests
     public void ValidConstruction_DoesntThrow()
     {
         Assert.DoesNotThrow (() => {
-            new EndOfStreamMessage (12345);
+            var _ = new EndOfStreamMessage (12345);
         });
     }
 

@@ -15,7 +15,7 @@ public class InfoMessageTests
     public void ValidConstruction_DoesntThrow()
     {
         Assert.DoesNotThrow (() => {
-            new InfoMessage (null,
+            var _ = new InfoMessage (null,
                 "recognition_quality",
                 "Running recognition using a broadcast model quality.",
                 "broadcast");

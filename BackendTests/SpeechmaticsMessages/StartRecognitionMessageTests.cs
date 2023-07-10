@@ -17,13 +17,13 @@ public class StartRecognitionMessage_AudioTypeTests
 
         // raw type
         Assert.DoesNotThrow (() => {
-            new StartRecognitionMessage_AudioType(type: "raw",
+            var _ = new StartRecognitionMessage_AudioType(type: "raw",
                 encoding: "pcm_f32le",
                 sample_rate: 16000);
-            new StartRecognitionMessage_AudioType(type: "raw",
+            _ = new StartRecognitionMessage_AudioType(type: "raw",
                 encoding: "pcm_s16le",
                 sample_rate: 96000);
-            new StartRecognitionMessage_AudioType(type: "raw",
+            _ = new StartRecognitionMessage_AudioType(type: "raw",
                 encoding: "mulaw",
                 sample_rate: 182000);
         });
@@ -116,7 +116,7 @@ public class StartRecognitionMessageTests
     {
         Assert.DoesNotThrow (() => {
             // our defaults
-            new StartRecognitionMessage (null, null);
+            var _ = new StartRecognitionMessage (null, null);
 
             // TODO explicit preferences
         });
