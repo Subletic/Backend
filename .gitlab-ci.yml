@@ -41,6 +41,7 @@ stages:
   - build
   - lint
   - test
+  - build-docker
 
 build:
   stage: build
