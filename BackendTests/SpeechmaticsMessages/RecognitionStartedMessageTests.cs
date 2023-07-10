@@ -15,7 +15,7 @@ public class RecognitionStartedMessageTests
     public void ValidConstruction_DoesntThrow()
     {
         Assert.DoesNotThrow (() => {
-            new RecognitionStartedMessage ("somegreatid", new RecognitionStartedMessage_LanguagePackInfo (
+            var _ = new RecognitionStartedMessage ("somegreatid", new RecognitionStartedMessage_LanguagePackInfo (
                 adapted: false,
                 itn: true,
                 language_description: "Something",
