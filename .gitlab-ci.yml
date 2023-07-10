@@ -98,3 +98,18 @@ test:
         path: ./**/*/coverage.cobertura.xml
       junit:
         - ./**/*test-result.xml
+
+build-docker:
+  variables:
+    KANIKO_ARGS: ""
+    KANIKO_BUILD_CONTEXT: $CI_PROJECT_DIR
+  stage: build-docker
+  image:
+    name: gcr.io/kaniko-project/executor:v1.10.0-debug
+    entrypoint: [""]
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - mkdir -p /kaniko/.docker
+    - DOCKERFILE_PATH=${DOCKERFILE_PATH:-"$KANIKO_BUILD_CONTEXT/Dockerfile"}
+    - /kaniko/executor --context $KANIKO_BUILD_CONTEXT --dockerfile $DOCKERFILE_PATH --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG $KANIKO_ARGS --destination $CI_REGISTRY_IMAGE:latest $KANIKO_ARGS
