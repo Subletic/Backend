@@ -67,7 +67,7 @@ lint:
     echo "Checking Code-style..."
 
     dotnet tool restore
-    dotnet tool install -g roslynator.dotnet.cli
+    dotnet tool install -g roslynator.dotnet.cli --version 0.6.0
 
     /root/.dotnet/tools/roslynator analyze
   dependencies:
