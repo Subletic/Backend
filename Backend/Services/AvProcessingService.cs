@@ -45,18 +45,11 @@ public partial class AvProcessingService : IAvProcessingService
 {
     /**
       *  <summary>
-      *  The Speechmatics URL we'll send the API key to in order to request a RT API access token.
-      *  </summary>
-      */
-    private static readonly string urlRequestKey = "https://mp.speechmatics.com/v1/api_keys?type=rt";
-
-    /**
-      *  <summary>
       *  A URL template for the Speechmatics RT API.
       *  The received RT API access token shall be filled in to get the URL we'll need to use.
       *  </summary>
       */
-    private static readonly string urlRecognitionTemplate = "wss://eu2.rt.speechmatics.com/v2/de?jwt={0}";
+    private static readonly string urlRecognitionTemplate = "wss://neu.rt.speechmatics.com/v2/de";
 
     /**
       *  <summary>
@@ -244,20 +237,14 @@ public partial class AvProcessingService : IAvProcessingService
       *  <param name="apiKeyVar">The name of the environment variable that holds your API key.</param>
       *
       *  <returns>
-      *  An <c>await</c>able <c>Task{bool}</c> indicating if the envvar was set and we got an RT API access token.
+      *  A <c>bool</c> indicating if the envvar was set and the RT API can be used.
       *  </returns>
-      *
-      *  <exception cref="InvalidOperationException">
-      *  1. If the request to Speechmatics returned an unexpected (unsuccessful) status code.
-      *  2. If the response from Speechmatics deserialised into <c>null</c>. See <c>DeserializeMessage{T}</c> for
-      *  details.
-      *  </exception>
       *
       *  <see cref="DeserializeMessage{T}" />
       *  <see cref="apiKey" />
       *  </summary>
       */
-    public async Task<bool> Init(string apiKeyVar)
+    public bool Init(string apiKeyVar)
     {
         // TODO is it safer to only read a file path to the secret from envvar?
         string? apiKeyEnvMaybe = Environment.GetEnvironmentVariable (apiKeyVar);
@@ -266,36 +253,8 @@ public partial class AvProcessingService : IAvProcessingService
             Console.WriteLine ($"Requested {apiKeyVar} envvar is not set");
             return false;
         }
-        string apiKeyEnv = apiKeyEnvMaybe!;
 
-        HttpRequestMessage keyRequest = new HttpRequestMessage (HttpMethod.Post, urlRequestKey);
-        keyRequest.Headers.Authorization = new AuthenticationHeaderValue ("Bearer", apiKeyEnv);
-        keyRequest.Content = new StringContent (
-            // TODO don't manually hack together JSON like this
-            "{\"ttl\": 1200}",
-            Encoding.UTF8,
-            new MediaTypeHeaderValue ("application/json"));
-
-        var keyResponse = await new HttpClient().SendAsync (keyRequest);
-        string keyResponseString = await keyResponse.Content.ReadAsStringAsync();
-
-        if (!keyResponse.IsSuccessStatusCode)
-        {
-            // TODO maybe just log and return false instead
-            throw new InvalidOperationException (String.Format (
-                "Speechmatics key request returned unexpected code {0}: {1}",
-                keyResponse.StatusCode, keyResponseString));
-        }
-
-        // TODO use DeserializeMessage?
-        TemporaryKeyResponse? keyResponseParsed = JsonSerializer.Deserialize<TemporaryKeyResponse> (
-            keyResponseString, jsonOptions);
-        if (keyResponseParsed is null)
-            throw new InvalidOperationException ("Failed to deserialize key request response");
-        apiKey = keyResponseParsed!.key_value;
-
-        // FIXME don't print this outside of debugging
-        Console.WriteLine ($"Key: {apiKey}");
+        apiKey = apiKeyEnvMaybe!;
         return true;
     }
 
@@ -737,8 +696,9 @@ public partial class AvProcessingService : IAvProcessingService
         bool successReceiving = true;
 
         ClientWebSocket wsClient = new ClientWebSocket();
+        wsClient.Options.SetRequestHeader("Authorization", $"Bearer {apiKey!}");
         await wsClient.ConnectAsync (
-            new Uri (String.Format (urlRecognitionTemplate, apiKey!)),
+            new Uri (urlRecognitionTemplate),
             CancellationToken.None);
 
         // start tracking sent & confirmed audio packet counts
