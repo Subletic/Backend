@@ -78,7 +78,7 @@ public class WebVttExporter
     /// <param name="content">The content to write.</param>
     public void WriteToStream(string content)
     {
-        using (var writer = new StreamWriter(_outputStream, Encoding.UTF8, 4096, true))
+        using (var writer = new StreamWriter(_outputStream, Encoding.UTF8, 4096, leaveOpen: true))
         {
             writer.Write(content);
         }
