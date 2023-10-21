@@ -1,4 +1,4 @@
-﻿namespace Backend.Services;
+namespace Backend.Services;
 
 
 /// <summary>
@@ -7,7 +7,7 @@
 public class StartupService : IHostedService
 {
     private static readonly Uri showcaseUri = new Uri (
-        "file://" + Environment.CurrentDirectory + Path.DirectorySeparatorChar + "tagesschau_clip.aac");
+        "https://cdn.discordapp.com/attachments/1119718406791376966/1123317245246976010/tagesschau_clip.aac");
 
     private readonly IAvProcessingService _avProcessingService;
 
