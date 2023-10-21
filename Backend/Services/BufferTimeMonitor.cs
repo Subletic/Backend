@@ -28,6 +28,10 @@ public class BufferTimeMonitor : BackgroundService
 
     private readonly MemoryStream _outputStream;
 
+    private const int DelayMilliseconds = 1000;
+
+    private const int speechBubbleValidityMinutes = 1 ;
+
     /// <summary>
     /// Initializes the Dependency Injection and the List of timed out SpeechBubbles.
     /// </summary>
@@ -37,7 +41,7 @@ public class BufferTimeMonitor : BackgroundService
         _speechBubbleListService = speechBubbleListService;
         _hubContext = hubContext;
         _timedOutSpeechBubbles = new List<SpeechBubble>();
-        _timeLimitInMinutes = 1; // move to a constant or configuration file
+        _timeLimitInMinutes = speechBubbleValidityMinutes; // move to a constant or configuration file
         _webVttExporter = webVttExporter;
         _outputStream = new MemoryStream();
     }
@@ -54,7 +58,7 @@ public class BufferTimeMonitor : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
             
-            await Task.Delay(1000, stoppingToken);
+            await Task.Delay(DelayMilliseconds, stoppingToken);
 
             var oldestSpeechBubble = _speechBubbleListService.GetSpeechBubbles().First;
             if (oldestSpeechBubble == null)
