@@ -78,9 +78,14 @@ public class WebVttExporter
     /// <param name="content">The content to write.</param>
     public void WriteToStream(string content)
     {
-        using (var writer = new StreamWriter(_outputStream, Encoding.UTF8, 4096, leaveOpen: true))
-        {
-            writer.Write(content);
-        }
+        var outputStreamWriter = new StreamWriter(
+            stream: _outputStream,          // Der Ziel-Stream, in den geschrieben wird
+            encoding: Encoding.UTF8,        // Die Zeichencodierung (hier: UTF-8)
+            bufferSize: 4096,               // Die Puffergröße für optimale Leistung
+            leaveOpen: true                // Gibt an, ob der Stream geöffnet bleiben soll
+        );
+        outputStreamWriter.Write(content);
+        outputStreamWriter.Dispose();
+
     }
 }
