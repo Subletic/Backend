@@ -4,6 +4,9 @@ namespace Backend.Data.SpeechmaticsMessages.AddTranscriptMessage.result.alternat
   *  <summary>
   *  A possible word/symbol.
   *
+  *  API Reference: <see href="https://docs.speechmatics.com/rt-api-ref#addtranscript" />
+  *  (no separate section, just included in its parent message's section)
+  *
   *  <see cref="content" />
   *  <see cref="confidence" />
   *  <see cref="language" />

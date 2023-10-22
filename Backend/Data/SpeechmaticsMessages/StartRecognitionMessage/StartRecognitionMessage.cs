@@ -11,6 +11,7 @@ namespace Backend.Data.SpeechmaticsMessages.StartRecognitionMessage;
   *  When: After WebSocket connection has been opened
   *  Purpose: Signal that Server that we want to start a transcription process
   *  Effects: n/a, depends on <c>RecognitionStartedMessage</c> response
+  *  API Reference: <see href="https://docs.speechmatics.com/rt-api-ref#startrecognition" />
   *
   *  <see cref="RecognitionStartedMessage" />
   *  </summary>

@@ -6,6 +6,9 @@ namespace Backend.Data.SpeechmaticsMessages.AddTranscriptMessage.result;
   *  <summary>
   *  Metadata about the transcript, element-by-element.
   *
+  *  API Reference: <see href="https://docs.speechmatics.com/rt-api-ref#addtranscript" />
+  *  (no separate section, just included in its parent message's section)
+  *
   *  <see cref="type" />
   *  <see cref="start_time" />
   *  <see cref="end_time" />

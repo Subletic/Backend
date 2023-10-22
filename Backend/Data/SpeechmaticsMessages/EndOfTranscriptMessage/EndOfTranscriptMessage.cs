@@ -12,6 +12,7 @@
   *  Effects:
   *  - no further <c>AddTranscriptMessage</c>s are sent
   *  - connection may be safely terminated
+  *  API Reference: <see href="https://docs.speechmatics.com/rt-api-ref#endoftranscript" />
   *
   *  <see cref="AddTranscriptMessage" />
   *  <see cref="EndOfStreamMessage" />

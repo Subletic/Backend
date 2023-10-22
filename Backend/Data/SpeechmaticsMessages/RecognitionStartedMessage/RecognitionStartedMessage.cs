@@ -12,6 +12,7 @@ namespace Backend.Data.SpeechmaticsMessages.RecognitionStartedMessage;
   *  Effects:
   *  - Transcription has begun
   *  - <c>AddAudio</c> messages and <c>EndOfStreamMessage</c>s will now be accepted
+  *  API Reference: <see href="https://docs.speechmatics.com/rt-api-ref#recognitionstarted" />
   *
   *  <see cref="EndOfStreamMessage" />
   *  <see cref="StartRecognitionMessage" />

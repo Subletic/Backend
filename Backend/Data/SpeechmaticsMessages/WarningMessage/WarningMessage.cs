@@ -8,6 +8,7 @@
   *  When: Various, depends on <c>type</c>
   *  Purpose: Warn the Client about something that may become a problem
   *  Effects: Various, depends on <c>type</c>
+  *  API Reference: <see href="https://docs.speechmatics.com/rt-api-ref#warning" />
   *
   *  <see cref="type" />
   *  </summary>

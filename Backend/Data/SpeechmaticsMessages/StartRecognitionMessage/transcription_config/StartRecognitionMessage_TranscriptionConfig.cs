@@ -4,6 +4,8 @@ namespace Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcriptio
   *  <summary>
   *  Configuration for this recognition session.
   *
+  *  API Reference: <see href="https://docs.speechmatics.com/rt-api-ref#transcription-config" />
+  *
   *  <see cref="language" />
   *  <see cref="enable_partials" />
   *  </summary>

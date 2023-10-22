@@ -4,6 +4,9 @@ namespace Backend.Data.SpeechmaticsMessages.RecognitionStartedMessage.language_p
   *  <summary>
   *  Metadata about the language being used for transcription.
   *
+  *  API Reference: <see href="https://docs.speechmatics.com/rt-api-ref#recognitionstarted" />
+  *  (no separate section, just included in its parent message's section)
+  *
   *  <see cref="adapted" />
   *  <see cref="itn" />
   *  <see cref="language_description" />

@@ -8,6 +8,7 @@
   *  When: Various, depends on <c>type</c>
   *  Purpose: Inform the Client about a critical error that has happened
   *  Effects: Transcription and connection will immediately be terminated
+  *  API Reference: <see href="https://docs.speechmatics.com/rt-api-ref#error-messages" />
   *
   *  <see cref="type" />
   *  </summary>

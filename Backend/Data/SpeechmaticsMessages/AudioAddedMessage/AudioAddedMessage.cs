@@ -12,6 +12,7 @@
   *  Effects:
   *  - one of the following <c>AddTranscriptMessage</c>s will contain a transcript of the recognised speech
   *  - <c>seq_no</c> shows which <c>AddAudio</c> has been acknowledged
+  *  API Reference: <see href="https://docs.speechmatics.com/rt-api-ref#audioadded" />
   *
   *  <see cref="seq_no" />
   *  <see cref="AddTranscriptMessage" />

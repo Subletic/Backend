@@ -11,6 +11,7 @@ namespace Backend.Data.SpeechmaticsMessages.AddTranscriptMessage;
   *  When: After several <c>AddAudio</c> message -> <c>AudioAddedMessage</c>
   *  Purpose: Present the Client with the final transcription of some audio
   *  Effects: Transcription data must be converted and put into the Backend for further processing and transmission
+  *  API Reference: <see href="https://docs.speechmatics.com/rt-api-ref#addtranscript" />
   *
   *  <see cref="AudioAddedMessage" />
   *  </summary>

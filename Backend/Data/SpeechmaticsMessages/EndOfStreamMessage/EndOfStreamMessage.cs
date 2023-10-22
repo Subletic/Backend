@@ -10,6 +10,7 @@
   *  Effects:
   *  - no further <c>AddAudio</c> messages are accepted
   *  - will respond with <c>EndOfTranscriptMessage</c>
+  *  API Reference: <see href="https://docs.speechmatics.com/rt-api-ref#endofstream" />
   *
   *  <see cref="EndOfTranscriptMessage" />
   *  </summary>

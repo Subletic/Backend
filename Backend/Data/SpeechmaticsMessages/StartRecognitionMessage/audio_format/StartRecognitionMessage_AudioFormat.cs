@@ -4,6 +4,8 @@ namespace Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.audio_format
   *  <summary>
   *  Audio stream format that will be sent.
   *
+  *  API Reference: <see href="https://docs.speechmatics.com/rt-api-ref#supported-audio-types" />
+  *
   *  <see cref="type" />
   *  <see cref="encoding" />
   *  <see cref="sample_rate" />

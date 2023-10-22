@@ -8,6 +8,7 @@
   *  When: After <c>StartRecognitionMessage</c>(?), depends on <c>type</c>
   *  Purpose: Additional information about something
   *  Effects: Various, depends on <c>type</c>
+  *  API Reference: <see href="https://docs.speechmatics.com/rt-api-ref#info" />
   *
   *  <see cref="type" />
   *  <seealso cref="StartRecognitionMessage" />
