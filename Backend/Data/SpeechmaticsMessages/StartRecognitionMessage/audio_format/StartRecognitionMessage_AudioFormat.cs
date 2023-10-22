@@ -1,104 +1,15 @@
-﻿namespace Backend.Data.SpeechmaticsMessages;
+namespace Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.audio_format;
 
 /**
   *  <summary>
-  *  Speechmatics RT API message: StartRecognition
-  *
-  *  Direction: Client -> Server
-  *  When: After WebSocket connection has been opened
-  *  Purpose: Signal that Server that we want to start a transcription process
-  *  Effects: n/a, depends on <c>RecognitionStartedMessage</c> response
-  *
-  *  <see cref="RecognitionStartedMessage" />
-  *  </summary>
-  */
-public class StartRecognitionMessage
-{
-    /**
-      *  <summary>
-      *  Simple constructor.
-      *
-      *  <param name="audio_format">
-      *  Audio stream type that will be sent.
-      *  If null, sane defaults for our purposes will be used.
-      *  </param>
-      *  <param name="transcription_config">
-      *  Configuration for this recognition session.
-      *  If null, sane defaults for our purposes will be used.
-      *  </param>
-      *
-      *  <see cref="audio_format" />
-      *  <see cref="transcription_config" />
-      *  <see cref="StartRecognitionMessage_AudioType" />
-      *  <see cref="StartRecognitionMessage_TranscriptionConfig" />
-      *  </summary>
-      */
-    public StartRecognitionMessage (
-        StartRecognitionMessage_AudioType? audio_format = null,
-        StartRecognitionMessage_TranscriptionConfig? transcription_config = null)
-    {
-        this.audio_format = (audio_format is not null)
-            ? (StartRecognitionMessage_AudioType) audio_format
-            : new StartRecognitionMessage_AudioType();
-        this.transcription_config = (transcription_config is not null)
-            ? (StartRecognitionMessage_TranscriptionConfig) transcription_config
-            : new StartRecognitionMessage_TranscriptionConfig();
-    }
-
-    /**
-      *  <summary>
-      *  The internal name of this message.
-      *  </summary>
-      */
-    private static readonly string _message = "StartRecognition";
-
-    /**
-      *  <value>
-      *  Message name.
-      *  Settable for JSON deserialising purposes, but value
-      *  *MUST* match <c>_message</c> when attempting to set.
-      *  </value>
-      */
-    public string message
-    {
-        get { return _message; }
-        set
-        {
-            if (value != _message)
-                throw new ArgumentException (String.Format (
-                    "wrong message type: expected {0}, received {1}",
-                    _message, value));
-        }
-    }
-
-    /**
-      *  <value>
-      *  Audio stream type that will be sent.
-      *  </value>
-      */
-    public StartRecognitionMessage_AudioType audio_format { get; set; }
-
-    /**
-      *  <value>
-      *  Configuration for this recognition session.
-      *  </value>
-      */
-    public StartRecognitionMessage_TranscriptionConfig transcription_config { get; set; }
-
-    // TODO add? irrelevant for our purposes
-    // public StartRecognitionMessage_TranslationConfig? translation_config { get; set; }
-}
-
-/**
-  *  <summary>
-  *  Audio stream type that will be sent.
+  *  Audio stream format that will be sent.
   *
   *  <see cref="type" />
   *  <see cref="encoding" />
   *  <see cref="sample_rate" />
   *  </summary>
   */
-public class StartRecognitionMessage_AudioType
+public class StartRecognitionMessage_AudioFormat
 {
     /**
       *  <summary>
@@ -113,7 +24,7 @@ public class StartRecognitionMessage_AudioType
       *  <see cref="sample_rate" />
       *  </summary>
       */
-    public StartRecognitionMessage_AudioType (
+    public StartRecognitionMessage_AudioFormat (
         string type = "raw",
         string? encoding = "pcm_s16le",
         int? sample_rate = 48000)
@@ -304,56 +215,4 @@ public class StartRecognitionMessage_AudioType
                     encoding));
         }
     }
-}
-
-/**
-  *  <summary>
-  *  Configuration for this recognition session.
-  *
-  *  <see cref="language" />
-  *  <see cref="enable_partials" />
-  *  </summary>
-  */
-public class StartRecognitionMessage_TranscriptionConfig
-{
-    /**
-      *  <summary>
-      *  Simple constructor.
-      *
-      *  <param name="language">Language model to process audio, usually in ISO language code format.</param>
-      *  <param name="enable_partials">Whether to send partial transcripts (<c>AddPartialTranscript</c> messages).</param>
-      *
-      *  <see cref="language" />
-      *  <see cref="enable_partials" />
-      *  </summary>
-      */
-    public StartRecognitionMessage_TranscriptionConfig (string language = "de", bool? enable_partials = false)
-    {
-        this.language = language;
-        this.enable_partials = enable_partials;
-    }
-
-    // not sure how to validate that language is an ISO language code
-    /**
-      *  <value>
-      *  Language model to process audio, usually in ISO language code format.
-      *  The value must be consistent with the language code used in the API endpoint URL.
-      *  </value>
-      */
-    public string language { get; set; }
-
-    /**
-      *  <value>
-      *  Whether or not to send partials (i.e. `AddPartialTranscript` messages)
-      *  in addition to the finals (i.e. `AddTranscriptMessage`s).
-      *
-      *  For now, the partials are somewhat useless to us. They are sent as a slowly accumulating list, each time
-      *  resending the previous values together with the new ones. It might be possible to similarly accumulate values
-      *  from partials in a special structure and only register the words that aren't resends.
-      *  I don't know if there are any guarantees about the stability of transcriptions between partials. I think it's
-      *  possible that the AI can go back and correct words in the partials, in which case these are wholly incompatible
-      *  with our expectations. This could use some more testing.
-      *  </value>
-      */
-    public bool? enable_partials { get; set; }
 }

@@ -1,4 +1,4 @@
-﻿namespace Backend.Data.SpeechmaticsMessages;
+﻿namespace Backend.Data.SpeechmaticsMessages.InfoMessage;
 
 /**
   *  <summary>
