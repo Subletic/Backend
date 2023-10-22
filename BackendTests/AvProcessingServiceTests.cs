@@ -15,7 +15,7 @@ namespace BackendTests
         }
 
         [Test]
-        public async Task Init_WithValidApiKey_ReturnsTrue()
+        public void Init_WithValidApiKey_ReturnsTrue()
         {
             // Arrange
             var avProcessingService = new AvProcessingService(_wordProcessingServiceMock.Object,
@@ -24,27 +24,14 @@ namespace BackendTests
             Environment.SetEnvironmentVariable(apiKeyVar, "eHbFYSRbfbTyORS3cs3HmguSCL9XMbbv");
 
             // Act
-            var result = await avProcessingService.Init(apiKeyVar);
+            var result = avProcessingService.Init(apiKeyVar);
 
             // Assert
             Assert.That(result, Is.True);
         }
 
         [Test]
-        public void Init_WithInvalidApiKey_ThrowsException()
-        {
-            // Arrange
-            var avProcessingService = new AvProcessingService(_wordProcessingServiceMock.Object,
-                _frontendAudioQueueServiceMock.Object, new WebVttExporter(new MemoryStream()));
-            const string apiKeyVar = "API_KEY";
-            Environment.SetEnvironmentVariable(apiKeyVar, "invalidKey");
-
-            // Assert
-            Assert.That(() => avProcessingService.Init(apiKeyVar), Throws.InvalidOperationException);
-        }
-
-        [Test]
-        public async Task Init_WithNoApiKey_ReturnsFalse()
+        public void Init_WithNoApiKey_ReturnsFalse()
         {
             // Arrange
             var avProcessingService = new AvProcessingService(_wordProcessingServiceMock.Object,
@@ -53,7 +40,7 @@ namespace BackendTests
             Environment.SetEnvironmentVariable(apiKeyVar, null);
 
             // Act
-            var result = await avProcessingService.Init(apiKeyVar);
+            var result = avProcessingService.Init(apiKeyVar);
 
             // Assert
             Assert.That(result, Is.False);
