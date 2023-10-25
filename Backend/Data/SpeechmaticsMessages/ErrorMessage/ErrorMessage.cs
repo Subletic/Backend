@@ -1,4 +1,4 @@
-﻿namespace Backend.Data.SpeechmaticsMessages;
+﻿namespace Backend.Data.SpeechmaticsMessages.ErrorMessage;
 
 /**
   *  <summary>
@@ -8,6 +8,7 @@
   *  When: Various, depends on <c>type</c>
   *  Purpose: Inform the Client about a critical error that has happened
   *  Effects: Transcription and connection will immediately be terminated
+  *  API Reference: <see href="https://docs.speechmatics.com/rt-api-ref#error-messages" />
   *
   *  <see cref="type" />
   *  </summary>
@@ -39,24 +40,24 @@ public class ErrorMessage
       *  The internal name of this message.
       *  </summary>
       */
-    private static readonly string _message = "Error";
+    private const string MESSAGE_TYPE = "Error";
 
     /**
       *  <value>
       *  Message name.
       *  Settable for JSON deserialising purposes, but value
-      *  *MUST* match <c>_message</c> when attempting to set.
+      *  *MUST* match <c>MESSAGE_TYPE</c> when attempting to set.
       *  </value>
       */
     public string message
     {
-        get { return _message; }
+        get { return MESSAGE_TYPE; }
         set
         {
-            if (value != _message)
+            if (value != MESSAGE_TYPE)
                 throw new ArgumentException (String.Format (
                     "wrong message type: expected {0}, received {1}",
-                    _message, value));
+                    MESSAGE_TYPE, value));
         }
     }
 

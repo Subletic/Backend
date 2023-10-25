@@ -1,4 +1,4 @@
-﻿namespace Backend.Data.SpeechmaticsMessages;
+﻿namespace Backend.Data.SpeechmaticsMessages.AudioAddedMessage;
 
 /**
   *  <summary>
@@ -12,6 +12,7 @@
   *  Effects:
   *  - one of the following <c>AddTranscriptMessage</c>s will contain a transcript of the recognised speech
   *  - <c>seq_no</c> shows which <c>AddAudio</c> has been acknowledged
+  *  API Reference: <see href="https://docs.speechmatics.com/rt-api-ref#audioadded" />
   *
   *  <see cref="seq_no" />
   *  <see cref="AddTranscriptMessage" />
@@ -40,24 +41,24 @@ public class AudioAddedMessage
       *  The internal name of this message.
       *  </summary>
       */
-    private static readonly string _message = "AudioAdded";
+    private const string MESSAGE_TYPE = "AudioAdded";
 
     /**
       *  <value>
       *  Message name.
       *  Settable for JSON deserialising purposes, but value
-      *  *MUST* match <c>_message</c> when attempting to set.
+      *  *MUST* match <c>MESSAGE_TYPE</c> when attempting to set.
       *  </value>
       */
     public string message
     {
-        get { return _message; }
+        get { return MESSAGE_TYPE; }
         set
         {
-            if (value != _message)
+            if (value != MESSAGE_TYPE)
                 throw new ArgumentException (String.Format (
                     "wrong message type: expected {0}, received {1}",
-                    _message, value));
+                    MESSAGE_TYPE, value));
         }
     }
 

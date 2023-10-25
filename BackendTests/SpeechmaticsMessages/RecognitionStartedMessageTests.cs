@@ -1,4 +1,5 @@
-﻿using Backend.Data.SpeechmaticsMessages;
+﻿using Backend.Data.SpeechmaticsMessages.RecognitionStartedMessage;
+using Backend.Data.SpeechmaticsMessages.RecognitionStartedMessage.language_pack_info;
 using System.Text;
 using System.Text.Json;
 

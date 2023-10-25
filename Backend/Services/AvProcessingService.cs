@@ -15,7 +15,17 @@ using System.Threading;
 
 using Backend.Controllers;
 using Backend.Data;
-using Backend.Data.SpeechmaticsMessages;
+using Backend.Data.SpeechmaticsMessages.AddTranscriptMessage;
+using Backend.Data.SpeechmaticsMessages.AddTranscriptMessage.result;
+using Backend.Data.SpeechmaticsMessages.AudioAddedMessage;
+using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage;
+using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.audio_format;
+using Backend.Data.SpeechmaticsMessages.EndOfStreamMessage;
+using Backend.Data.SpeechmaticsMessages.ErrorMessage;
+using Backend.Data.SpeechmaticsMessages.WarningMessage;
+using Backend.Data.SpeechmaticsMessages.InfoMessage;
+using Backend.Data.SpeechmaticsMessages.RecognitionStartedMessage;
+using Backend.Data.SpeechmaticsMessages.EndOfTranscriptMessage;
 
 namespace Backend.Services;
 
@@ -54,11 +64,11 @@ public partial class AvProcessingService : IAvProcessingService
     /**
       *  <summary>
       *  A description of the audio format we'll send to the RT API.
-      *  <see cref="StartRecognitionMessage_AudioType" />
+      *  <see cref="StartRecognitionMessage_AudioFormat" />
       *  </summary>
       */
-    private static readonly StartRecognitionMessage_AudioType audioType =
-        new StartRecognitionMessage_AudioType ("raw", "pcm_s16le", 48000);
+    private static readonly StartRecognitionMessage_AudioFormat audioFormat =
+        new StartRecognitionMessage_AudioFormat ("raw", "pcm_s16le", 48000);
 
     /**
       *  <summary>
@@ -280,7 +290,7 @@ public partial class AvProcessingService : IAvProcessingService
         try
         {
             // serialisation may fail
-            string startRecognitionMessage = JsonSerializer.Serialize (new StartRecognitionMessage (audioType),
+            string startRecognitionMessage = JsonSerializer.Serialize (new StartRecognitionMessage (audioFormat),
                 jsonOptions);
 
             logSend (startRecognitionMessage);
@@ -331,10 +341,10 @@ public partial class AvProcessingService : IAvProcessingService
         try {
             Action<FFMpegArgumentOptions> outputOptions = options => options
                 .WithCustomArgument("-ac 1"); // downmix to mono
-            if (audioType.type == "raw") {
+            if (audioFormat.type == "raw") {
                 outputOptions += options => options
-                    .ForceFormat(audioType.encodingToFFMpegFormat())
-                    .WithAudioSamplingRate (audioType.getCheckedSampleRate());
+                    .ForceFormat(audioFormat.GetEncodingInFFMpegFormat())
+                    .WithAudioSamplingRate (audioFormat.GetCheckedSampleRate());
             }
             await FFMpegArguments
                 .FromUrlInput (mediaUri, options => options
@@ -387,7 +397,7 @@ public partial class AvProcessingService : IAvProcessingService
 
         try
         {
-            byte[] buffer = new byte[audioType.getCheckedSampleRate() * audioType.bytesPerSample()]; // 1s
+            byte[] buffer = new byte[audioFormat.GetCheckedSampleRate() * audioFormat.GetBytesPerSample()]; // 1s
             Console.WriteLine ("Started audio sending");
             do
             {
@@ -427,7 +437,7 @@ public partial class AvProcessingService : IAvProcessingService
                     sendBuffer = new byte[buffer.Length];
                     Array.Copy (buffer, 0, sendBuffer, 0, buffer.Length);
                 }
-                short[] sendShortBuffer = new short[audioType.getCheckedSampleRate()];
+                short[] sendShortBuffer = new short[audioFormat.GetCheckedSampleRate()];
                 Buffer.BlockCopy (sendBuffer, 0, sendShortBuffer, 0, sendBuffer.Length);
                 _frontendAudioQueueService.Enqueue (sendShortBuffer);
 
@@ -582,7 +592,7 @@ public partial class AvProcessingService : IAvProcessingService
 
                 Console.WriteLine ($"Received transcript: {atMessage.metadata.transcript}");
 
-                foreach (AddTranscriptMessage_result transcript in atMessage.results!)
+                foreach (AddTranscriptMessage_Result transcript in atMessage.results!)
                 {
                     // the specs say an AddTranscript.results may come without an alternatives list.
                     // TODO what is its purpose?

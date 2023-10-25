@@ -1,10 +1,12 @@
-﻿using Backend.Data.SpeechmaticsMessages;
+﻿using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage;
+using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.audio_format;
+using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_config;
 using System.Text;
 using System.Text.Json;
 
 namespace BackendTests.SpeechmaticsMessages;
 
-public class StartRecognitionMessage_AudioTypeTests
+public class StartRecognitionMessage_AudioFormatTests
 {
     private static readonly JsonSerializerOptions jsonOptions = new() { IncludeFields = true };
 
@@ -13,23 +15,23 @@ public class StartRecognitionMessage_AudioTypeTests
     public void ValidValues_DoesntThrow()
     {
         // our defaults
-        Assert.DoesNotThrow (() => new StartRecognitionMessage_AudioType());
+        Assert.DoesNotThrow (() => new StartRecognitionMessage_AudioFormat());
 
         // raw type
         Assert.DoesNotThrow (() => {
-            var _ = new StartRecognitionMessage_AudioType(type: "raw",
+            var _ = new StartRecognitionMessage_AudioFormat(type: "raw",
                 encoding: "pcm_f32le",
                 sample_rate: 16000);
-            _ = new StartRecognitionMessage_AudioType(type: "raw",
+            _ = new StartRecognitionMessage_AudioFormat(type: "raw",
                 encoding: "pcm_s16le",
                 sample_rate: 96000);
-            _ = new StartRecognitionMessage_AudioType(type: "raw",
+            _ = new StartRecognitionMessage_AudioFormat(type: "raw",
                 encoding: "mulaw",
                 sample_rate: 182000);
         });
 
         // file type
-        Assert.DoesNotThrow (() => new StartRecognitionMessage_AudioType(type: "file",
+        Assert.DoesNotThrow (() => new StartRecognitionMessage_AudioFormat(type: "file",
             encoding: null,
             sample_rate: null));
     }
@@ -39,12 +41,12 @@ public class StartRecognitionMessage_AudioTypeTests
     public void InvalidValues_Throws()
     {
         // bad encoding
-        Assert.Throws<ArgumentException> (() => new StartRecognitionMessage_AudioType(type: "raw",
+        Assert.Throws<ArgumentException> (() => new StartRecognitionMessage_AudioFormat(type: "raw",
             encoding: "somethingelse",
             sample_rate: 8000));
 
         // bad sample_rate
-        Assert.Throws<ArgumentOutOfRangeException> (() => new StartRecognitionMessage_AudioType(type: "raw",
+        Assert.Throws<ArgumentOutOfRangeException> (() => new StartRecognitionMessage_AudioFormat(type: "raw",
             encoding: "mulaw",
             sample_rate: 0));
     }
@@ -83,7 +85,7 @@ public class StartRecognitionMessage_AudioTypeTests
 
         for (int i = 0; i < types.Length; ++i)
         {
-            StartRecognitionMessage_AudioType at = new StartRecognitionMessage_AudioType (type: types[i],
+            StartRecognitionMessage_AudioFormat at = new StartRecognitionMessage_AudioFormat (type: types[i],
                 encoding: encodings[i],
                 sample_rate: sample_rates[i]);
             Assert.That (at.type, Is.EqualTo (types[i]));
@@ -92,13 +94,13 @@ public class StartRecognitionMessage_AudioTypeTests
 
             if (at.type == "raw")
             {
-                Assert.That (at.encodingToFFMpegFormat(), Is.EqualTo (encodingsFfmpeg[i]));
-                Assert.That (at.getCheckedSampleRate(), Is.EqualTo (sample_rates[i]));
+                Assert.That (at.GetEncodingInFFMpegFormat(), Is.EqualTo (encodingsFfmpeg[i]));
+                Assert.That (at.GetCheckedSampleRate(), Is.EqualTo (sample_rates[i]));
             }
             else
             {
-                Assert.Throws<InvalidOperationException> (() => at.encodingToFFMpegFormat());
-                Assert.Throws<InvalidOperationException> (() => at.getCheckedSampleRate());
+                Assert.Throws<InvalidOperationException> (() => at.GetEncodingInFFMpegFormat());
+                Assert.Throws<InvalidOperationException> (() => at.GetCheckedSampleRate());
             }
         }
     }
@@ -108,7 +110,7 @@ public class StartRecognitionMessageTests
 {
     private static readonly JsonSerializerOptions jsonOptions = new() { IncludeFields = true };
 
-    private static readonly string messageValue = "StartRecognition";
+    private const string messageValue = "StartRecognition";
 
     [Test, Order(1)]
     // Valid constructor call must be accepted
@@ -199,7 +201,7 @@ public class StartRecognitionMessageTests
     // Valid construction must report correct contents
     public void ValidConstruction_CorrectContent()
     {
-        StartRecognitionMessage_AudioType at = new StartRecognitionMessage_AudioType (type: "raw",
+        StartRecognitionMessage_AudioFormat at = new StartRecognitionMessage_AudioFormat (type: "raw",
             encoding: "mulaw",
             sample_rate: 44100);
 
