@@ -34,24 +34,24 @@ public class EndOfTranscriptMessage
       *  The internal name of this message.
       *  </summary>
       */
-    private static readonly string _message = "EndOfTranscript";
+    private const string MESSAGE_TYPE = "EndOfTranscript";
 
     /**
       *  <value>
       *  Message name.
       *  Settable for JSON deserialising purposes, but value
-      *  *MUST* match <c>_message</c> when attempting to set.
+      *  *MUST* match <c>MESSAGE_TYPE</c> when attempting to set.
       *  </value>
       */
     public string message
     {
-        get { return _message; }
+        get { return MESSAGE_TYPE; }
         set
         {
-            if (value != _message)
+            if (value != MESSAGE_TYPE)
                 throw new ArgumentException (String.Format (
                     "wrong message type: expected {0}, received {1}",
-                    _message, value));
+                    MESSAGE_TYPE, value));
         }
     }
 }

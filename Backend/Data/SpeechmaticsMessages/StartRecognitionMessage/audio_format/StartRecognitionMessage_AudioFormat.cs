@@ -41,21 +41,21 @@ public class StartRecognitionMessage_AudioFormat
       *  Bare <c>type</c> value.
       *  </value>
       */
-    private string? _type;
+    private string? audioType;
 
     /**
       *  <value>
       *  Bare <c>encoding</c> value.
       *  </value>
       */
-    private string? _encoding;
+    private string? audioEncoding;
 
     /**
       *  <value>
       *  Bare <c>sample_rate</c> value.
       *  </value>
       */
-    private int? _sample_rate;
+    private int? audioSampleRate;
 
     /**
       *  <value>
@@ -70,9 +70,9 @@ public class StartRecognitionMessage_AudioFormat
     {
         get
         {
-            if (_type is null) throw new InvalidOperationException (
+            if (audioType is null) throw new InvalidOperationException (
                 "null is not a valid state for type, assign a valid value first");
-            return (string)_type;
+            return (string)audioType;
         }
 
         set
@@ -81,7 +81,7 @@ public class StartRecognitionMessage_AudioFormat
             {
                 case "raw":
                 case "file":
-                    _type = value;
+                    audioType = value;
                     break;
                 default:
                     throw new ArgumentException (String.Format (
@@ -104,7 +104,7 @@ public class StartRecognitionMessage_AudioFormat
       */
     public string? encoding
     {
-        get => _encoding;
+        get => audioEncoding;
 
         set
         {
@@ -114,7 +114,7 @@ public class StartRecognitionMessage_AudioFormat
                 case "pcm_s16le":
                 case "mulaw":
                 case null:
-                    _encoding = value;
+                    audioEncoding = value;
                     break;
                 default:
                     throw new ArgumentException (String.Format (
@@ -132,14 +132,14 @@ public class StartRecognitionMessage_AudioFormat
       */
     public int? sample_rate
     {
-        get => _sample_rate;
+        get => audioSampleRate;
 
         set
         {
             if (value.HasValue && value <= 0) throw new ArgumentOutOfRangeException (
                 nameof (value), "Sample rate must be > 0");
 
-            _sample_rate = value;
+            audioSampleRate = value;
         }
     }
 
@@ -152,7 +152,7 @@ public class StartRecognitionMessage_AudioFormat
       *  <exception cref="InvalidOperationException">If <c>sample_rate</c> is <c>null</c>.</exception>
       *  </summary>
       */
-    public int getCheckedSampleRate() {
+    public int GetCheckedSampleRate() {
         if (!sample_rate.HasValue) throw new InvalidOperationException (
             "sample_rate is null");
         return (int)sample_rate;
@@ -167,7 +167,7 @@ public class StartRecognitionMessage_AudioFormat
       *  <exception cref="InvalidOperationException">If <c>encoding</c> is <c>null</c> or unknown.</exception>
       *  </summary>
       */
-    public string encodingToFFMpegFormat()
+    public string GetEncodingInFFMpegFormat()
     {
         if (type != "raw") throw new InvalidOperationException (String.Format (
             "don't know ffmpeg format string for type: {0}",
@@ -197,7 +197,7 @@ public class StartRecognitionMessage_AudioFormat
       *  <exception cref="InvalidOperationException">If <c>encoding</c> is <c>null</c> or unknown.</exception>
       *  </summary>
       */
-    public uint bytesPerSample()
+    public uint GetBytesPerSample()
     {
         if (type != "raw") throw new InvalidOperationException (String.Format (
             "don't know amount of bytes per sample for type: {0}",

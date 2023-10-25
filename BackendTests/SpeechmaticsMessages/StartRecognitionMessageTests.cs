@@ -94,13 +94,13 @@ public class StartRecognitionMessage_AudioFormatTests
 
             if (at.type == "raw")
             {
-                Assert.That (at.encodingToFFMpegFormat(), Is.EqualTo (encodingsFfmpeg[i]));
-                Assert.That (at.getCheckedSampleRate(), Is.EqualTo (sample_rates[i]));
+                Assert.That (at.GetEncodingInFFMpegFormat(), Is.EqualTo (encodingsFfmpeg[i]));
+                Assert.That (at.GetCheckedSampleRate(), Is.EqualTo (sample_rates[i]));
             }
             else
             {
-                Assert.Throws<InvalidOperationException> (() => at.encodingToFFMpegFormat());
-                Assert.Throws<InvalidOperationException> (() => at.getCheckedSampleRate());
+                Assert.Throws<InvalidOperationException> (() => at.GetEncodingInFFMpegFormat());
+                Assert.Throws<InvalidOperationException> (() => at.GetCheckedSampleRate());
             }
         }
     }
@@ -110,7 +110,7 @@ public class StartRecognitionMessageTests
 {
     private static readonly JsonSerializerOptions jsonOptions = new() { IncludeFields = true };
 
-    private static readonly string messageValue = "StartRecognition";
+    private const string messageValue = "StartRecognition";
 
     [Test, Order(1)]
     // Valid constructor call must be accepted

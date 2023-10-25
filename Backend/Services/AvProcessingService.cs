@@ -343,8 +343,8 @@ public partial class AvProcessingService : IAvProcessingService
                 .WithCustomArgument("-ac 1"); // downmix to mono
             if (audioFormat.type == "raw") {
                 outputOptions += options => options
-                    .ForceFormat(audioFormat.encodingToFFMpegFormat())
-                    .WithAudioSamplingRate (audioFormat.getCheckedSampleRate());
+                    .ForceFormat(audioFormat.GetEncodingInFFMpegFormat())
+                    .WithAudioSamplingRate (audioFormat.GetCheckedSampleRate());
             }
             await FFMpegArguments
                 .FromUrlInput (mediaUri, options => options
@@ -397,7 +397,7 @@ public partial class AvProcessingService : IAvProcessingService
 
         try
         {
-            byte[] buffer = new byte[audioFormat.getCheckedSampleRate() * audioFormat.bytesPerSample()]; // 1s
+            byte[] buffer = new byte[audioFormat.GetCheckedSampleRate() * audioFormat.GetBytesPerSample()]; // 1s
             Console.WriteLine ("Started audio sending");
             do
             {
@@ -437,7 +437,7 @@ public partial class AvProcessingService : IAvProcessingService
                     sendBuffer = new byte[buffer.Length];
                     Array.Copy (buffer, 0, sendBuffer, 0, buffer.Length);
                 }
-                short[] sendShortBuffer = new short[audioFormat.getCheckedSampleRate()];
+                short[] sendShortBuffer = new short[audioFormat.GetCheckedSampleRate()];
                 Buffer.BlockCopy (sendBuffer, 0, sendShortBuffer, 0, sendBuffer.Length);
                 _frontendAudioQueueService.Enqueue (sendShortBuffer);
 
