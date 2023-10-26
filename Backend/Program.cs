@@ -6,6 +6,13 @@ var builder = WebApplication.CreateBuilder(args);
 // If frontend URL is not specified, use default value (localhost:4200)
 var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:4200";
 
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json")
+    .Build();
+
+builder.Services.AddSingleton<IConfiguration>(configuration);
+
 // Add services to the container.
 builder.Services.AddControllers();
 
