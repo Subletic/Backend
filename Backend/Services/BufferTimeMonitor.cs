@@ -2,6 +2,13 @@
 using Backend.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using System.IO;
+using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 
 
 
@@ -21,28 +28,29 @@ public class BufferTimeMonitor : BackgroundService
     private readonly List<SpeechBubble> _timedOutSpeechBubbles;
 
     private readonly ISpeechBubbleListService _speechBubbleListService;
-    
-    private readonly int _timeLimitInMinutes;
 
     private readonly WebVttExporter _webVttExporter;
 
     private readonly MemoryStream _outputStream;
 
-    private const int DELAY_MILLISECONDS = 1000;
+    private readonly IConfiguration _configuration;
 
-    private const int SPEECH_BUBBLE_VALIDITY_MINUTES = 1;
+    private readonly int _timeLimitInMinutes;
 
+    private readonly int _delayMilliseconds;
 
     /// <summary>
     /// Initializes the Dependency Injection and the List of timed out SpeechBubbles.
     /// </summary>
     /// <param name="speechBubbleListService">Service given by the DI</param>
-    public BufferTimeMonitor(IHubContext<CommunicationHub> hubContext, ISpeechBubbleListService speechBubbleListService, WebVttExporter webVttExporter)
+    public BufferTimeMonitor(IConfiguration configuration, IHubContext<CommunicationHub> hubContext, ISpeechBubbleListService speechBubbleListService, WebVttExporter webVttExporter)
     {
+        _configuration = configuration;
+        _timeLimitInMinutes = _configuration.GetValue<int>("BufferTimeMonitorSettings:TimeLimitInMinutes");
+        _delayMilliseconds = _configuration.GetValue<int>("BufferTimeMonitorSettings:DelayMilliseconds");
         _speechBubbleListService = speechBubbleListService;
         _hubContext = hubContext;
         _timedOutSpeechBubbles = new List<SpeechBubble>();
-        _timeLimitInMinutes = SPEECH_BUBBLE_VALIDITY_MINUTES; // move to a constant or configuration file
         _webVttExporter = webVttExporter;
         _outputStream = new MemoryStream();
     }
@@ -58,8 +66,8 @@ public class BufferTimeMonitor : BackgroundService
         
         while (!stoppingToken.IsCancellationRequested)
         {
-            
-            await Task.Delay(DELAY_MILLISECONDS, stoppingToken);
+
+            await Task.Delay(_delayMilliseconds, stoppingToken);
 
             var oldestSpeechBubble = _speechBubbleListService.GetSpeechBubbles().First;
             if (oldestSpeechBubble == null)
