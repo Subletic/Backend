@@ -30,7 +30,7 @@ builder.Services.AddSingleton<IWordProcessingService, WordProcessingService>();
 
 builder.Services.AddSingleton<FrontendAudioQueueService, FrontendAudioQueueService>();
 
-builder.Services.AddSingleton<WebVttExporter>();
+builder.Services.AddScoped<ISubtitleConverter, WebVttExporter>();
 
 builder.Services.AddSingleton<Stream>(File.Open("output.vtt", FileMode.Create));
 

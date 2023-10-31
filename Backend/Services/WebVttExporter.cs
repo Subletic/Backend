@@ -10,7 +10,7 @@ namespace Backend.Services;
 /// <summary>
 /// Class responsible for exporting speech bubbles to WebVTT format.
 /// </summary>
-public class WebVttExporter
+public class WebVttExporter : ISubtitleConverter
 {
     private readonly Stream _outputStream;
 
