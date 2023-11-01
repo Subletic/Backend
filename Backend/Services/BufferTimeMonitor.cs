@@ -19,9 +19,9 @@ namespace Backend.Services;
 /// </summary>
 public class BufferTimeMonitor : BackgroundService
 {
-    
+
     private readonly IHubContext<CommunicationHub> _hubContext;
-    
+
     /// <summary>
     /// List containing all SpeechBubbles that have timed out.
     /// </summary>
@@ -29,7 +29,7 @@ public class BufferTimeMonitor : BackgroundService
 
     private readonly ISpeechBubbleListService _speechBubbleListService;
 
-    private readonly WebVttExporter _webVttExporter;
+    private readonly ISubtitleConverter _subtitleConverter;
 
     private readonly MemoryStream _outputStream;
 
@@ -43,7 +43,7 @@ public class BufferTimeMonitor : BackgroundService
     /// Initializes the Dependency Injection and the List of timed out SpeechBubbles.
     /// </summary>
     /// <param name="speechBubbleListService">Service given by the DI</param>
-    public BufferTimeMonitor(IConfiguration configuration, IHubContext<CommunicationHub> hubContext, ISpeechBubbleListService speechBubbleListService, WebVttExporter webVttExporter)
+    public BufferTimeMonitor(IConfiguration configuration, IHubContext<CommunicationHub> hubContext, ISpeechBubbleListService speechBubbleListService, ISubtitleConverter subtitleConverter)
     {
         _configuration = configuration;
         _timeLimitInMinutes = _configuration.GetValue<int>("BufferTimeMonitorSettings:TimeLimitInMinutes");
@@ -51,7 +51,7 @@ public class BufferTimeMonitor : BackgroundService
         _speechBubbleListService = speechBubbleListService;
         _hubContext = hubContext;
         _timedOutSpeechBubbles = new List<SpeechBubble>();
-        _webVttExporter = webVttExporter;
+        _subtitleConverter = subtitleConverter;
         _outputStream = new MemoryStream();
     }
 
@@ -63,7 +63,7 @@ public class BufferTimeMonitor : BackgroundService
     /// <param name="stoppingToken">Token used to stop the Task</param>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        
+
         while (!stoppingToken.IsCancellationRequested)
         {
 
@@ -74,29 +74,29 @@ public class BufferTimeMonitor : BackgroundService
             {
                 continue;
             }
-            
+
             var currentTime = DateTime.Now;
             var oldestSpeechBubbleCreationTime = oldestSpeechBubble.Value.CreationTime;
             var timeDifference = currentTime - oldestSpeechBubbleCreationTime;
-            
-            
+
+
             if (timeDifference.TotalMinutes > _timeLimitInMinutes)
             {
-                
+
                 await DeleteSpeechBubbleMessageToFrontend(oldestSpeechBubble.Value.Id);
-                
+
                 _timedOutSpeechBubbles.Add(oldestSpeechBubble.Value);
                 _speechBubbleListService.DeleteOldestSpeechBubble();
 
                 // Export timed-out speech bubble as webvtt
                 using (var outputStream = new MemoryStream())
                 {
-                    _webVttExporter.ExportSpeechBubble(oldestSpeechBubble.Value);
+                    _subtitleConverter.ExportSpeechBubble(oldestSpeechBubble.Value);
                     outputStream.Seek(0, SeekOrigin.Begin);
                     await outputStream.CopyToAsync(_outputStream, stoppingToken);
                 }
             }
- 
+
         }
     }
 
