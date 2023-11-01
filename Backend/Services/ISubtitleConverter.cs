@@ -1,4 +1,4 @@
-using Backend.Data;
+﻿using Backend.Data;
 using Backend.Services;
 
 public interface ISubtitleConverter
