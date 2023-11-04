@@ -1,10 +1,16 @@
-﻿using Backend.Services;
+﻿using Backend.Data;
+using Backend.Services;
 using Moq;
 using NUnit.Framework;
+using System;
+using System.Buffers;
+using System.IO.Pipelines;
 using System.Net.WebSockets;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Backend.Data;
+using System.Collections.Generic;
+
 namespace BackendTests
 {
     public class SubtitleExporterServiceTests
@@ -15,28 +21,38 @@ namespace BackendTests
             // Arrange
             var service = new SubtitleExporterService();
 
-            // Mock für WebSocket erstellen
             var mockWebSocket = new Mock<WebSocket>();
+            var cancellationTokenSource = new CancellationTokenSource();
 
-            // Mock für CancellationTokenSource erstellen
-            var mockCancellationTokenSource = new Mock<CancellationTokenSource>();
+            // Generate some sample subtitle data
+            var wordTokens = new List<WordToken>
+            {
+                new WordToken("Hello", 0.95f, 0.0, 1.0, 1),
+                new WordToken("world", 0.92f, 1.0, 2.0, 1),
+                new WordToken("of", 0.91f, 2.0, 3.0, 1),
+                new WordToken("unit", 0.93f, 3.0, 4.0, 1),
+                new WordToken("testing", 0.94f, 4.0, 5.0, 1)
+            };
 
-            // Setzen der Verhalten für CancellationTokenSource
-            mockCancellationTokenSource.Setup(m => m.Token).Returns(CancellationToken.None);
+            var speechBubble = new SpeechBubble(1, 1, 0.0, 5.0, wordTokens);
 
-            // Simulieren des ExportSubtitle-Aufrufs
-            await service.ExportSubtitle(new SpeechBubble(1, 1, 0.0, 1.0, new List<WordToken>()));
+            // Act: Export the subtitle
+            await service.ExportSubtitle(speechBubble);
 
-            // Act
-            var sendingTask = service.Start(mockWebSocket.Object, mockCancellationTokenSource.Object);
+            // Act: Start sending task
+            var sendingTask = service.Start(mockWebSocket.Object, cancellationTokenSource);
 
-            // Assert - Überprüfen Sie, ob die WebSocket-Methode aufgerufen wurde
+            // Allow time for data to be sent
+            await Task.Delay(100);
+
+            // Clean up
+            cancellationTokenSource.Cancel();
+
+            // Assert
+            sendingTask.Wait(2000); // Wait for the sending task to complete
             mockWebSocket.Verify(webSocket =>
-                webSocket.SendAsync(It.IsAny<Memory<byte>>(), WebSocketMessageType.Text, true, CancellationToken.None),
+                webSocket.SendAsync(It.IsAny<ArraySegment<byte>>(), WebSocketMessageType.Text, true, cancellationTokenSource.Token),
                 Times.AtLeastOnce());
-
-            // Überprüfen Sie, ob die Methode ohne Ausnahmen abgeschlossen wurde
-            sendingTask.Wait();
         }
     }
 }
