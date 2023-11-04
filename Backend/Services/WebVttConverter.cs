@@ -10,17 +10,17 @@ namespace Backend.Services;
 /// <summary>
 /// Class responsible for exporting speech bubbles to WebVTT format.
 /// </summary>
-public class WebVttExporter : ISubtitleConverter
+public class WebVttConverter : ISubtitleConverter
 {
-    private readonly Stream _outputStream;
+    private readonly Stream outputStream;
 
     /// <summary>
     /// Initializes a new instance of the WebVttExporter class with the specified output stream.
     /// </summary>
     /// <param name="outputStream">The output stream to write the WebVTT content to.</param>
-    public WebVttExporter(Stream outputStream)
+    public WebVttConverter(Stream outputStream)
     {
-        _outputStream = outputStream;
+        this.outputStream = outputStream;
 
         // header
         WriteToStream("WEBVTT");
@@ -30,10 +30,11 @@ public class WebVttExporter : ISubtitleConverter
     /// Exports the speech bubbles to WebVTT format and writes the content to the output stream.
     /// </summary>
     /// <param name="speechBubbles">The list of speech bubbles to export.</param>
-    public void ExportSpeechBubble(SpeechBubble speechBubble)
+    public Task ConvertSpeechBubble(SpeechBubble speechBubble)
     {
-        string webVttContent = ConvertToWebVttFormat(speechBubble);
+        string webVttContent = convertToWebVttFormat(speechBubble);
         WriteToStream(webVttContent);
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -41,7 +42,7 @@ public class WebVttExporter : ISubtitleConverter
     /// </summary>
     /// <param name="speechBubbles">The list of speech bubbles to convert.</param>
     /// <returns>The WebVTT-formatted content.</returns>
-    public string ConvertToWebVttFormat(SpeechBubble speechBubble)
+    private string convertToWebVttFormat(SpeechBubble speechBubble)
     {
         StringBuilder webVttBuilder = new StringBuilder();
 
@@ -76,16 +77,15 @@ public class WebVttExporter : ISubtitleConverter
     /// Writes the content to the output stream.
     /// </summary>
     /// <param name="content">The content to write.</param>
-    public void WriteToStream(string content)
+    private void WriteToStream(string content)
     {
-        var outputStreamWriter = new StreamWriter(
-            stream: _outputStream,          // Der Ziel-Stream, in den geschrieben wird
+        using (StreamWriter outputStreamWriter = new StreamWriter(
+            stream: outputStream,          // Der Ziel-Stream, in den geschrieben wird
             encoding: Encoding.UTF8,        // Die Zeichencodierung (hier: UTF-8)
             bufferSize: 4096,               // Die Puffergröße für optimale Leistung
             leaveOpen: true                // Gibt an, ob der Stream geöffnet bleiben soll
-        );
-        outputStreamWriter.Write(content);
-        outputStreamWriter.Dispose();
+        ))
+            outputStreamWriter.Write(content);
 
     }
 }

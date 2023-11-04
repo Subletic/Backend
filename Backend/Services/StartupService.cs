@@ -30,14 +30,14 @@ public class StartupService : IHostedService
             throw new InvalidOperationException(
                 $"Failed to find a registered {nameof(IAvProcessingService)} service");
 
-        var doShowcase = _avProcessingService.Init("SPEECHMATICS_API_KEY");
+        /*var doShowcase =*/ _avProcessingService.Init("SPEECHMATICS_API_KEY");
 
+        /*
         Console.WriteLine($"{(doShowcase ? "Doing" : "Not doing")} the Speechmatics API showcase");
 
         // stressed and exhausted, the compiler is forcing my hand:
         // errors on this variable being unset at the later await, even though it will definitely be set when it needs to await it
         // thus initialise to null and cast away nullness during the await
-
 
         if (doShowcase)
         {
@@ -45,6 +45,7 @@ public class StartupService : IHostedService
             // var transcriptionSuccess = await audioTranscription;
             // Console.WriteLine($"Speechmatics communication was a {(transcriptionSuccess ? "success" : "failure")}");
         }
+        */
 
         return Task.CompletedTask;
     }

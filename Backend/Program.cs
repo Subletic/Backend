@@ -28,11 +28,17 @@ builder.Services.AddSingleton<IAvProcessingService, AvProcessingService>();
 
 builder.Services.AddSingleton<IWordProcessingService, WordProcessingService>();
 
+builder.Services.AddSingleton<IAvReceiverService, AvReceiverService>();
+
+builder.Services.AddSingleton<ISubtitleExporterService, SubtitleExporterService>();
+
 builder.Services.AddSingleton<FrontendAudioQueueService, FrontendAudioQueueService>();
 
+/*
 builder.Services.AddScoped<ISubtitleConverter, WebVttExporter>();
 
 builder.Services.AddSingleton<Stream>(File.Open("output.vtt", FileMode.Create));
+*/
 
 builder.Services.AddHostedService<StartupService>();
 
@@ -58,6 +64,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseWebSockets();
 
 app.UseRouting();
 

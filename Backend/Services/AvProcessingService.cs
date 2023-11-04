@@ -161,24 +161,16 @@ public partial class AvProcessingService : IAvProcessingService
 
     /**
       *  <summary>
-      *  Unused private field to store an instance of subtitleConverter
-      *  </summary>
-    */
-    private readonly ISubtitleConverter _subtitleConverter;
-
-    /**
-      *  <summary>
       *  Constructor of the service.
       *  <param name="wordProcessingService">The <c>SpeechBubbleController</c> to push new words into</param>
       *  <param name="sendingAudioService">The <c>FrontendAudioQueueService</c> to push new audio into for the Frontend</param>
-      *  <param name="subtitleConverter">Unused <c>subtitleConverter</c></param>
       *  </summary>
       */
-    public AvProcessingService(IWordProcessingService wordProcessingService, FrontendAudioQueueService sendingAudioService, ISubtitleConverter subtitleConverter)
+    public AvProcessingService(IWordProcessingService wordProcessingService,
+        FrontendAudioQueueService sendingAudioService)
     {
         _wordProcessingService = wordProcessingService;
         _frontendAudioQueueService = sendingAudioService;
-        _subtitleConverter = subtitleConverter;
         Console.WriteLine("AvProcessingService is started!");
     }
 
@@ -333,7 +325,7 @@ public partial class AvProcessingService : IAvProcessingService
       *  <seealso cref="TranscribeAudio" />
       *  </summary>
       */
-    private async Task<bool> ProcessAudioToStream(Uri mediaUri, PipeWriter audioPipe)
+    private async Task<bool> ProcessAudioToStream(Stream avStream, PipeWriter audioPipe)
     {
         Console.WriteLine("Started audio processing");
         bool success = true;
@@ -349,7 +341,7 @@ public partial class AvProcessingService : IAvProcessingService
                     .WithAudioSamplingRate(audioFormat.GetCheckedSampleRate());
             }
             await FFMpegArguments
-                .FromUrlInput(mediaUri, options => options
+                .FromPipeInput(new StreamPipeSource (avStream), options => options
                     .WithDuration(TimeSpan.FromMinutes(5)) // TODO just 5 minutes for now, capped just to be sure
                 )
                 .OutputToPipe(new StreamPipeSink(audioPipe.AsStream()), outputOptions)
@@ -387,14 +379,14 @@ public partial class AvProcessingService : IAvProcessingService
       *  <seealso cref="TranscribeAudio" />
       *  </summary>
       */
-    private async Task<bool> SendAudio(ClientWebSocket wsClient, Uri mediaUri)
+    private async Task<bool> SendAudio(ClientWebSocket wsClient, Stream avStream)
     {
         Console.WriteLine("Starting audio sending");
 
         bool success = true;
         Pipe audioPipe = new Pipe();
         Stream audioPipeReader = audioPipe.Reader.AsStream(false);
-        Task<bool> audioProcessor = ProcessAudioToStream(mediaUri, audioPipe.Writer);
+        Task<bool> audioProcessor = ProcessAudioToStream(avStream, audioPipe.Writer);
 
         int offset = 0;
         int readCount;
@@ -703,7 +695,7 @@ public partial class AvProcessingService : IAvProcessingService
       *  <seealso cref="SendEndOfStream" />
       *  </summary>
       */
-    public async Task<bool> TranscribeAudio(Uri mediaUri)
+    public async Task<bool> TranscribeAudio(Stream avStream)
     {
         if (apiKey is null)
         {
@@ -728,7 +720,7 @@ public partial class AvProcessingService : IAvProcessingService
 
         successSending = await SendStartRecognition(wsClient);
         if (successSending)
-            successSending = await SendAudio(wsClient, mediaUri);
+            successSending = await SendAudio(wsClient, avStream);
         if (successSending)
             successSending = await SendEndOfStream(wsClient);
 

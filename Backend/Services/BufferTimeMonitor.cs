@@ -29,7 +29,7 @@ public class BufferTimeMonitor : BackgroundService
 
     private readonly ISpeechBubbleListService _speechBubbleListService;
 
-    private readonly ISubtitleConverter _subtitleConverter;
+    private readonly ISubtitleExporterService _subtitleExporterService;
 
     private readonly MemoryStream _outputStream;
 
@@ -43,7 +43,8 @@ public class BufferTimeMonitor : BackgroundService
     /// Initializes the Dependency Injection and the List of timed out SpeechBubbles.
     /// </summary>
     /// <param name="speechBubbleListService">Service given by the DI</param>
-    public BufferTimeMonitor(IConfiguration configuration, IHubContext<CommunicationHub> hubContext, ISpeechBubbleListService speechBubbleListService, ISubtitleConverter subtitleConverter)
+    public BufferTimeMonitor(IConfiguration configuration, IHubContext<CommunicationHub> hubContext,
+        ISpeechBubbleListService speechBubbleListService, ISubtitleExporterService subtitleExporterService)
     {
         _configuration = configuration;
         _timeLimitInMinutes = _configuration.GetValue<int>("BufferTimeMonitorSettings:TimeLimitInMinutes");
@@ -51,7 +52,7 @@ public class BufferTimeMonitor : BackgroundService
         _speechBubbleListService = speechBubbleListService;
         _hubContext = hubContext;
         _timedOutSpeechBubbles = new List<SpeechBubble>();
-        _subtitleConverter = subtitleConverter;
+        _subtitleExporterService = subtitleExporterService;
         _outputStream = new MemoryStream();
     }
 
@@ -91,7 +92,7 @@ public class BufferTimeMonitor : BackgroundService
                 // Export timed-out speech bubble as webvtt
                 using (var outputStream = new MemoryStream())
                 {
-                    _subtitleConverter.ExportSpeechBubble(oldestSpeechBubble.Value);
+                    await _subtitleExporterService.ExportSubtitle(oldestSpeechBubble.Value);
                     outputStream.Seek(0, SeekOrigin.Begin);
                     await outputStream.CopyToAsync(_outputStream, stoppingToken);
                 }
@@ -101,7 +102,7 @@ public class BufferTimeMonitor : BackgroundService
     }
 
     /// <summary>
-    /// Sends an asynchronous request to the frontend via SignalR, to inform the frontend that a Speechbubble, identified by id, has to be deleted. 
+    /// Sends an asynchronous request to the frontend via SignalR, to inform the frontend that a Speechbubble, identified by id, has to be deleted.
     /// The frontend can then subscribe to incoming Objects and handle them accordingly.
     /// </summary>
     /// <param name="id"></param>
