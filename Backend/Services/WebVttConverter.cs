@@ -41,7 +41,7 @@ public class WebVttConverter : ISubtitleConverter
     /// </summary>
     /// <param name="speechBubbles">The list of speech bubbles to convert.</param>
     /// <returns>The WebVTT-formatted content.</returns>
-    private string convertToWebVttFormat(SpeechBubble speechBubble)
+    private static string convertToWebVttFormat(SpeechBubble speechBubble)
     {
         StringBuilder webVttBuilder = new StringBuilder();
 

@@ -9,6 +9,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+namespace Backend.Services;
+
 public class AvReceiverService : IAvReceiverService
 {
     private const int MAXIMUM_READ_SIZE = 4096;

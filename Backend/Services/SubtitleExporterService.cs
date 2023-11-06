@@ -9,6 +9,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+namespace Backend.Services;
+
 /// <summary>
 /// Service responsible for exporting finished subtitles back over the WebSocket connection.
 /// </summary>
