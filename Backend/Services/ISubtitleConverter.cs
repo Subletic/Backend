@@ -3,5 +3,5 @@ using Backend.Services;
 
 public interface ISubtitleConverter
 {
-    Task ConvertSpeechBubble(SpeechBubble speechBubble);
+    void ConvertSpeechBubble(SpeechBubble speechBubble);
 }

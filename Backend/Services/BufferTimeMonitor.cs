@@ -20,24 +20,22 @@ namespace Backend.Services;
 public class BufferTimeMonitor : BackgroundService
 {
 
-    private readonly IHubContext<CommunicationHub> _hubContext;
+    private readonly IHubContext<CommunicationHub> hubContext;
 
     /// <summary>
     /// List containing all SpeechBubbles that have timed out.
     /// </summary>
-    private readonly List<SpeechBubble> _timedOutSpeechBubbles;
+    private readonly List<SpeechBubble> timedOutSpeechBubbles;
 
-    private readonly ISpeechBubbleListService _speechBubbleListService;
+    private readonly ISpeechBubbleListService speechBubbleListService;
 
-    private readonly ISubtitleExporterService _subtitleExporterService;
+    private readonly ISubtitleExporterService subtitleExporterService;
 
-    private readonly MemoryStream _outputStream;
+    private readonly IConfiguration configuration;
 
-    private readonly IConfiguration _configuration;
+    private readonly int timeLimitInMinutes;
 
-    private readonly int _timeLimitInMinutes;
-
-    private readonly int _delayMilliseconds;
+    private readonly int delayMilliseconds;
 
     /// <summary>
     /// Initializes the Dependency Injection and the List of timed out SpeechBubbles.
@@ -46,14 +44,13 @@ public class BufferTimeMonitor : BackgroundService
     public BufferTimeMonitor(IConfiguration configuration, IHubContext<CommunicationHub> hubContext,
         ISpeechBubbleListService speechBubbleListService, ISubtitleExporterService subtitleExporterService)
     {
-        _configuration = configuration;
-        _timeLimitInMinutes = _configuration.GetValue<int>("BufferTimeMonitorSettings:TimeLimitInMinutes");
-        _delayMilliseconds = _configuration.GetValue<int>("BufferTimeMonitorSettings:DelayMilliseconds");
-        _speechBubbleListService = speechBubbleListService;
-        _hubContext = hubContext;
-        _timedOutSpeechBubbles = new List<SpeechBubble>();
-        _subtitleExporterService = subtitleExporterService;
-        _outputStream = new MemoryStream();
+        this.configuration = configuration;
+        this.timeLimitInMinutes = configuration.GetValue<int>("BufferTimeMonitorSettings:TimeLimitInMinutes");
+        this.delayMilliseconds = configuration.GetValue<int>("BufferTimeMonitorSettings:DelayMilliseconds");
+        this.speechBubbleListService = speechBubbleListService;
+        this.hubContext = hubContext;
+        this.timedOutSpeechBubbles = new List<SpeechBubble>();
+        this.subtitleExporterService = subtitleExporterService;
     }
 
     /// <summary>
@@ -68,9 +65,9 @@ public class BufferTimeMonitor : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
 
-            await Task.Delay(_delayMilliseconds, stoppingToken);
+            await Task.Delay(delayMilliseconds, stoppingToken);
 
-            var oldestSpeechBubble = _speechBubbleListService.GetSpeechBubbles().First;
+            var oldestSpeechBubble = speechBubbleListService.GetSpeechBubbles().First;
             if (oldestSpeechBubble == null)
             {
                 continue;
@@ -80,22 +77,14 @@ public class BufferTimeMonitor : BackgroundService
             var oldestSpeechBubbleCreationTime = oldestSpeechBubble.Value.CreationTime;
             var timeDifference = currentTime - oldestSpeechBubbleCreationTime;
 
-
-            if (timeDifference.TotalMinutes > _timeLimitInMinutes)
+            if (timeDifference.TotalMinutes > timeLimitInMinutes)
             {
-
                 await DeleteSpeechBubbleMessageToFrontend(oldestSpeechBubble.Value.Id);
 
-                _timedOutSpeechBubbles.Add(oldestSpeechBubble.Value);
-                _speechBubbleListService.DeleteOldestSpeechBubble();
+                timedOutSpeechBubbles.Add(oldestSpeechBubble.Value);
+                speechBubbleListService.DeleteOldestSpeechBubble();
 
-                // Export timed-out speech bubble as webvtt
-                using (var outputStream = new MemoryStream())
-                {
-                    await _subtitleExporterService.ExportSubtitle(oldestSpeechBubble.Value);
-                    outputStream.Seek(0, SeekOrigin.Begin);
-                    await outputStream.CopyToAsync(_outputStream, stoppingToken);
-                }
+                await subtitleExporterService.ExportSubtitle(oldestSpeechBubble.Value);
             }
 
         }
@@ -110,7 +99,7 @@ public class BufferTimeMonitor : BackgroundService
     {
         try
         {
-            await _hubContext.Clients.All.SendAsync("deleteBubble", id);
+            await hubContext.Clients.All.SendAsync("deleteBubble", id);
         }
         catch (Exception)
         {

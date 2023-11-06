@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Backend.Data;
+
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Pipelines;
 using System.Text;
-using Backend.Data;
 
 namespace Backend.Services;
-
 
 /// <summary>
 /// Class responsible for exporting speech bubbles to WebVTT format.
@@ -30,11 +31,9 @@ public class WebVttConverter : ISubtitleConverter
     /// Exports the speech bubbles to WebVTT format and writes the content to the output stream.
     /// </summary>
     /// <param name="speechBubbles">The list of speech bubbles to export.</param>
-    public Task ConvertSpeechBubble(SpeechBubble speechBubble)
+    public void ConvertSpeechBubble(SpeechBubble speechBubble)
     {
-        string webVttContent = convertToWebVttFormat(speechBubble);
-        WriteToStream(webVttContent);
-        return Task.CompletedTask;
+        WriteToStream(convertToWebVttFormat(speechBubble));
     }
 
     /// <summary>
@@ -77,7 +76,7 @@ public class WebVttConverter : ISubtitleConverter
     /// Writes the content to the output stream.
     /// </summary>
     /// <param name="content">The content to write.</param>
-    private void WriteToStream(string content)
+    private async void WriteToStream(string content)
     {
         using (StreamWriter outputStreamWriter = new StreamWriter(
             stream: outputStream,          // Der Ziel-Stream, in den geschrieben wird
@@ -85,7 +84,6 @@ public class WebVttConverter : ISubtitleConverter
             bufferSize: 4096,               // Die Puffergröße für optimale Leistung
             leaveOpen: true                // Gibt an, ob der Stream geöffnet bleiben soll
         ))
-            outputStreamWriter.Write(content);
-
+            await outputStreamWriter.WriteAsync(content);
     }
 }

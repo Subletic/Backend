@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 /// </summary>
 public class SubtitleExporterService : ISubtitleExporterService
 {
-    private const int MINIMUM_READ_SIZE = 10;
+    private const int MAXIMUM_READ_SIZE = 4096;
 
     private Pipe subtitlePipe;
 
@@ -36,28 +36,42 @@ public class SubtitleExporterService : ISubtitleExporterService
     /// </summary>
     public async Task Start(WebSocket webSocket, CancellationTokenSource ctSource)
     {
-        PipeReader subtitleReader = subtitlePipe.Reader;
-        ReadResult subtitleResult;
+        Stream subtitleReaderStream = subtitlePipe.Reader.AsStream (leaveOpen: false);
+        byte[] buffer = new byte[MAXIMUM_READ_SIZE];
 
         Console.WriteLine ("Start sending subtitles over WebSocket");
 
-        do
+        try
         {
-            subtitleResult = await subtitleReader.ReadAtLeastAsync (MINIMUM_READ_SIZE, ctSource.Token);
-            if (subtitleResult.IsCanceled)
+            while (true)
             {
-                Console.WriteLine ("Cancellation has been triggered");
-                break;
+                Console.WriteLine ("Trying to read subtitles");
+                int readCount = 0;
+                try
+                {
+                    readCount = await subtitleReaderStream.ReadAtLeastAsync (buffer, 1, true, ctSource.Token);
+                }
+                catch (EndOfStreamException)
+                {
+                    Console.WriteLine ("End of stream reached");
+                    break;
+                }
+
+                Console.WriteLine ("Have subtitles ready to send");
+
+                await webSocket.SendAsync (new ReadOnlyMemory<byte> (buffer, 0, readCount),
+                    WebSocketMessageType.Text,
+                    false,
+                    ctSource.Token);
+                Console.WriteLine ("Subtitles sent");
             }
-
-            Console.WriteLine ("Have subtitles ready to send");
-
-            await webSocket.SendAsync (BuffersExtensions.ToArray<byte> (subtitleResult.Buffer),
-                WebSocketMessageType.Text,
-                subtitleResult.IsCompleted,
-                ctSource.Token);
         }
-        while (!subtitleResult.IsCompleted);
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine ("Subtitle export has been cancelled");
+        }
+
+        Console.WriteLine ("Done sending subtitles over WebSocket");
     }
 
     /// <summary>
@@ -65,7 +79,7 @@ public class SubtitleExporterService : ISubtitleExporterService
     /// </summary>
     public Task ExportSubtitle(SpeechBubble speechBubble)
     {
-        var subtitleText = subtitleConverter.ConvertSpeechBubble(speechBubble);
+        subtitleConverter.ConvertSpeechBubble(speechBubble);
         return Task.CompletedTask;
     }
 }

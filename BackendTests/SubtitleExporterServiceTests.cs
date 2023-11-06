@@ -36,11 +36,11 @@ namespace BackendTests
 
             var speechBubble = new SpeechBubble(1, 1, 0.0, 5.0, wordTokens);
 
-            // Act: Export the subtitle
-            await service.ExportSubtitle(speechBubble);
-
             // Act: Start sending task
             var sendingTask = service.Start(mockWebSocket.Object, cancellationTokenSource);
+
+            // Act: Export the subtitle
+            await service.ExportSubtitle(speechBubble);
 
             // Allow time for data to be sent
             await Task.Delay(100);
@@ -51,7 +51,7 @@ namespace BackendTests
             // Assert
             sendingTask.Wait(2000); // Wait for the sending task to complete
             mockWebSocket.Verify(webSocket =>
-                webSocket.SendAsync(It.IsAny<ArraySegment<byte>>(), WebSocketMessageType.Text, true, cancellationTokenSource.Token),
+                webSocket.SendAsync(It.IsAny<ReadOnlyMemory<byte>>(), WebSocketMessageType.Text, false, cancellationTokenSource.Token),
                 Times.AtLeastOnce());
         }
     }

@@ -12,7 +12,7 @@ namespace BackendTests
     public class WebVttConverterTests
     {
         [Test]
-        public async Task ConvertSpeechBubble_WritesCorrectWebVttContentToStream()
+        public void ConvertSpeechBubble_WritesCorrectWebVttContentToStream()
         {
             // Erstellen Sie einen MemoryStream, um die Ausgabe zu erfassen
             var outputStream = new MemoryStream();
@@ -27,7 +27,7 @@ namespace BackendTests
             });
 
             // Rufen Sie die Methode ConvertSpeechBubble auf
-            await converter.ConvertSpeechBubble(speechBubble);
+            converter.ConvertSpeechBubble(speechBubble);
 
             // Stellen Sie den MemoryStream auf den Anfang zurück
             outputStream.Position = 0;
