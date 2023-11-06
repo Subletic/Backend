@@ -34,12 +34,6 @@ builder.Services.AddSingleton<ISubtitleExporterService, SubtitleExporterService>
 
 builder.Services.AddSingleton<FrontendAudioQueueService, FrontendAudioQueueService>();
 
-/*
-builder.Services.AddScoped<ISubtitleConverter, WebVttExporter>();
-
-builder.Services.AddSingleton<Stream>(File.Open("output.vtt", FileMode.Create));
-*/
-
 builder.Services.AddHostedService<StartupService>();
 
 builder.Services.AddHostedService<BufferTimeMonitor>();

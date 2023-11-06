@@ -11,17 +11,42 @@ using System.Threading.Tasks;
 
 namespace Backend.Services;
 
+/**
+  *  <summary>
+  *  A service that fetches new A/V data over a WebSocket and kicks off its transcription via AvProcessingService.
+  *  </summary>
+  */
 public class AvReceiverService : IAvReceiverService
 {
+    /**
+      *  <summary>
+      *  Maximum amount of data to read from the WebSocket at once, in bytes
+      *  </summary>
+      */
     private const int MAXIMUM_READ_SIZE = 4096;
 
+    /**
+      *  <summary>
+      *  Dependency Injection for AvProcessingService to push fetched data into
+      *  </summary>
+      */
     private IAvProcessingService avProcessingService;
 
+    /**
+      *  <summary>
+      *  Simple constructor to handle DI
+      *  </summary>
+      */
     public AvReceiverService(IAvProcessingService avProcessingService)
     {
         this.avProcessingService = avProcessingService;
     }
 
+    /**
+      *  <summary>
+      *  Starts the front part of the transcription pipeline (read A/V overWebSocket, push into AvProcessingService)
+      *  </summary>
+      */
     public async Task Start(WebSocket webSocket, CancellationTokenSource ctSource)
     {
         Pipe avPipe = new Pipe();
