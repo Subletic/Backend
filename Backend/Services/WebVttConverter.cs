@@ -47,13 +47,16 @@ public class WebVttConverter : ISubtitleConverter
 
         string startTime = FormatTime(speechBubble.StartTime);
         string endTime = FormatTime(speechBubble.EndTime);
-        webVttBuilder.AppendLine();
-        webVttBuilder.AppendLine();
 
-        webVttBuilder.AppendLine($"{startTime} --> {endTime}");
+        webVttBuilder.AppendLine();
+        webVttBuilder.AppendLine();
+        webVttBuilder.Append($"{startTime} --> {endTime}");
 
         if (speechBubble.SpeechBubbleContent.Count > 0)
+        {
+            webVttBuilder.AppendLine();
             webVttBuilder.Append(speechBubble.SpeechBubbleContent[0].Word);
+        }
         for (int i = 1; i < speechBubble.SpeechBubbleContent.Count; ++i)
         {
             webVttBuilder.Append(' ');

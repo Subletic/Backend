@@ -15,6 +15,25 @@ namespace BackendTests
         {
             var testData = new[]
             {
+                // No Bubbles
+                new object[]
+                {
+                    new List<SpeechBubble> {},
+                    @"WEBVTT",
+                },
+
+                // 1 Bubble, no Tokens
+                new object[]
+                {
+                    new List<SpeechBubble>
+                    {
+                        new SpeechBubble(1, 1, 0.0, 1.0, new List<WordToken> {})
+                    },
+                    @"WEBVTT
+
+00:00:00.000 --> 00:00:01.000",
+                },
+
                 // 1 Bubble, 1 Token, 1 Speaker
                 new object[]
                 {
