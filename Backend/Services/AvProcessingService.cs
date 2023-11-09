@@ -333,7 +333,9 @@ public partial class AvProcessingService : IAvProcessingService
         try
         {
             Action<FFMpegArgumentOptions> outputOptions = options => options
-                .WithCustomArgument("-ac 1"); // downmix to mono
+                .WithCustomArgument("-ac 1") // downmix stereo audio to mono
+                .WithCustomArgument("-vn") // throw away video streams
+                .WithCustomArgument("-sn"); // throw away subtitle streams
             if (audioFormat.type == "raw")
             {
                 outputOptions += options => options
@@ -341,9 +343,7 @@ public partial class AvProcessingService : IAvProcessingService
                     .WithAudioSamplingRate(audioFormat.GetCheckedSampleRate());
             }
             await FFMpegArguments
-                .FromPipeInput(new StreamPipeSource (avStream), options => options
-                    .WithDuration(TimeSpan.FromMinutes(5)) // TODO just 5 minutes for now, capped just to be sure
-                )
+                .FromPipeInput(new StreamPipeSource (avStream))
                 .OutputToPipe(new StreamPipeSink(audioPipe.AsStream()), outputOptions)
                 .ProcessAsynchronously();
         }
