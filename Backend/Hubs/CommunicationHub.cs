@@ -15,14 +15,14 @@ namespace Backend.Hubs
         /// Dependency Injection of a queue of audio buffers.
         /// <see cref="ReceiveAudioStream" />
         /// </summary>
-        private readonly FrontendAudioQueueService _sendingAudioService;
+        private readonly FrontendAudioQueueService sendingAudioService;
 
         /// <summary>
         /// Constructor for Dependency Injection.
         /// </summary>
         public CommunicationHub (FrontendAudioQueueService sendingAudioService)
         {
-            _sendingAudioService = sendingAudioService;
+            this.sendingAudioService = sendingAudioService;
         }
 
         /// <summary>
@@ -40,7 +40,7 @@ namespace Backend.Hubs
                 cancellationToken.ThrowIfCancellationRequested();
 
                 short[]? receivedData;
-                if (_sendingAudioService.TryDequeue(out receivedData)) {
+                if (sendingAudioService.TryDequeue(out receivedData)) {
                     Console.WriteLine ("Sending audio data to frontend");
                     yield return receivedData!;
                 }

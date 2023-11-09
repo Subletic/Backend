@@ -10,7 +10,7 @@ public class WordToken
         EndTime = endTime;
         Speaker = speaker;
     }
-    
+
     public string Word { get; set; }
     public float Confidence { get; set; }
     public double StartTime { get; set; }

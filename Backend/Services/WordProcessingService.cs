@@ -13,21 +13,22 @@ public class WordProcessingService : IWordProcessingService
     /// Dependency Injection for accessing the LinkedList of SpeechBubbles and corresponding methods.
     /// All actions on the SpeechBubbleList are delegated to the SpeechBubbleListService.
     /// </summary>
-    private readonly ISpeechBubbleListService _speechBubbleListService;
+    private readonly ISpeechBubbleListService speechBubbleListService;
 
-    private readonly IHubContext<CommunicationHub> _hubContext;
-    private readonly List<WordToken> _wordTokenBuffer;
+    private readonly IHubContext<CommunicationHub> hubContext;
+    private readonly List<WordToken> wordTokenBuffer;
 
-    private long _nextSpeechBubbleId;
-    private int? _currentSpeaker;
+    private long nextSpeechBubbleId;
+    private int? currentSpeaker;
 
     public WordProcessingService(IHubContext<CommunicationHub> hubContext,
         ISpeechBubbleListService speechBubbleListService)
     {
-        _wordTokenBuffer = new List<WordToken>();
-        _nextSpeechBubbleId = 1;
-        _hubContext = hubContext;
-        _speechBubbleListService = speechBubbleListService;
+        this.wordTokenBuffer = new List<WordToken>();
+        this.hubContext = hubContext;
+        this.speechBubbleListService = speechBubbleListService;
+
+        nextSpeechBubbleId = 1;
     }
 
 
@@ -45,37 +46,37 @@ public class WordProcessingService : IWordProcessingService
         // Append point or comma to last WordToken
         if (wordToken.Word is "." or "," or "!" or "?")
         {
-            switch (_wordTokenBuffer.Count)
+            switch (wordTokenBuffer.Count)
             {
-                case 0 when _speechBubbleListService.GetSpeechBubbles().Count > 0:
+                case 0 when speechBubbleListService.GetSpeechBubbles().Count > 0:
                 {
-                    var lastSpeechBubble = _speechBubbleListService.GetSpeechBubbles().Last();
+                    var lastSpeechBubble = speechBubbleListService.GetSpeechBubbles().Last();
                     lastSpeechBubble.SpeechBubbleContent.Last().Word += wordToken.Word;
                     return;
                 }
                 case > 0:
-                    _wordTokenBuffer.Last().Word += wordToken.Word;
+                    wordTokenBuffer.Last().Word += wordToken.Word;
                     return;
             }
         }
 
         // Add new word Token to current Speech Bubble
-        if (_currentSpeaker != null && _currentSpeaker == wordToken.Speaker)
+        if (currentSpeaker != null && currentSpeaker == wordToken.Speaker)
         {
             if (IsSpeechBubbleFull(wordToken))
             {
                 FlushBufferToNewSpeechBubble();
             }
 
-            _wordTokenBuffer.Add(wordToken);
+            wordTokenBuffer.Add(wordToken);
         }
         // Finish current SpeechBubble if new Speaker is detected
-        else if (_currentSpeaker != null && _currentSpeaker != wordToken.Speaker)
+        else if (currentSpeaker != null && currentSpeaker != wordToken.Speaker)
         {
             FlushBufferToNewSpeechBubble();
 
-            _currentSpeaker = wordToken.Speaker;
-            _wordTokenBuffer.Add(wordToken);
+            currentSpeaker = wordToken.Speaker;
+            wordTokenBuffer.Add(wordToken);
         }
     }
 
@@ -96,16 +97,16 @@ public class WordProcessingService : IWordProcessingService
         const int maxSecondsTimeDifference = 5;
         var isTimeLimitExceeded = false;
 
-        if (_wordTokenBuffer.Count > 0)
+        if (wordTokenBuffer.Count > 0)
         {
-            var lastBufferElementTimeStamp = _wordTokenBuffer.Last().EndTime;
+            var lastBufferElementTimeStamp = wordTokenBuffer.Last().EndTime;
             var newWordTokenTimeStamp = wordToken.StartTime;
             var timeDifference = newWordTokenTimeStamp - lastBufferElementTimeStamp;
 
             isTimeLimitExceeded = timeDifference > maxSecondsTimeDifference;
         }
 
-        return _wordTokenBuffer.Count >= maxWordCount - 1 || isTimeLimitExceeded;
+        return wordTokenBuffer.Count >= maxWordCount - 1 || isTimeLimitExceeded;
     }
 
     /// <summary>
@@ -116,16 +117,16 @@ public class WordProcessingService : IWordProcessingService
     private async void FlushBufferToNewSpeechBubble()
     {
         var nextSpeechBubble = new SpeechBubble(
-            id: _nextSpeechBubbleId,
-            speaker: (int)_currentSpeaker!,
-            startTime: _wordTokenBuffer.First().StartTime,
-            endTime: _wordTokenBuffer.Last().EndTime,
-            wordTokens: new List<WordToken>(_wordTokenBuffer)
+            id: nextSpeechBubbleId,
+            speaker: (int)currentSpeaker!,
+            startTime: wordTokenBuffer.First().StartTime,
+            endTime: wordTokenBuffer.Last().EndTime,
+            wordTokens: new List<WordToken>(wordTokenBuffer)
         );
 
-        _nextSpeechBubbleId++;
-        _speechBubbleListService.AddNewSpeechBubble(nextSpeechBubble);
-        _wordTokenBuffer.Clear();
+        nextSpeechBubbleId++;
+        speechBubbleListService.AddNewSpeechBubble(nextSpeechBubble);
+        wordTokenBuffer.Clear();
 
         await SendNewSpeechBubbleMessageToFrontend(nextSpeechBubble);
     }
@@ -137,7 +138,7 @@ public class WordProcessingService : IWordProcessingService
     /// <param name="wordToken">The new Word Token received from the Mock-Server or Speech-Recognition Software</param>
     private void SetSpeakerIfSpeakerIsNull(WordToken wordToken)
     {
-        _currentSpeaker ??= wordToken.Speaker;
+        currentSpeaker ??= wordToken.Speaker;
     }
 
     /// <summary>
@@ -151,7 +152,7 @@ public class WordProcessingService : IWordProcessingService
 
         try
         {
-            await _hubContext.Clients.All.SendAsync("newBubble", listToSend);
+            await hubContext.Clients.All.SendAsync("newBubble", listToSend);
         }
         catch (Exception)
         {

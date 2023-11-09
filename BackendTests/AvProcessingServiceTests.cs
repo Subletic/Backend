@@ -9,20 +9,20 @@ namespace BackendTests
 {
     public class AvProcessingServiceTests
     {
-        private readonly Mock<IWordProcessingService> _wordProcessingServiceMock;
-        private readonly Mock<FrontendAudioQueueService> _frontendAudioQueueServiceMock;
+        private readonly Mock<IWordProcessingService> wordProcessingServiceMock;
+        private readonly Mock<FrontendAudioQueueService> frontendAudioQueueServiceMock;
 
         public AvProcessingServiceTests()
         {
-            _wordProcessingServiceMock = new Mock<IWordProcessingService>();
-            _frontendAudioQueueServiceMock = new Mock<FrontendAudioQueueService>();
+            wordProcessingServiceMock = new Mock<IWordProcessingService>();
+            frontendAudioQueueServiceMock = new Mock<FrontendAudioQueueService>();
         }
 
         [Test]
         public void Init_WithValidApiKey_ReturnsTrue()
         {
             // Arrange
-            var avProcessingService = new AvProcessingService(_wordProcessingServiceMock.Object, _frontendAudioQueueServiceMock.Object);
+            var avProcessingService = new AvProcessingService(wordProcessingServiceMock.Object, frontendAudioQueueServiceMock.Object);
             const string apiKeyVar = "API_KEY";
             Environment.SetEnvironmentVariable(apiKeyVar, "eHbFYSRbfbTyORS3cs3HmguSCL9XMbbv");
 
@@ -37,7 +37,7 @@ namespace BackendTests
         public void Init_WithNoApiKey_ReturnsFalse()
         {
             // Arrange
-            var avProcessingService = new AvProcessingService(_wordProcessingServiceMock.Object, _frontendAudioQueueServiceMock.Object);
+            var avProcessingService = new AvProcessingService(wordProcessingServiceMock.Object, frontendAudioQueueServiceMock.Object);
             const string apiKeyVar = "API_KEY";
             Environment.SetEnvironmentVariable(apiKeyVar, null);
 
@@ -52,7 +52,7 @@ namespace BackendTests
         public async Task TranscribeAudio_WithInvalidApiKey_ReturnsFalse()
         {
             // Arrange
-            var avProcessingService = new AvProcessingService(_wordProcessingServiceMock.Object, _frontendAudioQueueServiceMock.Object);
+            var avProcessingService = new AvProcessingService(wordProcessingServiceMock.Object, frontendAudioQueueServiceMock.Object);
             Stream audioStream = new MemoryStream(); // Erstellen Sie hier einen geeigneten Stream
 
             // Act
