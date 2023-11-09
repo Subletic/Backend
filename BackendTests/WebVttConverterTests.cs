@@ -11,37 +11,90 @@ namespace BackendTests
     [TestFixture]
     public class WebVttConverterTests
     {
-        [Test]
-        public void ConvertSpeechBubble_WritesCorrectWebVttContentToStream()
+        private static IEnumerable<object[]> EXPORT_DATA()
         {
-            // Erstellen Sie einen MemoryStream, um die Ausgabe zu erfassen
-            var outputStream = new MemoryStream();
-            var converter = new WebVttConverter(outputStream);
-
-            // Erstellen Sie eine Test-SpeechBubble
-            var speechBubble = new SpeechBubble(1, 0, 1.0, 2.5, new List<WordToken>
+            var testData = new[]
             {
-                new WordToken("Hello", 0.9f, 1.0, 1.2, 1),
-                new WordToken("world", 0.9f, 1.3, 1.5, 1),
-                new WordToken("!", 0.9f, 1.6, 1.8, 1)
-            });
+                // 1 Bubble, 1 Token, 1 Speaker
+                new object[]
+                {
+                    new List<SpeechBubble>
+                    {
+                        new SpeechBubble(1, 1, 0.2, 0.8, new List<WordToken>
+                        {
+                             new WordToken("Test", 0.5f, 0.2, 0.8, 1),
+                        })
+                    },
+                    @"WEBVTT
 
-            // Rufen Sie die Methode ConvertSpeechBubble auf
-            converter.ConvertSpeechBubble(speechBubble);
+00:00:00.200 --> 00:00:00.800
+Test",
+                },
 
-            // Stellen Sie den MemoryStream auf den Anfang zurück
-            outputStream.Position = 0;
-            var reader = new StreamReader(outputStream);
-            var exportedContent = reader.ReadToEnd();
-
-            // Erwartete WebVTT-Ausgabe
-            var expectedContent =
-                @"WEBVTT
+                // 1 Bubble, multiple Tokens, 1 Speaker
+                new object[]
+                {
+                    new List<SpeechBubble>
+                    {
+                        new SpeechBubble(1, 1, 1.0, 2.5, new List<WordToken>
+                        {
+                            new WordToken("Hello", 0.9f, 1.0, 1.2, 1),
+                            new WordToken("world!", 0.9f, 1.3, 1.5, 1),
+                        })
+                    },
+                    @"WEBVTT
 
 00:00:01.000 --> 00:00:02.500
-Hello
-world
-!";
+Hello world!",
+                },
+
+                // Multiple Bubbles, multiple Tokens, 1 Speaker
+                new object[]
+                {
+                    new List<SpeechBubble>
+                    {
+                        new SpeechBubble(1, 1, 7.8, 9.6, new List<WordToken>
+                        {
+                            new WordToken("Hello,", 0.9f, 7.8, 8.35, 1),
+                            new WordToken("everyone!", 0.4f, 8.4, 9.6, 1),
+                        }),
+                        new SpeechBubble(2, 1, 11.0, 12.5, new List<WordToken>
+                        {
+                            new WordToken("How", 1.0f, 11.0, 11.45, 1),
+                            new WordToken("are", 0.9f, 11.5, 11.95, 1),
+                            new WordToken("you?", 1.0f, 12.0, 12.5, 1),
+                        }),
+                    },
+                    @"WEBVTT
+
+00:00:07.800 --> 00:00:09.600
+Hello, everyone!
+
+00:00:11.000 --> 00:00:12.500
+How are you?",
+                },
+            };
+
+            foreach (object[] test in testData)
+                yield return test;
+        }
+
+        [Test, TestCaseSource(nameof(EXPORT_DATA))]
+        public void ConvertSpeechBubble_HandlesExampleCorrectly(List<SpeechBubble> speechBubbles, string expectedContent)
+        {
+            // Init converter
+            Stream outputStream = new MemoryStream();
+            ISubtitleConverter converter = new WebVttConverter(outputStream);
+
+            // Push SpeechBubbles through the converter
+            foreach (SpeechBubble speechBubble in speechBubbles)
+                converter.ConvertSpeechBubble(speechBubble);
+
+            // Read converter result
+            outputStream.Position = 0;
+            string exportedContent = "";
+            using (var reader = new StreamReader(outputStream))
+                exportedContent = reader.ReadToEnd();
 
             // Überprüfen Sie, ob die exportierte Ausgabe der erwarteten Ausgabe entspricht
             Assert.That(exportedContent, Is.EqualTo(expectedContent));
