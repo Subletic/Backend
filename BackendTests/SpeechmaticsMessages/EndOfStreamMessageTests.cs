@@ -1,4 +1,4 @@
-﻿using Backend.Data.SpeechmaticsMessages;
+﻿using Backend.Data.SpeechmaticsMessages.EndOfStreamMessage;
 using System.Text;
 using System.Text.Json;
 

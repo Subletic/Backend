@@ -11,14 +11,14 @@ public class SpeechBubbleListService : ISpeechBubbleListService
     /// <summary>
     /// Linked List that holds all SpeechBubbles.
     /// </summary>
-    private readonly LinkedList<SpeechBubble> _speechBubbleList;
+    private readonly LinkedList<SpeechBubble> speechBubbleList;
 
     /// <summary>
     /// Initializes new LinkedList on Startup.
     /// </summary>
     public SpeechBubbleListService()
     {
-        _speechBubbleList = new LinkedList<SpeechBubble>();
+        this.speechBubbleList = new LinkedList<SpeechBubble>();
     }
 
     /// <summary>
@@ -27,7 +27,7 @@ public class SpeechBubbleListService : ISpeechBubbleListService
     /// <returns>The List of SpeechBubbles</returns>
     public LinkedList<SpeechBubble> GetSpeechBubbles()
     {
-        return _speechBubbleList;
+        return speechBubbleList;
     }
 
     /// <summary>
@@ -37,7 +37,7 @@ public class SpeechBubbleListService : ISpeechBubbleListService
     /// <param name="speechBubble">The SpeechBubble to append to the List</param>
     public void AddNewSpeechBubble(SpeechBubble speechBubble)
     {
-        _speechBubbleList.AddLast(speechBubble);
+        speechBubbleList.AddLast(speechBubble);
     }
 
     /// <summary>
@@ -45,9 +45,9 @@ public class SpeechBubbleListService : ISpeechBubbleListService
     /// </summary>
     public void DeleteOldestSpeechBubble()
     {
-        _speechBubbleList.RemoveFirst();
+        speechBubbleList.RemoveFirst();
     }
-    
+
     /// <summary>
     /// Replaces a SpeechBubble in the LinkedList with a new SpeechBubble.
     /// The SpeechBubble with the same ID as the new SpeechBubble is replaced.
@@ -56,13 +56,13 @@ public class SpeechBubbleListService : ISpeechBubbleListService
     /// <param name="speechBubble">The SpeechBubble that changed.</param>
     public void ReplaceSpeechBubble(SpeechBubble speechBubble)
     {
-        if (_speechBubbleList.Count == 0)
+        if (speechBubbleList.Count == 0)
         {
-            _speechBubbleList.AddFirst(speechBubble);
+            speechBubbleList.AddFirst(speechBubble);
             return;
         }
 
-        var currentSpeechBubble = _speechBubbleList.First;
+        var currentSpeechBubble = speechBubbleList.First;
 
         while (currentSpeechBubble != null)
         {
@@ -71,9 +71,9 @@ public class SpeechBubbleListService : ISpeechBubbleListService
                 // Replace the object in the linked list
                 var oldSpeechBubbleCreationTime = currentSpeechBubble.Value.CreationTime;
                 speechBubble.CreationTime = oldSpeechBubbleCreationTime;
-                
-                _speechBubbleList.AddAfter(currentSpeechBubble, speechBubble);
-                _speechBubbleList.Remove(currentSpeechBubble);
+
+                speechBubbleList.AddAfter(currentSpeechBubble, speechBubble);
+                speechBubbleList.Remove(currentSpeechBubble);
                 return;
             }
             currentSpeechBubble = currentSpeechBubble.Next; // Move to the next node

@@ -6,6 +6,13 @@ var builder = WebApplication.CreateBuilder(args);
 // If frontend URL is not specified, use default value (localhost:4200)
 var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:4200";
 
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json")
+    .Build();
+
+builder.Services.AddSingleton<IConfiguration>(configuration);
+
 // Add services to the container.
 builder.Services.AddControllers();
 
@@ -21,11 +28,11 @@ builder.Services.AddSingleton<IAvProcessingService, AvProcessingService>();
 
 builder.Services.AddSingleton<IWordProcessingService, WordProcessingService>();
 
+builder.Services.AddSingleton<IAvReceiverService, AvReceiverService>();
+
+builder.Services.AddSingleton<ISubtitleExporterService, SubtitleExporterService>();
+
 builder.Services.AddSingleton<FrontendAudioQueueService, FrontendAudioQueueService>();
-
-builder.Services.AddSingleton<WebVttExporter>();
-
-builder.Services.AddSingleton<Stream>(File.Open("output.vtt", FileMode.Create));
 
 builder.Services.AddHostedService<StartupService>();
 
@@ -51,6 +58,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseWebSockets();
 
 app.UseRouting();
 

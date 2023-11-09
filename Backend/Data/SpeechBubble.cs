@@ -13,7 +13,7 @@ public class SpeechBubble
         SpeechBubbleContent = wordTokens;
         CreationTime = DateTime.Now;
     }
-    
+
     public long Id { get; init; }
     public int Speaker { get; set; }
     public double StartTime { get; set; }

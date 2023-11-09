@@ -15,7 +15,17 @@ using System.Threading;
 
 using Backend.Controllers;
 using Backend.Data;
-using Backend.Data.SpeechmaticsMessages;
+using Backend.Data.SpeechmaticsMessages.AddTranscriptMessage;
+using Backend.Data.SpeechmaticsMessages.AddTranscriptMessage.result;
+using Backend.Data.SpeechmaticsMessages.AudioAddedMessage;
+using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage;
+using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.audio_format;
+using Backend.Data.SpeechmaticsMessages.EndOfStreamMessage;
+using Backend.Data.SpeechmaticsMessages.ErrorMessage;
+using Backend.Data.SpeechmaticsMessages.WarningMessage;
+using Backend.Data.SpeechmaticsMessages.InfoMessage;
+using Backend.Data.SpeechmaticsMessages.RecognitionStartedMessage;
+using Backend.Data.SpeechmaticsMessages.EndOfTranscriptMessage;
 
 namespace Backend.Services;
 
@@ -45,27 +55,20 @@ public partial class AvProcessingService : IAvProcessingService
 {
     /**
       *  <summary>
-      *  The Speechmatics URL we'll send the API key to in order to request a RT API access token.
-      *  </summary>
-      */
-    private static readonly string urlRequestKey = "https://mp.speechmatics.com/v1/api_keys?type=rt";
-
-    /**
-      *  <summary>
       *  A URL template for the Speechmatics RT API.
       *  The received RT API access token shall be filled in to get the URL we'll need to use.
       *  </summary>
       */
-    private static readonly string urlRecognitionTemplate = "wss://eu2.rt.speechmatics.com/v2/de?jwt={0}";
+    private static readonly string urlRecognitionTemplate = "wss://neu.rt.speechmatics.com/v2/de";
 
     /**
       *  <summary>
       *  A description of the audio format we'll send to the RT API.
-      *  <see cref="StartRecognitionMessage_AudioType" />
+      *  <see cref="StartRecognitionMessage_AudioFormat" />
       *  </summary>
       */
-    private static readonly StartRecognitionMessage_AudioType audioType =
-        new StartRecognitionMessage_AudioType ("raw", "pcm_s16le", 48000);
+    private static readonly StartRecognitionMessage_AudioFormat audioFormat =
+        new StartRecognitionMessage_AudioFormat("raw", "pcm_s16le", 48000);
 
     /**
       *  <summary>
@@ -154,28 +157,20 @@ public partial class AvProcessingService : IAvProcessingService
       *  A Queue that buffers the decoded audio until it is needed for the final re-muxing.
       *  </summary>
       */
-    private static AudioQueue audioQueue = new AudioQueue (audioMuxingPipe.Writer);
-
-    /**
-      *  <summary>
-      *  Unused private field to store an instance of WebVttExporter
-      *  </summary>
-    */
-    private readonly WebVttExporter _webVttExporter;
+    private static AudioQueue audioQueue = new AudioQueue(audioMuxingPipe.Writer);
 
     /**
       *  <summary>
       *  Constructor of the service.
       *  <param name="wordProcessingService">The <c>SpeechBubbleController</c> to push new words into</param>
       *  <param name="sendingAudioService">The <c>FrontendAudioQueueService</c> to push new audio into for the Frontend</param>
-      *  <param name="WebVttExporter">Unused <c>WebVttExporter</c></param>
       *  </summary>
       */
-    public AvProcessingService (IWordProcessingService wordProcessingService, FrontendAudioQueueService sendingAudioService, WebVttExporter webVttExporter)
+    public AvProcessingService(IWordProcessingService wordProcessingService,
+        FrontendAudioQueueService sendingAudioService)
     {
         _wordProcessingService = wordProcessingService;
         _frontendAudioQueueService = sendingAudioService;
-        _webVttExporter = webVttExporter;
         Console.WriteLine("AvProcessingService is started!");
     }
 
@@ -185,9 +180,9 @@ public partial class AvProcessingService : IAvProcessingService
       *  <see cref="logReceive" />
       *  </summary>
       */
-    private static void logSend (string message)
+    private static void logSend(string message)
     {
-        Console.WriteLine ($"Sending to Speechmatics: {message}");
+        Console.WriteLine($"Sending to Speechmatics: {message}");
     }
 
     /**
@@ -196,9 +191,9 @@ public partial class AvProcessingService : IAvProcessingService
       *  <see cref="logSend" />
       *  </summary>
       */
-    private static void logReceive (string message)
+    private static void logReceive(string message)
     {
-        Console.WriteLine ($"Received from Speechmatics: {message}");
+        Console.WriteLine($"Received from Speechmatics: {message}");
     }
 
     /**
@@ -225,15 +220,15 @@ public partial class AvProcessingService : IAvProcessingService
       *  <see cref="System.Text.Json.JsonSerializer.Deserialize{T}" />
       *  </summary>
       */
-    private static T DeserializeMessage<T> (string buffer, string messageName = "unknown",
+    private static T DeserializeMessage<T>(string buffer, string messageName = "unknown",
         string descriptionOfMessage = "a message")
     {
-        T? messageMaybe = JsonSerializer.Deserialize<T> (buffer, jsonOptions);
+        T? messageMaybe = JsonSerializer.Deserialize<T>(buffer, jsonOptions);
         if (messageMaybe is null)
-            throw new InvalidOperationException ($"Failed to deserialize {messageName} message "
+            throw new InvalidOperationException($"Failed to deserialize {messageName} message "
                 + $"into type {typeof(T).ToString()}");
 
-        Console.WriteLine ($"Speechmatics sent {descriptionOfMessage}");
+        Console.WriteLine($"Speechmatics sent {descriptionOfMessage}");
         return messageMaybe!;
     }
 
@@ -244,58 +239,24 @@ public partial class AvProcessingService : IAvProcessingService
       *  <param name="apiKeyVar">The name of the environment variable that holds your API key.</param>
       *
       *  <returns>
-      *  An <c>await</c>able <c>Task{bool}</c> indicating if the envvar was set and we got an RT API access token.
+      *  A <c>bool</c> indicating if the envvar was set and the RT API can be used.
       *  </returns>
-      *
-      *  <exception cref="InvalidOperationException">
-      *  1. If the request to Speechmatics returned an unexpected (unsuccessful) status code.
-      *  2. If the response from Speechmatics deserialised into <c>null</c>. See <c>DeserializeMessage{T}</c> for
-      *  details.
-      *  </exception>
       *
       *  <see cref="DeserializeMessage{T}" />
       *  <see cref="apiKey" />
       *  </summary>
       */
-    public async Task<bool> Init(string apiKeyVar)
+    public bool Init(string apiKeyVar)
     {
         // TODO is it safer to only read a file path to the secret from envvar?
-        string? apiKeyEnvMaybe = Environment.GetEnvironmentVariable (apiKeyVar);
+        string? apiKeyEnvMaybe = Environment.GetEnvironmentVariable(apiKeyVar);
         if (apiKeyEnvMaybe == null)
         {
-            Console.WriteLine ($"Requested {apiKeyVar} envvar is not set");
+            Console.WriteLine($"Requested {apiKeyVar} envvar is not set");
             return false;
         }
-        string apiKeyEnv = apiKeyEnvMaybe!;
 
-        HttpRequestMessage keyRequest = new HttpRequestMessage (HttpMethod.Post, urlRequestKey);
-        keyRequest.Headers.Authorization = new AuthenticationHeaderValue ("Bearer", apiKeyEnv);
-        keyRequest.Content = new StringContent (
-            // TODO don't manually hack together JSON like this
-            "{\"ttl\": 1200}",
-            Encoding.UTF8,
-            new MediaTypeHeaderValue ("application/json"));
-
-        var keyResponse = await new HttpClient().SendAsync (keyRequest);
-        string keyResponseString = await keyResponse.Content.ReadAsStringAsync();
-
-        if (!keyResponse.IsSuccessStatusCode)
-        {
-            // TODO maybe just log and return false instead
-            throw new InvalidOperationException (String.Format (
-                "Speechmatics key request returned unexpected code {0}: {1}",
-                keyResponse.StatusCode, keyResponseString));
-        }
-
-        // TODO use DeserializeMessage?
-        TemporaryKeyResponse? keyResponseParsed = JsonSerializer.Deserialize<TemporaryKeyResponse> (
-            keyResponseString, jsonOptions);
-        if (keyResponseParsed is null)
-            throw new InvalidOperationException ("Failed to deserialize key request response");
-        apiKey = keyResponseParsed!.key_value;
-
-        // FIXME don't print this outside of debugging
-        Console.WriteLine ($"Key: {apiKey}");
+        apiKey = apiKeyEnvMaybe!;
         return true;
     }
 
@@ -314,27 +275,27 @@ public partial class AvProcessingService : IAvProcessingService
       *  <seealso cref="TranscribeAudio" />
       *  </summary>
       */
-    private static async Task<bool> SendStartRecognition (ClientWebSocket wsClient)
+    private static async Task<bool> SendStartRecognition(ClientWebSocket wsClient)
     {
         bool success = true;
 
         try
         {
             // serialisation may fail
-            string startRecognitionMessage = JsonSerializer.Serialize (new StartRecognitionMessage (audioType),
+            string startRecognitionMessage = JsonSerializer.Serialize(new StartRecognitionMessage(audioFormat),
                 jsonOptions);
 
-            logSend (startRecognitionMessage);
+            logSend(startRecognitionMessage);
 
             // socket may be closed unexpectedly
-            await wsClient.SendAsync (Encoding.UTF8.GetBytes (startRecognitionMessage),
+            await wsClient.SendAsync(Encoding.UTF8.GetBytes(startRecognitionMessage),
                 WebSocketMessageType.Text,
                 true,
                 CancellationToken.None);
         }
         catch (Exception e)
         {
-            Console.WriteLine (e.ToString());
+            Console.WriteLine(e.ToString());
             success = false;
         }
 
@@ -364,34 +325,38 @@ public partial class AvProcessingService : IAvProcessingService
       *  <seealso cref="TranscribeAudio" />
       *  </summary>
       */
-    private async Task<bool> ProcessAudioToStream (Uri mediaUri, PipeWriter audioPipe)
+    private async Task<bool> ProcessAudioToStream(Stream avStream, PipeWriter audioPipe)
     {
-        Console.WriteLine ("Started audio processing");
+        Console.WriteLine("Started audio processing");
         bool success = true;
 
-        try {
+        try
+        {
             Action<FFMpegArgumentOptions> outputOptions = options => options
-                .WithCustomArgument("-ac 1"); // downmix to mono
-            if (audioType.type == "raw") {
+                .WithCustomArgument("-ac 1") // downmix stereo audio to mono
+                .WithCustomArgument("-vn") // throw away video streams
+                .WithCustomArgument("-sn"); // throw away subtitle streams
+            if (audioFormat.type == "raw")
+            {
                 outputOptions += options => options
-                    .ForceFormat(audioType.encodingToFFMpegFormat())
-                    .WithAudioSamplingRate (audioType.getCheckedSampleRate());
+                    .ForceFormat(audioFormat.GetEncodingInFFMpegFormat())
+                    .WithAudioSamplingRate(audioFormat.GetCheckedSampleRate());
             }
             await FFMpegArguments
-                .FromUrlInput (mediaUri, options => options
-                    .WithDuration(TimeSpan.FromMinutes(5)) // TODO just 5 minutes for now, capped just to be sure
-                )
-                .OutputToPipe (new StreamPipeSink (audioPipe.AsStream ()), outputOptions)
+                .FromPipeInput(new StreamPipeSource (avStream))
+                .OutputToPipe(new StreamPipeSink(audioPipe.AsStream()), outputOptions)
                 .ProcessAsynchronously();
-        } catch (Exception e) {
-            Console.WriteLine (e.ToString());
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.ToString());
             success = false;
         }
 
         // always flush & mark complete, so other side of pipe can move on
         await audioPipe.FlushAsync();
         await audioPipe.CompleteAsync();
-        Console.WriteLine ("Completed audio processing");
+        Console.WriteLine("Completed audio processing");
 
         return success;
     }
@@ -414,30 +379,30 @@ public partial class AvProcessingService : IAvProcessingService
       *  <seealso cref="TranscribeAudio" />
       *  </summary>
       */
-    private async Task<bool> SendAudio (ClientWebSocket wsClient, Uri mediaUri)
+    private async Task<bool> SendAudio(ClientWebSocket wsClient, Stream avStream)
     {
-        Console.WriteLine ("Starting audio sending");
+        Console.WriteLine("Starting audio sending");
 
         bool success = true;
-        Pipe audioPipe = new Pipe ();
-        Stream audioPipeReader = audioPipe.Reader.AsStream (false);
-        Task<bool> audioProcessor = ProcessAudioToStream (mediaUri, audioPipe.Writer);
+        Pipe audioPipe = new Pipe();
+        Stream audioPipeReader = audioPipe.Reader.AsStream(false);
+        Task<bool> audioProcessor = ProcessAudioToStream(avStream, audioPipe.Writer);
 
         int offset = 0;
         int readCount;
 
         try
         {
-            byte[] buffer = new byte[audioType.getCheckedSampleRate() * audioType.bytesPerSample()]; // 1s
-            Console.WriteLine ("Started audio sending");
+            byte[] buffer = new byte[audioFormat.GetCheckedSampleRate() * audioFormat.GetBytesPerSample()]; // 1s
+            Console.WriteLine("Started audio sending");
             do
             {
                 // wide range of possible exceptions
-                readCount = await audioPipeReader.ReadAsync (buffer.AsMemory (offset, buffer.Length - offset));
+                readCount = await audioPipeReader.ReadAsync(buffer.AsMemory(offset, buffer.Length - offset));
                 offset += readCount;
 
                 if (readCount != 0)
-                    Console.WriteLine ($"read {readCount} audio bytes from pipe");
+                    Console.WriteLine($"read {readCount} audio bytes from pipe");
 
                 bool lastWithLeftovers = readCount == 0 && offset > 0;
                 bool shouldSend = (offset == buffer.Length) || lastWithLeftovers;
@@ -445,32 +410,34 @@ public partial class AvProcessingService : IAvProcessingService
                 if (!shouldSend) continue;
 
                 byte[] sendBuffer = buffer;
-                if (lastWithLeftovers) {
+                if (lastWithLeftovers)
+                {
                     sendBuffer = new byte[offset];
-                    Array.Copy (buffer, 0, sendBuffer, 0, sendBuffer.Length);
+                    Array.Copy(buffer, 0, sendBuffer, 0, sendBuffer.Length);
                 }
 
-                logSend ($"[{sendBuffer.Length} bytes of binary audio data]");
+                logSend($"[{sendBuffer.Length} bytes of binary audio data]");
 
                 // socket may be closed unexpectedly
-                await wsClient.SendAsync (sendBuffer,
+                await wsClient.SendAsync(sendBuffer,
                     WebSocketMessageType.Binary,
                     true,
                     CancellationToken.None);
 
                 // store only decoded audio
                 short[] storeShortBuffer = new short[buffer.Length / 2];
-                Buffer.BlockCopy (sendBuffer, 0, storeShortBuffer, 0, (sendBuffer.Length / 2) * 2);
+                Buffer.BlockCopy(sendBuffer, 0, storeShortBuffer, 0, (sendBuffer.Length / 2) * 2);
                 // Task storingAudioBuffer = audioQueue.Enqueue (storeShortBuffer);
 
                 // play back with zero padding
-                if (lastWithLeftovers) {
+                if (lastWithLeftovers)
+                {
                     sendBuffer = new byte[buffer.Length];
-                    Array.Copy (buffer, 0, sendBuffer, 0, buffer.Length);
+                    Array.Copy(buffer, 0, sendBuffer, 0, buffer.Length);
                 }
-                short[] sendShortBuffer = new short[audioType.getCheckedSampleRate()];
-                Buffer.BlockCopy (sendBuffer, 0, sendShortBuffer, 0, sendBuffer.Length);
-                _frontendAudioQueueService.Enqueue (sendShortBuffer);
+                short[] sendShortBuffer = new short[audioFormat.GetCheckedSampleRate()];
+                Buffer.BlockCopy(sendBuffer, 0, sendShortBuffer, 0, sendBuffer.Length);
+                _frontendAudioQueueService.Enqueue(sendShortBuffer);
 
                 sentNum += 1;
                 offset = 0;
@@ -478,18 +445,18 @@ public partial class AvProcessingService : IAvProcessingService
                 // await storingAudioBuffer;
                 // TODO remove when we handle an actual livestream
                 // processing a local file is much faster than receiving networked A/V in realtime, simulate the delay
-                await Task.Delay (1000);
+                await Task.Delay(1000);
             } while (readCount != 0);
         }
         catch (Exception e)
         {
-            Console.WriteLine (e.ToString());
+            Console.WriteLine(e.ToString());
             success = false;
         }
-        Console.WriteLine ("Completed audio sending");
+        Console.WriteLine("Completed audio sending");
 
         success = success && await audioProcessor;
-        Console.WriteLine ("Done sending audio");
+        Console.WriteLine("Done sending audio");
 
         return success;
     }
@@ -508,26 +475,26 @@ public partial class AvProcessingService : IAvProcessingService
       *  <see cref="EndOfStreamMessage" />
       *  </summary>
       */
-    private async Task<bool> SendEndOfStream (ClientWebSocket wsClient)
+    private async Task<bool> SendEndOfStream(ClientWebSocket wsClient)
     {
         bool success = true;
 
         try
         {
             // serialisation may fail
-            string endOfStreamMessage = JsonSerializer.Serialize(new EndOfStreamMessage (seqNum), jsonOptions);
+            string endOfStreamMessage = JsonSerializer.Serialize(new EndOfStreamMessage(seqNum), jsonOptions);
 
-            logSend (endOfStreamMessage);
+            logSend(endOfStreamMessage);
 
             // socket may be closed unexpectedly
-            await wsClient.SendAsync (Encoding.UTF8.GetBytes (endOfStreamMessage),
+            await wsClient.SendAsync(Encoding.UTF8.GetBytes(endOfStreamMessage),
                 WebSocketMessageType.Text,
                 true,
                 CancellationToken.None);
         }
         catch (Exception e)
         {
-            Console.WriteLine (e.ToString());
+            Console.WriteLine(e.ToString());
             success = false;
         }
 
@@ -563,38 +530,38 @@ public partial class AvProcessingService : IAvProcessingService
       *  <see cref="System.Text.Json.JsonSerializer.Deserialize{T}" />
       *  </summary>
       */
-    private bool HandleSpeechmaticsResponse (string responseString)
+    private bool HandleSpeechmaticsResponse(string responseString)
     {
-        MatchCollection messageMatches = messageTypeRegex().Matches (responseString);
+        MatchCollection messageMatches = messageTypeRegex().Matches(responseString);
         if (messageMatches.Count != 1)
-            throw new ArgumentException (
+            throw new ArgumentException(
                 $"Found unexpected amount of message type matches: {messageMatches.Count}");
 
         switch (messageMatches[0].Groups[1].ToString())
         {
             case "Error":
-                ErrorMessage errorMessage = DeserializeMessage<ErrorMessage> (responseString,
+                ErrorMessage errorMessage = DeserializeMessage<ErrorMessage>(responseString,
                     "Error", "a critical error");
 
                 // the server has stopped the transcription and will close the connection. propagate its error
-                throw new InvalidOperationException ($"{errorMessage.type}: {errorMessage.reason}");
+                throw new InvalidOperationException($"{errorMessage.type}: {errorMessage.reason}");
 
             case "Warning":
-                WarningMessage warningMessage = DeserializeMessage<WarningMessage> (responseString,
+                WarningMessage warningMessage = DeserializeMessage<WarningMessage>(responseString,
                     "Warning", "a warning");
 
                 // nothing, just nice to know
                 return false;
 
             case "Info":
-                InfoMessage infoMessage = DeserializeMessage<InfoMessage> (responseString,
+                InfoMessage infoMessage = DeserializeMessage<InfoMessage>(responseString,
                     "Info", "additional information");
 
                 // nothing, just nice to know
                 return false;
 
             case "RecognitionStarted":
-                RecognitionStartedMessage rsMessage = DeserializeMessage<RecognitionStartedMessage> (
+                RecognitionStartedMessage rsMessage = DeserializeMessage<RecognitionStartedMessage>(
                     responseString, "RecognitionStarted",
                     "a confirmation that it is ready to transcribe our audio");
 
@@ -602,7 +569,7 @@ public partial class AvProcessingService : IAvProcessingService
                 return false;
 
             case "AudioAdded":
-                AudioAddedMessage aaMessage = DeserializeMessage<AudioAddedMessage> (responseString,
+                AudioAddedMessage aaMessage = DeserializeMessage<AudioAddedMessage>(responseString,
                     "AudioAdded", "a confirmation that it received our audio");
 
                 // TODO inform sending side of this class that Speechmatics is still confirming audio receivals,
@@ -610,7 +577,7 @@ public partial class AvProcessingService : IAvProcessingService
                 seqNum += 1;
                 if (aaMessage.seq_no != seqNum)
                 {
-                    Console.WriteLine (String.Format (
+                    Console.WriteLine(String.Format(
                         "expected seq_no {0}, received {1} - error? copying received one",
                         seqNum, aaMessage.seq_no));
                     seqNum = aaMessage.seq_no;
@@ -618,25 +585,25 @@ public partial class AvProcessingService : IAvProcessingService
                 return false;
 
             case "AddTranscript":
-                AddTranscriptMessage atMessage = DeserializeMessage<AddTranscriptMessage> (responseString,
+                AddTranscriptMessage atMessage = DeserializeMessage<AddTranscriptMessage>(responseString,
                     "AddTranscript", "a transcription of our audio");
 
-                Console.WriteLine ($"Received transcript: {atMessage.metadata.transcript}");
+                Console.WriteLine($"Received transcript: {atMessage.metadata.transcript}");
 
-                foreach (AddTranscriptMessage_result transcript in atMessage.results!)
+                foreach (AddTranscriptMessage_Result transcript in atMessage.results!)
                 {
                     // the specs say an AddTranscript.results may come without an alternatives list.
                     // TODO what is its purpose?
                     if (transcript.alternatives is null)
-                        throw new InvalidOperationException (
+                        throw new InvalidOperationException(
                             "Received a transcript result without an alternatives list. "
                             + "Specifications say this is a possibility, but what is its purpose? "
                             + $"Analyse: {responseString}");
 
-                    _wordProcessingService.HandleNewWord (new WordToken(
+                    _wordProcessingService.HandleNewWord(new WordToken(
                         // docs say this sends a list, I've only ever seen it send 1 result
                         transcript.alternatives![0].content,
-                        (float) transcript.alternatives![0].confidence,
+                        (float)transcript.alternatives![0].confidence,
                         transcript.start_time,
                         transcript.end_time,
                         // TODO api sends a string if this feature is requested, extract a number from it
@@ -647,14 +614,14 @@ public partial class AvProcessingService : IAvProcessingService
                 }
                 return false;
 
-           case "EndOfTranscript":
-                EndOfTranscriptMessage eotMessage = DeserializeMessage<EndOfTranscriptMessage> (responseString,
+            case "EndOfTranscript":
+                EndOfTranscriptMessage eotMessage = DeserializeMessage<EndOfTranscriptMessage>(responseString,
                     "EndOfTranscript", "a confirmation that the current transcription process is now done");
 
                 return true;
 
-           default:
-                throw new ArgumentException ($"Unknown Speechmatics message: {responseString}");
+            default:
+                throw new ArgumentException($"Unknown Speechmatics message: {responseString}");
         }
     }
 
@@ -673,34 +640,36 @@ public partial class AvProcessingService : IAvProcessingService
       *  <seealso cref="HandlespeechmaticsResponse" />
       *  </summary>
       */
-    private async Task<bool> ReceiveMessages (ClientWebSocket wsClient) {
-        Console.WriteLine ("Starting message receiving");
+    private async Task<bool> ReceiveMessages(ClientWebSocket wsClient)
+    {
+        Console.WriteLine("Starting message receiving");
         bool success = true;
         bool doneReceivingMessages = false;
         byte[] responseBuffer = new byte[16 * 1024]; // 16 kiB, AddTranscript messages can be extremely long
         string responseString;
 
-        Console.WriteLine ("Started message receiving");
+        Console.WriteLine("Started message receiving");
         try
         {
-            while (!doneReceivingMessages) {
+            while (!doneReceivingMessages)
+            {
                 // socket may be closed unexpectedly
-                var response = await wsClient.ReceiveAsync (responseBuffer,
+                var response = await wsClient.ReceiveAsync(responseBuffer,
                     CancellationToken.None);
-                responseString = Encoding.UTF8.GetString (responseBuffer, 0, response.Count);
-                logReceive (responseString);
+                responseString = Encoding.UTF8.GetString(responseBuffer, 0, response.Count);
+                logReceive(responseString);
 
                 // may throw deserialisation-related exceptions, or on issues with identifying the type of message,
                 // or on Error message
-                doneReceivingMessages = HandleSpeechmaticsResponse (responseString);
+                doneReceivingMessages = HandleSpeechmaticsResponse(responseString);
             }
         }
         catch (Exception e)
         {
-            Console.WriteLine (e.ToString());
+            Console.WriteLine(e.ToString());
             success = false;
         }
-        Console.WriteLine ("Completed message receiving");
+        Console.WriteLine("Completed message receiving");
 
         return success;
     }
@@ -726,10 +695,11 @@ public partial class AvProcessingService : IAvProcessingService
       *  <seealso cref="SendEndOfStream" />
       *  </summary>
       */
-    public async Task<bool> TranscribeAudio (Uri mediaUri) {
+    public async Task<bool> TranscribeAudio(Stream avStream)
+    {
         if (apiKey is null)
         {
-            Console.WriteLine ("Valid Speechmatics API key required, call AvProcessingService.Init first");
+            Console.WriteLine("Valid Speechmatics API key required, call AvProcessingService.Init first");
             return false;
         }
 
@@ -737,21 +707,22 @@ public partial class AvProcessingService : IAvProcessingService
         bool successReceiving = true;
 
         ClientWebSocket wsClient = new ClientWebSocket();
-        await wsClient.ConnectAsync (
-            new Uri (String.Format (urlRecognitionTemplate, apiKey!)),
+        wsClient.Options.SetRequestHeader("Authorization", $"Bearer {apiKey!}");
+        await wsClient.ConnectAsync(
+            new Uri(urlRecognitionTemplate),
             CancellationToken.None);
 
         // start tracking sent & confirmed audio packet counts
         sentNum = 0;
         seqNum = 0;
 
-        Task<bool> receiveMessages = ReceiveMessages (wsClient);
+        Task<bool> receiveMessages = ReceiveMessages(wsClient);
 
-        successSending = await SendStartRecognition (wsClient);
+        successSending = await SendStartRecognition(wsClient);
         if (successSending)
-            successSending = await SendAudio (wsClient, mediaUri);
+            successSending = await SendAudio(wsClient, avStream);
         if (successSending)
-            successSending = await SendEndOfStream (wsClient);
+            successSending = await SendEndOfStream(wsClient);
 
         successReceiving = await receiveMessages;
 
@@ -772,7 +743,7 @@ public partial class AvProcessingService : IAvProcessingService
                 wsCloseReason += " receiving";
         }
 
-        await wsClient.CloseAsync (wsCloseStatus, wsCloseReason, CancellationToken.None);
+        await wsClient.CloseAsync(wsCloseStatus, wsCloseReason, CancellationToken.None);
 
         return successSending && successReceiving;
     }

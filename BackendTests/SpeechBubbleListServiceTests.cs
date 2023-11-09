@@ -6,31 +6,31 @@ namespace BackendTests
     [TestFixture]
     public class SpeechBubbleListServiceTests
     {
-        private SpeechBubbleListService _speechBubbleListService;
-        private readonly SpeechBubble _testSpeechBubble1;
-        private readonly SpeechBubble _testSpeechBubble2;
+        private SpeechBubbleListService speechBubbleListService;
+        private readonly SpeechBubble testSpeechBubble1;
+        private readonly SpeechBubble testSpeechBubble2;
 
         public SpeechBubbleListServiceTests()
         {
-            _speechBubbleListService = new SpeechBubbleListService();
+            speechBubbleListService = new SpeechBubbleListService();
 
             var firstWord = new WordToken(word: "Test", confidence: 0.9f, startTime: 1, endTime: 2, speaker: 1);
             var secondWord = new WordToken(word: "Test2", confidence: 0.7f, startTime: 3, endTime: 4, speaker: 2);
             var thirdWord = new WordToken(word: "Test3", confidence: 0.7f, startTime: 10, endTime: 11, speaker: 2);
             var fourthWord = new WordToken(word: "Test4", confidence: 0.7f, startTime: 12, endTime: 14, speaker: 2);
 
-            _testSpeechBubble1 = new SpeechBubble
+            testSpeechBubble1 = new SpeechBubble
             (
-                1, 
+                1,
                 1,
                 1,
                 1,
                 new List<WordToken> { firstWord, secondWord, thirdWord, fourthWord }
             );
 
-            _testSpeechBubble2 = new SpeechBubble
+            testSpeechBubble2 = new SpeechBubble
             (
-                2, 
+                2,
                 1,
                 1,
                 1,
@@ -41,13 +41,13 @@ namespace BackendTests
         [SetUp]
         public void SetUp()
         {
-            _speechBubbleListService = new SpeechBubbleListService();
+            speechBubbleListService = new SpeechBubbleListService();
         }
 
         [Test]
         public void GetSpeechBubbles_ReturnsEmptyList_WhenNoSpeechBubblesAdded()
         {
-            var speechBubbles = _speechBubbleListService.GetSpeechBubbles();
+            var speechBubbles = speechBubbleListService.GetSpeechBubbles();
 
             Assert.That(speechBubbles, Is.Empty);
         }
@@ -55,24 +55,24 @@ namespace BackendTests
         [Test]
         public void AddNewSpeechBubble_AddsSpeechBubbleToList()
         {
-            _speechBubbleListService.AddNewSpeechBubble(_testSpeechBubble1);
-            var speechBubbles = _speechBubbleListService.GetSpeechBubbles();
+            speechBubbleListService.AddNewSpeechBubble(testSpeechBubble1);
+            var speechBubbles = speechBubbleListService.GetSpeechBubbles();
 
             Assert.That(speechBubbles, Has.Count.EqualTo(1));
-            Assert.That(speechBubbles.First!.Value, Is.EqualTo(_testSpeechBubble1));
+            Assert.That(speechBubbles.First!.Value, Is.EqualTo(testSpeechBubble1));
         }
 
         [Test]
         public void DeleteOldestSpeechBubble_RemovesOldestSpeechBubbleFromList()
         {
-            _speechBubbleListService.AddNewSpeechBubble(_testSpeechBubble1);
-            _speechBubbleListService.AddNewSpeechBubble(_testSpeechBubble2);
+            speechBubbleListService.AddNewSpeechBubble(testSpeechBubble1);
+            speechBubbleListService.AddNewSpeechBubble(testSpeechBubble2);
 
-            _speechBubbleListService.DeleteOldestSpeechBubble();
-            var speechBubbles = _speechBubbleListService.GetSpeechBubbles();
+            speechBubbleListService.DeleteOldestSpeechBubble();
+            var speechBubbles = speechBubbleListService.GetSpeechBubbles();
 
             Assert.That(speechBubbles, Has.Count.EqualTo(1));
-            Assert.That(speechBubbles.First!.Value, Is.EqualTo(_testSpeechBubble2));
+            Assert.That(speechBubbles.First!.Value, Is.EqualTo(testSpeechBubble2));
         }
 
         [Test]
@@ -82,7 +82,7 @@ namespace BackendTests
 
             var testSpeechBubble1 = new SpeechBubble
             (
-                1, 
+                1,
                 1,
                 1,
                 1,
@@ -91,7 +91,7 @@ namespace BackendTests
 
             var testSpeechBubble2 = new SpeechBubble
             (
-                2, 
+                2,
                 1,
                 1,
                 1,
@@ -100,18 +100,18 @@ namespace BackendTests
 
             var testSpeechBubble3 = new SpeechBubble
             (
-                1, 
+                1,
                 1,
                 1,
                 1,
                 new List<WordToken> { fourthWord }
             );
 
-            _speechBubbleListService.AddNewSpeechBubble(testSpeechBubble1);
-            _speechBubbleListService.AddNewSpeechBubble(testSpeechBubble2);
+            speechBubbleListService.AddNewSpeechBubble(testSpeechBubble1);
+            speechBubbleListService.AddNewSpeechBubble(testSpeechBubble2);
 
-            _speechBubbleListService.ReplaceSpeechBubble(testSpeechBubble3);
-            var speechBubbles = _speechBubbleListService.GetSpeechBubbles();
+            speechBubbleListService.ReplaceSpeechBubble(testSpeechBubble3);
+            var speechBubbles = speechBubbleListService.GetSpeechBubbles();
 
             Assert.That(speechBubbles, Has.Count.EqualTo(2));
             Assert.Multiple(() =>
@@ -128,7 +128,7 @@ namespace BackendTests
 
             var testSpeechBubble1 = new SpeechBubble
             (
-                1, 
+                1,
                 1,
                 1,
                 1,
@@ -137,7 +137,7 @@ namespace BackendTests
 
             var testSpeechBubble2 = new SpeechBubble
             (
-                2, 
+                2,
                 1,
                 1,
                 1,
@@ -146,7 +146,7 @@ namespace BackendTests
 
             var testSpeechBubble3 = new SpeechBubble
             (
-                3, 
+                3,
                 1,
                 1,
                 1,
@@ -155,19 +155,19 @@ namespace BackendTests
 
             var testSpeechBubble4 = new SpeechBubble
             (
-                2, 
+                2,
                 1,
                 1,
                 1,
                 new List<WordToken> { fourthWord }
             );
 
-            _speechBubbleListService.AddNewSpeechBubble(testSpeechBubble1);
-            _speechBubbleListService.AddNewSpeechBubble(testSpeechBubble2);
-            _speechBubbleListService.AddNewSpeechBubble(testSpeechBubble3);
+            speechBubbleListService.AddNewSpeechBubble(testSpeechBubble1);
+            speechBubbleListService.AddNewSpeechBubble(testSpeechBubble2);
+            speechBubbleListService.AddNewSpeechBubble(testSpeechBubble3);
 
-            _speechBubbleListService.ReplaceSpeechBubble(testSpeechBubble4);
-            var speechBubbles = _speechBubbleListService.GetSpeechBubbles();
+            speechBubbleListService.ReplaceSpeechBubble(testSpeechBubble4);
+            var speechBubbles = speechBubbleListService.GetSpeechBubbles();
 
             Assert.That(speechBubbles, Has.Count.EqualTo(3));
             Assert.Multiple(() =>
@@ -180,30 +180,28 @@ namespace BackendTests
         [Test]
         public void ReplaceSpeechBubble_ReplaceIntoEmptyListAddsElementToList()
         {
-            _speechBubbleListService.ReplaceSpeechBubble(_testSpeechBubble1);
+            speechBubbleListService.ReplaceSpeechBubble(testSpeechBubble1);
 
-            var speechBubbles = _speechBubbleListService.GetSpeechBubbles();
+            var speechBubbles = speechBubbleListService.GetSpeechBubbles();
             Assert.That(speechBubbles, Has.Count.EqualTo(1));
         }
-        
+
         [Test]
         public void ReplaceSpeechBubble_CreationTimeDoesntChange()
         {
-            var creationTime = _testSpeechBubble1.CreationTime;
+            var creationTime = testSpeechBubble1.CreationTime;
             var newSpeechBubble = new SpeechBubble(
-                _testSpeechBubble1.Id, _testSpeechBubble1.Speaker, _testSpeechBubble1.StartTime,
-                _testSpeechBubble1.EndTime, _testSpeechBubble1.SpeechBubbleContent);
-            
-            newSpeechBubble.CreationTime += TimeSpan.FromMinutes(2);
-            
-            _speechBubbleListService.ReplaceSpeechBubble(_testSpeechBubble1);
-            _speechBubbleListService.ReplaceSpeechBubble(newSpeechBubble);
+                testSpeechBubble1.Id, testSpeechBubble1.Speaker, testSpeechBubble1.StartTime,
+                testSpeechBubble1.EndTime, testSpeechBubble1.SpeechBubbleContent);
 
-            var speechBubbles = _speechBubbleListService.GetSpeechBubbles();
-            
+            newSpeechBubble.CreationTime += TimeSpan.FromMinutes(2);
+
+            speechBubbleListService.ReplaceSpeechBubble(testSpeechBubble1);
+            speechBubbleListService.ReplaceSpeechBubble(newSpeechBubble);
+
+            var speechBubbles = speechBubbleListService.GetSpeechBubbles();
+
             Assert.That(speechBubbles.First!.Value.CreationTime, Is.EqualTo(creationTime));
         }
-        
-        
     }
 }

@@ -1,59 +1,48 @@
 ﻿using Backend.Services;
 using Moq;
+using NUnit.Framework;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace BackendTests
 {
     public class AvProcessingServiceTests
     {
-        private readonly Mock<IWordProcessingService> _wordProcessingServiceMock;
-        private readonly Mock<FrontendAudioQueueService> _frontendAudioQueueServiceMock;
+        private readonly Mock<IWordProcessingService> wordProcessingServiceMock;
+        private readonly Mock<FrontendAudioQueueService> frontendAudioQueueServiceMock;
 
         public AvProcessingServiceTests()
         {
-            _wordProcessingServiceMock = new Mock<IWordProcessingService>();
-            _frontendAudioQueueServiceMock = new Mock<FrontendAudioQueueService>();
+            wordProcessingServiceMock = new Mock<IWordProcessingService>();
+            frontendAudioQueueServiceMock = new Mock<FrontendAudioQueueService>();
         }
 
         [Test]
-        public async Task Init_WithValidApiKey_ReturnsTrue()
+        public void Init_WithValidApiKey_ReturnsTrue()
         {
             // Arrange
-            var avProcessingService = new AvProcessingService(_wordProcessingServiceMock.Object,
-                _frontendAudioQueueServiceMock.Object, new WebVttExporter(new MemoryStream()));
+            var avProcessingService = new AvProcessingService(wordProcessingServiceMock.Object, frontendAudioQueueServiceMock.Object);
             const string apiKeyVar = "API_KEY";
             Environment.SetEnvironmentVariable(apiKeyVar, "eHbFYSRbfbTyORS3cs3HmguSCL9XMbbv");
 
             // Act
-            var result = await avProcessingService.Init(apiKeyVar);
+            var result = avProcessingService.Init(apiKeyVar);
 
             // Assert
             Assert.That(result, Is.True);
         }
 
         [Test]
-        public void Init_WithInvalidApiKey_ThrowsException()
+        public void Init_WithNoApiKey_ReturnsFalse()
         {
             // Arrange
-            var avProcessingService = new AvProcessingService(_wordProcessingServiceMock.Object,
-                _frontendAudioQueueServiceMock.Object, new WebVttExporter(new MemoryStream()));
-            const string apiKeyVar = "API_KEY";
-            Environment.SetEnvironmentVariable(apiKeyVar, "invalidKey");
-
-            // Assert
-            Assert.That(() => avProcessingService.Init(apiKeyVar), Throws.InvalidOperationException);
-        }
-
-        [Test]
-        public async Task Init_WithNoApiKey_ReturnsFalse()
-        {
-            // Arrange
-            var avProcessingService = new AvProcessingService(_wordProcessingServiceMock.Object,
-                _frontendAudioQueueServiceMock.Object, new WebVttExporter(new MemoryStream()));
+            var avProcessingService = new AvProcessingService(wordProcessingServiceMock.Object, frontendAudioQueueServiceMock.Object);
             const string apiKeyVar = "API_KEY";
             Environment.SetEnvironmentVariable(apiKeyVar, null);
 
             // Act
-            var result = await avProcessingService.Init(apiKeyVar);
+            var result = avProcessingService.Init(apiKeyVar);
 
             // Assert
             Assert.That(result, Is.False);
@@ -63,12 +52,11 @@ namespace BackendTests
         public async Task TranscribeAudio_WithInvalidApiKey_ReturnsFalse()
         {
             // Arrange
-            var avProcessingService = new AvProcessingService(_wordProcessingServiceMock.Object,
-                _frontendAudioQueueServiceMock.Object, new WebVttExporter(new MemoryStream()));
-            Uri filePath = new Uri ("file://unnecessaryPath");
+            var avProcessingService = new AvProcessingService(wordProcessingServiceMock.Object, frontendAudioQueueServiceMock.Object);
+            Stream audioStream = new MemoryStream(); // Erstellen Sie hier einen geeigneten Stream
 
             // Act
-            var result = await avProcessingService.TranscribeAudio(filePath);
+            var result = await avProcessingService.TranscribeAudio(audioStream);
 
             // Assert
             Assert.That(result, Is.False);

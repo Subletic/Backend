@@ -2,6 +2,13 @@
 using Backend.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using System.IO;
+using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 
 
 
@@ -12,34 +19,38 @@ namespace Backend.Services;
 /// </summary>
 public class BufferTimeMonitor : BackgroundService
 {
-    
-    private readonly IHubContext<CommunicationHub> _hubContext;
-    
+
+    private readonly IHubContext<CommunicationHub> hubContext;
+
     /// <summary>
     /// List containing all SpeechBubbles that have timed out.
     /// </summary>
-    private readonly List<SpeechBubble> _timedOutSpeechBubbles;
+    private readonly List<SpeechBubble> timedOutSpeechBubbles;
 
-    private readonly ISpeechBubbleListService _speechBubbleListService;
-    
-    private readonly int _timeLimitInMinutes;
+    private readonly ISpeechBubbleListService speechBubbleListService;
 
-    private readonly WebVttExporter _webVttExporter;
+    private readonly ISubtitleExporterService subtitleExporterService;
 
-    private readonly MemoryStream _outputStream;
+    private readonly IConfiguration configuration;
+
+    private readonly int timeLimitInMinutes;
+
+    private readonly int delayMilliseconds;
 
     /// <summary>
     /// Initializes the Dependency Injection and the List of timed out SpeechBubbles.
     /// </summary>
     /// <param name="speechBubbleListService">Service given by the DI</param>
-    public BufferTimeMonitor(IHubContext<CommunicationHub> hubContext, ISpeechBubbleListService speechBubbleListService, WebVttExporter webVttExporter)
+    public BufferTimeMonitor(IConfiguration configuration, IHubContext<CommunicationHub> hubContext,
+        ISpeechBubbleListService speechBubbleListService, ISubtitleExporterService subtitleExporterService)
     {
-        _speechBubbleListService = speechBubbleListService;
-        _hubContext = hubContext;
-        _timedOutSpeechBubbles = new List<SpeechBubble>();
-        _timeLimitInMinutes = 1; // move to a constant or configuration file
-        _webVttExporter = webVttExporter;
-        _outputStream = new MemoryStream();
+        this.configuration = configuration;
+        this.timeLimitInMinutes = configuration.GetValue<int>("BufferTimeMonitorSettings:TimeLimitInMinutes");
+        this.delayMilliseconds = configuration.GetValue<int>("BufferTimeMonitorSettings:DelayMilliseconds");
+        this.speechBubbleListService = speechBubbleListService;
+        this.hubContext = hubContext;
+        this.timedOutSpeechBubbles = new List<SpeechBubble>();
+        this.subtitleExporterService = subtitleExporterService;
     }
 
     /// <summary>
@@ -50,45 +61,37 @@ public class BufferTimeMonitor : BackgroundService
     /// <param name="stoppingToken">Token used to stop the Task</param>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        
+
         while (!stoppingToken.IsCancellationRequested)
         {
-            
-            await Task.Delay(1000, stoppingToken);
 
-            var oldestSpeechBubble = _speechBubbleListService.GetSpeechBubbles().First;
+            await Task.Delay(delayMilliseconds, stoppingToken);
+
+            var oldestSpeechBubble = speechBubbleListService.GetSpeechBubbles().First;
             if (oldestSpeechBubble == null)
             {
                 continue;
             }
-            
+
             var currentTime = DateTime.Now;
             var oldestSpeechBubbleCreationTime = oldestSpeechBubble.Value.CreationTime;
             var timeDifference = currentTime - oldestSpeechBubbleCreationTime;
-            
-            
-            if (timeDifference.TotalMinutes > _timeLimitInMinutes)
-            {
-                
-                await DeleteSpeechBubbleMessageToFrontend(oldestSpeechBubble.Value.Id);
-                
-                _timedOutSpeechBubbles.Add(oldestSpeechBubble.Value);
-                _speechBubbleListService.DeleteOldestSpeechBubble();
 
-                // Export timed-out speech bubble as webvtt
-                using (var outputStream = new MemoryStream())
-                {
-                    _webVttExporter.ExportSpeechBubble(oldestSpeechBubble.Value);
-                    outputStream.Seek(0, SeekOrigin.Begin);
-                    await outputStream.CopyToAsync(_outputStream, stoppingToken);
-                }
+            if (timeDifference.TotalMinutes > timeLimitInMinutes)
+            {
+                await DeleteSpeechBubbleMessageToFrontend(oldestSpeechBubble.Value.Id);
+
+                timedOutSpeechBubbles.Add(oldestSpeechBubble.Value);
+                speechBubbleListService.DeleteOldestSpeechBubble();
+
+                await subtitleExporterService.ExportSubtitle(oldestSpeechBubble.Value);
             }
- 
+
         }
     }
 
     /// <summary>
-    /// Sends an asynchronous request to the frontend via SignalR, to inform the frontend that a Speechbubble, identified by id, has to be deleted. 
+    /// Sends an asynchronous request to the frontend via SignalR, to inform the frontend that a Speechbubble, identified by id, has to be deleted.
     /// The frontend can then subscribe to incoming Objects and handle them accordingly.
     /// </summary>
     /// <param name="id"></param>
@@ -96,7 +99,7 @@ public class BufferTimeMonitor : BackgroundService
     {
         try
         {
-            await _hubContext.Clients.All.SendAsync("deleteBubble", id);
+            await hubContext.Clients.All.SendAsync("deleteBubble", id);
         }
         catch (Exception)
         {

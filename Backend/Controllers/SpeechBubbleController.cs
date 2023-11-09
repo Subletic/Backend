@@ -16,9 +16,9 @@ namespace Backend.Controllers
         /// All actions on the SpeechBubbleList are delegated to the SpeechBubbleListService.
         /// ApplicationLifetime is used to stop the application when the frontend calls for a restart.
         /// </summary>
-        private readonly ISpeechBubbleListService _speechBubbleListService;
+        private readonly ISpeechBubbleListService speechBubbleListService;
 
-        private readonly IHostApplicationLifetime _applicationLifetime;
+        private readonly IHostApplicationLifetime applicationLifetime;
 
         /// <summary>
         /// Constructor for SpeechBubbleController.
@@ -27,8 +27,8 @@ namespace Backend.Controllers
         public SpeechBubbleController(ISpeechBubbleListService speechBubbleListService,
             IHostApplicationLifetime applicationLifetime)
         {
-            _speechBubbleListService = speechBubbleListService;
-            _applicationLifetime = applicationLifetime;
+            this.speechBubbleListService = speechBubbleListService;
+            this.applicationLifetime = applicationLifetime;
         }
 
 
@@ -48,7 +48,7 @@ namespace Backend.Controllers
             // Replace all received SpeechBubbles
             foreach (var receivedSpeechBubble in receivedSpeechBubbles)
             {
-                _speechBubbleListService.ReplaceSpeechBubble(receivedSpeechBubble);
+                speechBubbleListService.ReplaceSpeechBubble(receivedSpeechBubble);
             }
 
             return Ok(); // Return the updated _speechBubbleList
@@ -64,7 +64,7 @@ namespace Backend.Controllers
         [Route("restart")]
         public IActionResult HandleRestartRequest()
         {
-            _applicationLifetime.StopApplication();
+            applicationLifetime.StopApplication();
             return Ok();
         }
 

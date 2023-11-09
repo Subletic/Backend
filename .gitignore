@@ -475,3 +475,10 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# content below manually added:
+# *do not* commit this, may contain private developer credentials like API keys
+launchSettings.json
+
+# webvtt output from webvtt exporter, pointless to commit
+*.vtt
