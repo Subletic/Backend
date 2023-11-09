@@ -7,37 +7,37 @@ namespace BackendTests;
 
 public class AudioQueueTests
 {
-    private readonly Pipe _pipe;
+    private readonly Pipe pipe;
 
-    private AudioQueue _audioQueue;
+    private AudioQueue audioQueue;
 
     public AudioQueueTests()
     {
-        _pipe = new Pipe();
-        _audioQueue = new AudioQueue(_pipe.Writer);
+        pipe = new Pipe();
+        audioQueue = new AudioQueue(pipe.Writer);
     }
 
     [SetUp]
     public void Setup()
     {
-        _pipe.Writer.Complete();
-        _pipe.Reader.Complete();
-        _pipe.Reset();
+        pipe.Writer.Complete();
+        pipe.Reader.Complete();
+        pipe.Reset();
         // not really designed to be reset / cleared
-        _audioQueue = new AudioQueue(_pipe.Writer);
+        audioQueue = new AudioQueue(pipe.Writer);
     }
 
     [Test, Order(1)]
     // Enqueuing must not throw, must not write to pipe
     public void Enqueue_DoesntWrite()
     {
-        Assert.DoesNotThrowAsync (async () => await _audioQueue.Enqueue(new short[48000]));
+        Assert.DoesNotThrowAsync (async () => await audioQueue.Enqueue(new short[48000]));
 
         byte[] buf = new byte[2];
         CancellationTokenSource cts = new CancellationTokenSource();
         cts.CancelAfter (TimeSpan.FromSeconds (1));
         Assert.ThrowsAsync<OperationCanceledException> (async () => {
-            await _pipe.Reader.AsStream(true)
+            await pipe.Reader.AsStream(true)
                 .ReadExactlyAsync(buf, cts.Token);
         });
     }
@@ -46,13 +46,13 @@ public class AudioQueueTests
     // Dequeuing without enqueuing must throw, must not write data to pipe
     public void Dequeue_DoesntWrite()
     {
-        Assert.ThrowsAsync<InvalidOperationException> (async () => await _audioQueue.Dequeue());
+        Assert.ThrowsAsync<InvalidOperationException> (async () => await audioQueue.Dequeue());
 
         byte[] buf = new byte[2];
         CancellationTokenSource cts = new CancellationTokenSource();
         cts.CancelAfter (TimeSpan.FromSeconds (1));
         Assert.ThrowsAsync<OperationCanceledException> (async () => {
-            await _pipe.Reader.AsStream(true)
+            await pipe.Reader.AsStream(true)
                 .ReadExactlyAsync(buf, cts.Token);
         });
     }
@@ -61,17 +61,17 @@ public class AudioQueueTests
     // Enqueuing then dequeuing must not throw, must write data to pipe
     public async Task EnqueueDequeue_Writes()
     {
-        await _audioQueue.Enqueue (new short[48000]);
+        await audioQueue.Enqueue (new short[48000]);
 
         byte[] buf = new byte[2];
         CancellationTokenSource cts = new CancellationTokenSource();
         cts.CancelAfter (TimeSpan.FromSeconds (1));
         Assert.DoesNotThrowAsync(async () => {
-            Task dequeueDone = _audioQueue.Dequeue();
+            Task dequeueDone = audioQueue.Dequeue();
             // test that we can read *something*
-            await _pipe.Reader.AsStream(true)
+            await pipe.Reader.AsStream(true)
                 .ReadExactlyAsync(buf, cts.Token);
-            await _pipe.Reader.CompleteAsync(); // throw away rest of data
+            await pipe.Reader.CompleteAsync(); // throw away rest of data
             await dequeueDone;
         });
     }
@@ -88,15 +88,15 @@ public class AudioQueueTests
         Buffer.BlockCopy (inBufferBytes, 0, inBuffer, 0, inBufferBytes.Length);
 
         // Queue / Dequeue
-        await _audioQueue.Enqueue (inBuffer);
+        await audioQueue.Enqueue (inBuffer);
 
         // Read from Pipe
         byte[] buf = new byte[inBufferBytes.Length];
         CancellationTokenSource cts = new CancellationTokenSource();
         cts.CancelAfter (TimeSpan.FromSeconds (1));
         Assert.DoesNotThrowAsync(async () => {
-            Task dequeueDone = _audioQueue.Dequeue();
-            await _pipe.Reader.AsStream(true)
+            Task dequeueDone = audioQueue.Dequeue();
+            await pipe.Reader.AsStream(true)
                 .ReadExactlyAsync(buf, cts.Token);
             await dequeueDone;
         });
@@ -109,7 +109,7 @@ public class AudioQueueTests
         cts = new CancellationTokenSource();
         cts.CancelAfter (TimeSpan.FromSeconds (1));
         Assert.ThrowsAsync<OperationCanceledException>(async () => {
-            await _pipe.Reader.AsStream(true)
+            await pipe.Reader.AsStream(true)
                 .ReadExactlyAsync(buf, cts.Token);
         });
     }
@@ -133,18 +133,18 @@ public class AudioQueueTests
         // Queue
         for (var i = 0; i < buffers.Length; ++i)
         {
-            await _audioQueue.Enqueue (buffers[i]);
+            await audioQueue.Enqueue (buffers[i]);
         }
 
         // Start dequeuing
         Task doneDequeueing = Task.Run(async () => {
             for (var i = 0; i < buffers.Length; ++i)
             {
-                await _audioQueue.Dequeue();
+                await audioQueue.Dequeue();
             }
         });
 
-        Stream pipeReaderStream = _pipe.Reader.AsStream(true);
+        Stream pipeReaderStream = pipe.Reader.AsStream(true);
         for (var i = 0; i < buffers.Length; ++i)
         {
             // Read from Pipe
@@ -199,19 +199,19 @@ public class AudioQueueTests
 
         for (var i = 0; i < buffers.Length; ++i)
         {
-            await _audioQueue.Enqueue (buffers[i]);
+            await audioQueue.Enqueue (buffers[i]);
         }
 
         // TODO query AudioQueue for its max size instead of assuming 2 minutes
         for (var i = 0; i < (2 * 60) - buffers.Length; ++i)
         {
-            await _audioQueue.Enqueue (otherBuffer);
+            await audioQueue.Enqueue (otherBuffer);
         }
 
-        Stream pipeReaderStream = _pipe.Reader.AsStream(true);
+        Stream pipeReaderStream = pipe.Reader.AsStream(true);
         for (var i = 0; i < buffers.Length; ++i)
         {
-            Task enqueuingDone = _audioQueue.Enqueue (otherBuffer);
+            Task enqueuingDone = audioQueue.Enqueue (otherBuffer);
             byte[] buf = new byte[buffers[i].Length * 2];
             CancellationTokenSource cts = new CancellationTokenSource();
             cts.CancelAfter (TimeSpan.FromSeconds (1));

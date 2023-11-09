@@ -11,14 +11,14 @@ namespace BackendTests;
 
 public class SpeechBubbleControllerTests
 {
-    private readonly Mock<ISpeechBubbleListService> _speechBubbleListService;
-    private readonly List<WordToken> _testWordList;
+    private readonly Mock<ISpeechBubbleListService> speechBubbleListService;
+    private readonly List<WordToken> testWordList;
 
     public SpeechBubbleControllerTests()
     {
-        _speechBubbleListService = new Mock<ISpeechBubbleListService>();
-        _speechBubbleListService.Setup(sl => sl.AddNewSpeechBubble(It.IsAny<SpeechBubble>()));
-        _testWordList = new List<WordToken>
+        speechBubbleListService = new Mock<ISpeechBubbleListService>();
+        speechBubbleListService.Setup(sl => sl.AddNewSpeechBubble(It.IsAny<SpeechBubble>()));
+        testWordList = new List<WordToken>
         {
             new("Hello", 1, 1, 10, 4),
             new("World", 1, 11, 12, 4),
@@ -29,16 +29,16 @@ public class SpeechBubbleControllerTests
     [SetUp]
     public void Setup()
     {
-        _speechBubbleListService.Invocations.Clear();
+        speechBubbleListService.Invocations.Clear();
     }
 
     [Test]
     public void ParseFrontendResponseToSpeechBubbleList_InsertValidResponse_AttributesMappedToSpeechBubble()
     {
         // Arrange
-        var speechBubbleJson = new SpeechBubbleJson(1, 4, 1, 12, _testWordList);
+        var speechBubbleJson = new SpeechBubbleJson(1, 4, 1, 12, testWordList);
         var speechBubbleChainJson = new SpeechBubbleChainJson(new List<SpeechBubbleJson> { speechBubbleJson });
-        var expectedResult = new List<SpeechBubble> { new SpeechBubble(1, 4, 1, 12, _testWordList) };
+        var expectedResult = new List<SpeechBubble> { new SpeechBubble(1, 4, 1, 12, testWordList) };
 
 
         // Act
@@ -57,11 +57,11 @@ public class SpeechBubbleControllerTests
 
             for (var i = 0; i < resultingWordList.Count; i++)
             {
-                Assert.That(resultingWordList[i].Word, Is.EqualTo(_testWordList[i].Word));
-                Assert.That(resultingWordList[i].StartTime, Is.EqualTo(_testWordList[i].StartTime));
-                Assert.That(resultingWordList[i].EndTime, Is.EqualTo(_testWordList[i].EndTime));
-                Assert.That(resultingWordList[i].Speaker, Is.EqualTo(_testWordList[i].Speaker));
-                Assert.That(resultingWordList[i].Confidence, Is.EqualTo(_testWordList[i].Confidence));
+                Assert.That(resultingWordList[i].Word, Is.EqualTo(testWordList[i].Word));
+                Assert.That(resultingWordList[i].StartTime, Is.EqualTo(testWordList[i].StartTime));
+                Assert.That(resultingWordList[i].EndTime, Is.EqualTo(testWordList[i].EndTime));
+                Assert.That(resultingWordList[i].Speaker, Is.EqualTo(testWordList[i].Speaker));
+                Assert.That(resultingWordList[i].Confidence, Is.EqualTo(testWordList[i].Confidence));
             }
         });
     }
@@ -82,7 +82,7 @@ public class SpeechBubbleControllerTests
         {
             SpeechbubbleChain = new List<SpeechBubbleJson>()
             {
-                new(1, 1, 1, 20, _testWordList)
+                new(1, 1, 1, 20, testWordList)
             }
         };
 
@@ -115,7 +115,7 @@ public class SpeechBubbleControllerTests
         // Assert
         Assert.That(result, Is.InstanceOf<BadRequestResult>());
     }
-    
+
     [Test]
     public void HandleRestartRequest_ReturnsOkResult()
     {
