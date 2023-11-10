@@ -18,7 +18,7 @@ public class CustomDictionaryController : ControllerBase
     [HttpPost("upload")]
     public IActionResult UploadCustomDictionary([FromBody] CustomDictionary customDictionary)
     {
-        if (customDictionary.Equals(default(CustomDictionary)))
+        if (customDictionary.Equals(default(CustomDictionary)) || customDictionary.AdditionalVocab == null)
         {
             return BadRequest("Invalid custom dictionary data.");
         }
