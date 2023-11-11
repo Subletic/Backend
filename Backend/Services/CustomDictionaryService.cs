@@ -1,50 +1,45 @@
-﻿using System;
+﻿using Backend.Data;
+using System;
 using System.Collections.Generic;
-using Microsoft.AspNetCore.Mvc;
-using Backend.Data;
-using Backend.Services;
+using Serilog;  // Stellen Sie sicher, dass der korrekte Namespace für Serilog verwendet wird
 
-/// <summary>
-/// Dienstklasse zur Verarbeitung von benutzerdefinierten Wörterbüchern.
-/// </summary>
-public class CustomDictionaryService
+namespace Backend.Services
 {
-    private readonly List<CustomDictionary> _customDictionaries;
-
-    /// <summary>
-    /// Initialisiert eine neue Instanz der Klasse <see cref="CustomDictionaryService"/>.
-    /// </summary>
-    public CustomDictionaryService()
+    public class CustomDictionaryService
     {
-        _customDictionaries = new List<CustomDictionary>();
-    }
+        private List<Dictionary> _customDictionaries;
 
-    /// <summary>
-    /// Verarbeitet das benutzerdefinierte Wörterbuch, indem überprüft wird, ob es bereits existiert, und es entsprechend hinzugefügt oder aktualisiert wird.
-    /// </summary>
-    /// <param name="customDictionary">Das zu verarbeitende benutzerdefinierte Wörterbuch.</param>
-    public void ProcessCustomDictionary(CustomDictionary customDictionary)
-    {
-        // Überprüfen Sie, ob das übertragene Wörterbuch bereits vorhanden ist
-        var existingDictionary = _customDictionaries.Find(d =>
-            d.AdditionalVocab.Any(entry => entry.Content == customDictionary.AdditionalVocab[0].Content)
-        );
 
-        if (existingDictionary != null)
+        public CustomDictionaryService()
         {
-            // Fügen Sie die zusätzlichen Vokabeln dem vorhandenen Wörterbuch hinzu
-            existingDictionary.AdditionalVocab.AddRange(customDictionary.AdditionalVocab);
+            _customDictionaries = new List<Dictionary>();
         }
-        else
-        {
-            // Erstellen Sie eine Kopie des übertragenen Wörterbuchs, um die Datenstruktur zu behalten
-            var newDictionary = new CustomDictionary(
-                language: customDictionary.Language,
-                additionalVocab: new List<CustomDictionaryEntry>(customDictionary.AdditionalVocab)
-            );
 
-            // Fügen Sie das neue Wörterbuch hinzu
-            _customDictionaries.Add(newDictionary);
+        public void ProcessCustomDictionary(Dictionary customDictionary)
+        {
+            if (customDictionary == null || customDictionary.TranscriptionConfig == null)
+            {
+                throw new ArgumentException("Invalid custom dictionary data.");
+            }
+
+            if (customDictionary.TranscriptionConfig.AdditionalVocab.Count > 1000)
+            {
+                throw new ArgumentException("additionalVocab list cannot exceed 1000 elements.");
+            }
+
+            // Hier können Sie die Logik zum Speichern des Wörterbuchs hinzufügen, die vom Frontend kommt
+            Log.Information($"Received custom dictionary for language {customDictionary.TranscriptionConfig.Language}");
+
+            // Fügen Sie das Wörterbuch zur Liste hinzu
+            _customDictionaries.Add(customDictionary);
+
+            // Loggen Sie den Erfolg des Hinzufügens zum Wörterbuch
+            Log.Information($"Custom dictionary added to the in-memory data structure for language {customDictionary.TranscriptionConfig.Language}");
+        }
+
+        public List<Dictionary> GetCustomDictionaries()
+        {
+            return _customDictionaries;
         }
     }
 }
