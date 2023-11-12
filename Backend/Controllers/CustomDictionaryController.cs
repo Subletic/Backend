@@ -1,10 +1,8 @@
-﻿using Backend.Data; 
+﻿using Backend.Data;
 using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using Serilog;
-using Serilog.Events;
-
+using System;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -39,7 +37,5 @@ public class CustomDictionaryController : ControllerBase
             Log.Error(ex, "Eine Ausnahme ist aufgetreten.");
             return StatusCode(500, "Internal Server Error");
         }
-
     }
 }
-

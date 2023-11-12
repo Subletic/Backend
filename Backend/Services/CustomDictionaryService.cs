@@ -1,14 +1,13 @@
 ﻿using Backend.Data;
 using System;
 using System.Collections.Generic;
-using Serilog;  // Stellen Sie sicher, dass der korrekte Namespace für Serilog verwendet wird
+using Serilog;
 
 namespace Backend.Services
 {
     public class CustomDictionaryService
     {
         private List<Dictionary> _customDictionaries;
-
 
         public CustomDictionaryService()
         {
@@ -27,14 +26,26 @@ namespace Backend.Services
                 throw new ArgumentException("additionalVocab list cannot exceed 1000 elements.");
             }
 
-            // Hier können Sie die Logik zum Speichern des Wörterbuchs hinzufügen, die vom Frontend kommt
             Log.Information($"Received custom dictionary for language {customDictionary.TranscriptionConfig.Language}");
 
-            // Fügen Sie das Wörterbuch zur Liste hinzu
-            _customDictionaries.Add(customDictionary);
+            var existingDictionary = _customDictionaries.FirstOrDefault(d =>
+                d.TranscriptionConfig.AdditionalVocab.Any(av => av.Content == customDictionary.TranscriptionConfig.AdditionalVocab.FirstOrDefault()?.Content)
+            );
 
-            // Loggen Sie den Erfolg des Hinzufügens zum Wörterbuch
-            Log.Information($"Custom dictionary added to the in-memory data structure for language {customDictionary.TranscriptionConfig.Language}");
+            if (existingDictionary != null)
+            {
+                existingDictionary.TranscriptionConfig = customDictionary.TranscriptionConfig;
+                foreach (var av in existingDictionary.TranscriptionConfig.AdditionalVocab)
+                {
+                    av.SoundsLike = customDictionary.TranscriptionConfig.AdditionalVocab[0].SoundsLike;
+                }
+                Log.Information($"Custom dictionary updated for content {customDictionary.TranscriptionConfig.AdditionalVocab.FirstOrDefault()?.Content}");
+            }
+            else
+            {
+                _customDictionaries.Add(customDictionary);
+                Log.Information($"Custom dictionary added to the in-memory data structure for content {customDictionary.TranscriptionConfig.AdditionalVocab.FirstOrDefault()?.Content}");
+            }
         }
 
         public List<Dictionary> GetCustomDictionaries()
