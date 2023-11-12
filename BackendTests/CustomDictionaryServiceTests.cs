@@ -12,8 +12,7 @@ namespace BackendTests
     {
         private CustomDictionaryService _customDictionaryService;
 
-        [SetUp]
-        public void Setup()
+        public CustomDictionaryServiceTests()
         {
             _customDictionaryService = new CustomDictionaryService();
         }
