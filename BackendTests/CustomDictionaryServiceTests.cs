@@ -60,7 +60,7 @@ namespace BackendTests
             Assert.That(dictionaries[0]?.TranscriptionConfig?.AdditionalVocab?[0]?.SoundsLike?[0], Is.EqualTo("SimilarWord"));
         }
 
-        private Dictionary CreateSampleCustomDictionary(string language, string content, List<string> soundsLike = null!)
+        private static Dictionary CreateSampleCustomDictionary(string language, string content, List<string> soundsLike = null!)
         {
             var additionalVocab = new AdditionalVocab(content, soundsLike);
             var transcriptionConfig = new TranscriptionConfig(language, new List<AdditionalVocab> { additionalVocab });
