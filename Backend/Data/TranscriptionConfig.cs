@@ -7,12 +7,12 @@ namespace Backend.Data
     {
         public string Language { get; set; }
         public List<AdditionalVocab> AdditionalVocab { get; set; }
-
+        private const int MAX_ADDITIONAL_VOCAB_COUNT = 1000;
         public TranscriptionConfig(string language, List<AdditionalVocab> additionalVocab)
         {
-            if (additionalVocab.Count > 1000)
+            if (additionalVocab.Count > MAX_ADDITIONAL_VOCAB_COUNT)
             {
-                throw new ArgumentException("additionalVocab list cannot exceed 1000 elements.");
+                throw new ArgumentException("additionalVocab list cannot exceed {MAX_ADDITIONAL_VOCAB_COUNT} elements.");
             }
 
             Language = language;

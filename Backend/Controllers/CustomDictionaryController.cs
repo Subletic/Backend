@@ -4,38 +4,42 @@ using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using System;
 
-[ApiController]
-[Route("api/[controller]")]
-public class CustomDictionaryController : ControllerBase
-{
-    private readonly CustomDictionaryService _dictionaryService;
+namespace Backend.Controllers {
 
-    public CustomDictionaryController(CustomDictionaryService dictionaryService)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class CustomDictionaryController : ControllerBase
     {
-        _dictionaryService = dictionaryService;
-    }
+        private readonly CustomDictionaryService _dictionaryService;
 
-    [HttpPost("upload-custom-dictionary")]
-    public IActionResult UploadCustomDictionary([FromBody] TranscriptionConfig transcriptionConfig)
-    {
-        try
+        public CustomDictionaryController(CustomDictionaryService dictionaryService)
         {
-            if (transcriptionConfig == null || transcriptionConfig.AdditionalVocab == null)
-            {
-                return BadRequest("Invalid custom dictionary data.");
-            }
-
-            // Erstellen Sie eine Instanz von Dictionary und übergeben Sie sie an den Service
-            var customDictionary = new Dictionary(transcriptionConfig);
-            _dictionaryService.ProcessCustomDictionary(customDictionary);
-
-            return Ok("Custom dictionary uploaded successfully.");
+            _dictionaryService = dictionaryService;
         }
-        catch (Exception ex)
+
+        [HttpPost("upload-custom-dictionary")]
+        public IActionResult UploadCustomDictionary([FromBody] TranscriptionConfig transcriptionConfig)
         {
-            // Loggen Sie die Ausnahme oder führen Sie andere Aktionen durch
-            Log.Error(ex, "Eine Ausnahme ist aufgetreten.");
-            return StatusCode(500, "Internal Server Error");
+            try
+            {
+                if (transcriptionConfig == null || transcriptionConfig.AdditionalVocab == null)
+                {
+                    return BadRequest("Invalid custom dictionary data.");
+                }
+
+                // Erstellen Sie eine Instanz von Dictionary und übergeben Sie sie an den Service
+                var customDictionary = new Dictionary(transcriptionConfig);
+                _dictionaryService.ProcessCustomDictionary(customDictionary);
+
+                return Ok("Custom dictionary uploaded successfully.");
+            }
+            catch (Exception ex)
+            {
+                // Loggen Sie die Ausnahme oder führen Sie andere Aktionen durch
+                Log.Error(ex, "Eine Ausnahme ist aufgetreten.");
+                return StatusCode(500, "Internal Server Error");
+            }
         }
     }
 }
+
