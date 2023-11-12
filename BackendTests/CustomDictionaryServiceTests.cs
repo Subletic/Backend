@@ -1,5 +1,6 @@
 ﻿using Backend.Data;
 using Backend.Services;
+using Microsoft.AspNetCore.Mvc;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -24,7 +25,7 @@ namespace BackendTests
             var customDictionary = CreateSampleCustomDictionary("en", "SampleContent");
 
             // Act
-            _customDictionaryService.ProcessCustomDictionary(customDictionary);
+            _customDictionaryService.ProcessCustomDictionary(customDictionary!);
 
             // Assert
             var dictionaries = _customDictionaryService.GetCustomDictionaries();
@@ -39,13 +40,17 @@ namespace BackendTests
         {
             // Arrange
             var customDictionary = CreateSampleCustomDictionary("en", "SampleContent");
-            _customDictionaryService.ProcessCustomDictionary(customDictionary);
+            _customDictionaryService.ProcessCustomDictionary(customDictionary!);
 
             // Act
             // Update the existing dictionary with the same language and content
-            customDictionary.TranscriptionConfig.AdditionalVocab[0].Content = "UpdatedContent";
-            customDictionary.TranscriptionConfig.AdditionalVocab[0].SoundsLike = new List<string> { "SimilarWord" };
-            _customDictionaryService.ProcessCustomDictionary(customDictionary);
+            customDictionary!.TranscriptionConfig.AdditionalVocab[0].Content = "UpdatedContent";
+            customDictionary!.TranscriptionConfig.AdditionalVocab[0].SoundsLike = new List<string> { "SimilarWord" };
+            if (customDictionary != null)
+            {
+                _customDictionaryService.ProcessCustomDictionary(customDictionary);
+            }
+
 
             // Assert
             var dictionaries = _customDictionaryService.GetCustomDictionaries();
@@ -55,7 +60,7 @@ namespace BackendTests
             Assert.That(dictionaries[0]?.TranscriptionConfig?.AdditionalVocab?[0]?.SoundsLike?[0], Is.EqualTo("SimilarWord"));
         }
 
-        private Dictionary CreateSampleCustomDictionary(string language, string content, List<string> soundsLike = null)
+        private Dictionary CreateSampleCustomDictionary(string language, string content, List<string> soundsLike = null!)
         {
             var additionalVocab = new AdditionalVocab(content, soundsLike);
             var transcriptionConfig = new TranscriptionConfig(language, new List<AdditionalVocab> { additionalVocab });
