@@ -13,7 +13,7 @@ namespace Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcriptio
       */
     public class StartRecognitionMessage_TranscriptionConfig
     {
-        
+
         /**
           *  <summary>
           *  Simple constructor.
@@ -28,11 +28,14 @@ namespace Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcriptio
           *  <see cref="additionalVocab" />
           *  </summary>
           */
-        public StartRecognitionMessage_TranscriptionConfig(string language = "de", bool? enable_partials = false, string? additionalVocabLanguage = null, List<string>? additionalVocabSoundsLike = null)
+        public StartRecognitionMessage_TranscriptionConfig(
+          string language = "de",
+          bool? enable_partials = false,
+          AdditionalVocab? additionalVocab = null)
         {
             this.language = language;
             this.enable_partials = enable_partials;
-            this.additionalVocab = new AdditionalVocab(additionalVocabLanguage ?? string.Empty, additionalVocabSoundsLike);
+            this.additionalVocab = additionalVocab ?? new AdditionalVocab("");
         }
 
         // not sure how to validate that language is an ISO language code
