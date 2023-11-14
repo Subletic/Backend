@@ -1,8 +1,8 @@
-﻿using System;
+﻿namespace Backend.Data;
+
+using System;
 using System.Collections.Generic;
 using System.IO.Pipelines;
-
-namespace Backend.Data;
 
 /**
   *  <summary>
@@ -40,7 +40,7 @@ public class AudioQueue
       *  <param name="outPipe">The writing side of a pipe where dequeued buffers get written to.</param>
       *  </summary>
       */
-    public AudioQueue (PipeWriter outPipe)
+    public AudioQueue(PipeWriter outPipe)
     {
         this.outPipe = outPipe;
         audioQueue.Clear();
@@ -62,9 +62,9 @@ public class AudioQueue
         while (audioQueue.Count >= maxQueueCount) await Dequeue();
 
         // FIXME TOC/TOU race, but maxQueueCount is not a critical limit so not really harmful
-        audioQueue.Enqueue (audioBuffer);
+        audioQueue.Enqueue(audioBuffer);
 
-        Console.WriteLine ($"New audio ({audioBuffer.Length} samples) added to audio queue");
+        Console.WriteLine($"New audio ({audioBuffer.Length} samples) added to audio queue");
     }
 
     /**
@@ -78,11 +78,11 @@ public class AudioQueue
     {
         short[] audioBuffer = audioQueue.Dequeue();
 
-        Console.WriteLine ($"Old audio ({audioBuffer.Length} samples) evicted from audio queue");
+        Console.WriteLine($"Old audio ({audioBuffer.Length} samples) evicted from audio queue");
 
-        byte[] bufferForWriting = new byte[audioBuffer.Length * (sizeof (short) / sizeof (byte))];
-        Buffer.BlockCopy (audioBuffer, 0, bufferForWriting, 0, bufferForWriting.Length);
+        byte[] bufferForWriting = new byte[audioBuffer.Length * (sizeof(short) / sizeof(byte))];
+        Buffer.BlockCopy(audioBuffer, 0, bufferForWriting, 0, bufferForWriting.Length);
 
-        await outPipe.WriteAsync (bufferForWriting);
+        await outPipe.WriteAsync(bufferForWriting);
     }
 }

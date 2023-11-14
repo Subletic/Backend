@@ -1,11 +1,9 @@
-using Microsoft.AspNetCore.SignalR;
-
-using System.Runtime.CompilerServices;
-
-using Backend.Services;
-
 namespace Backend.Hubs
 {
+    using System.Runtime.CompilerServices;
+    using Backend.Services;
+    using Microsoft.AspNetCore.SignalR;
+
     /// <summary>
     /// Used for SignalR communication.
     /// </summary>
@@ -20,7 +18,8 @@ namespace Backend.Hubs
         /// <summary>
         /// Constructor for Dependency Injection.
         /// </summary>
-        public CommunicationHub (FrontendAudioQueueService sendingAudioService)
+        /// <param name="sendingAudioService">The sending audio service.</param>
+        public CommunicationHub(FrontendAudioQueueService sendingAudioService)
         {
             this.sendingAudioService = sendingAudioService;
         }
@@ -30,22 +29,23 @@ namespace Backend.Hubs
         ///
         /// Uses <c>FrontendAudioQueueService</c> to receive decoded audio from <c>AvProcessingService</c>.
         /// </summary>
-        public async IAsyncEnumerable<short[]> ReceiveAudioStream(
-        [EnumeratorCancellation]
-        CancellationToken cancellationToken)
+        /// <param name="cancellationToken">Cancellation Token</param>
+        /// <returns>Audio stream</returns>
+        public async IAsyncEnumerable<short[]> ReceiveAudioStream([EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            Console.WriteLine ("ReceiveAudioStream started");
+            Console.WriteLine("ReceiveAudioStream started");
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
                 short[]? receivedData;
-                if (sendingAudioService.TryDequeue(out receivedData)) {
-                    Console.WriteLine ("Sending audio data to frontend");
+                if (sendingAudioService.TryDequeue(out receivedData))
+                {
+                    Console.WriteLine("Sending audio data to frontend");
                     yield return receivedData!;
                 }
 
-                await Task.Delay (200, cancellationToken);
+                await Task.Delay(200, cancellationToken);
             }
         }
     }

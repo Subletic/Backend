@@ -1,12 +1,13 @@
-﻿using Backend.Data;
+﻿#pragma warning disable IDE1006
+#pragma warning disable SA1300
+namespace Backend.Services;
 
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipelines;
 using System.Text;
-
-namespace Backend.Services;
+using Backend.Data;
 
 /// <summary>
 /// Class responsible for exporting speech bubbles to WebVTT format.
@@ -16,7 +17,7 @@ public class WebVttConverter : ISubtitleConverter
     private readonly Stream outputStream;
 
     /// <summary>
-    /// Initializes a new instance of the WebVttExporter class with the specified output stream.
+    /// Initializes a new instance of the WebVttConverter class with the specified output stream.
     /// </summary>
     /// <param name="outputStream">The output stream to write the WebVTT content to.</param>
     public WebVttConverter(Stream outputStream)
@@ -30,7 +31,7 @@ public class WebVttConverter : ISubtitleConverter
     /// <summary>
     /// Exports the speech bubbles to WebVTT format and writes the content to the output stream.
     /// </summary>
-    /// <param name="speechBubbles">The list of speech bubbles to export.</param>
+    /// <param name="speechBubble">The list of speech bubbles to export.</param>
     public void ConvertSpeechBubble(SpeechBubble speechBubble)
     {
         WriteToStream(convertToWebVttFormat(speechBubble));
@@ -39,7 +40,7 @@ public class WebVttConverter : ISubtitleConverter
     /// <summary>
     /// Converts the speech bubbles to WebVTT format.
     /// </summary>
-    /// <param name="speechBubbles">The list of speech bubbles to convert.</param>
+    /// <param name="speechBubble">The list of speech bubbles to convert.</param>
     /// <returns>The WebVTT-formatted content.</returns>
     private static string convertToWebVttFormat(SpeechBubble speechBubble)
     {
@@ -57,6 +58,7 @@ public class WebVttConverter : ISubtitleConverter
             webVttBuilder.AppendLine();
             webVttBuilder.Append(speechBubble.SpeechBubbleContent[0].Word);
         }
+
         for (int i = 1; i < speechBubble.SpeechBubbleContent.Count; ++i)
         {
             webVttBuilder.Append(' ');
@@ -66,13 +68,12 @@ public class WebVttConverter : ISubtitleConverter
         return webVttBuilder.ToString();
     }
 
-
     /// <summary>
     /// Formats the time in WebVTT format (hh:mm:ss.mmm).
     /// </summary>
     /// <param name="time">The time value to format.</param>
     /// <returns>The formatted time string.</returns>
-    static private string FormatTime(double time)
+    private static string FormatTime(double time)
     {
         TimeSpan timeSpan = TimeSpan.FromMilliseconds(time * 1000);
         return timeSpan.ToString(@"hh\:mm\:ss\.fff");
@@ -85,11 +86,10 @@ public class WebVttConverter : ISubtitleConverter
     private async void WriteToStream(string content)
     {
         using (StreamWriter outputStreamWriter = new StreamWriter(
-            stream: outputStream,          // Der Ziel-Stream, in den geschrieben wird
-            encoding: Encoding.UTF8,        // Die Zeichencodierung (hier: UTF-8)
-            bufferSize: 4096,               // Die Puffergröße für optimale Leistung
-            leaveOpen: true                // Gibt an, ob der Stream geöffnet bleiben soll
-        ))
+            stream: outputStream, // Der Ziel-Stream, in den geschrieben wird
+            encoding: Encoding.UTF8, // Die Zeichencodierung (hier: UTF-8)
+            bufferSize: 4096, // Die Puffergröße für optimale Leistung
+            leaveOpen: true)) // Gibt an, ob der Stream geöffnet bleiben soll
             await outputStreamWriter.WriteAsync(content);
     }
 }

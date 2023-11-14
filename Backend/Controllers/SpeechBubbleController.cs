@@ -1,9 +1,9 @@
-﻿using Backend.Data;
-using Backend.Services;
-using Microsoft.AspNetCore.Mvc;
-
-namespace Backend.Controllers
+﻿namespace Backend.Controllers
 {
+    using Backend.Data;
+    using Backend.Services;
+    using Microsoft.AspNetCore.Mvc;
+
     /// <summary>
     /// The SpeechBubbleController handles all incoming requests from the frontend.
     /// </summary>
@@ -24,18 +24,19 @@ namespace Backend.Controllers
         /// Constructor for SpeechBubbleController.
         /// Gets instance of SpeechBubbleListService via Dependency Injection.
         /// </summary>
-        public SpeechBubbleController(ISpeechBubbleListService speechBubbleListService,
-            IHostApplicationLifetime applicationLifetime)
+        /// <param name="speechBubbleListService">The speech bubble list service.</param>
+        /// <param name="applicationLifetime">The application lifetime.</param>
+        public SpeechBubbleController(ISpeechBubbleListService speechBubbleListService, IHostApplicationLifetime applicationLifetime)
         {
             this.speechBubbleListService = speechBubbleListService;
             this.applicationLifetime = applicationLifetime;
         }
 
-
         /// <summary>
         /// The HandleUpdatedSpeechBubble function updates an existing speech bubble with new data.
         /// It accepts a list of speech bubbles.
         /// </summary>
+        /// <param name="receivedList">The received list.</param>
         /// <returns>HTTP Status Code</returns>
         [HttpPost]
         [Route("speechbubble/update")]
@@ -54,7 +55,6 @@ namespace Backend.Controllers
             return Ok(); // Return the updated _speechBubbleList
         }
 
-
         /// <summary>
         /// Endpoint for restarting the application.
         /// Application needs to be started manually again after calling this endpoint.
@@ -67,7 +67,6 @@ namespace Backend.Controllers
             applicationLifetime.StopApplication();
             return Ok();
         }
-
 
         /// <summary>
         /// Parses incoming JSON from the frontend to a list of backend-compatible SpeechBubbles.
@@ -88,8 +87,7 @@ namespace Backend.Controllers
                         currentWordToken.Confidence,
                         currentWordToken.StartTime,
                         currentWordToken.EndTime,
-                        currentWordToken.Speaker
-                    ));
+                        currentWordToken.Speaker));
                 }
 
                 receivedSpeechBubbles.Add(new SpeechBubble(
@@ -97,8 +95,7 @@ namespace Backend.Controllers
                     currentSpeechBubble.Speaker,
                     currentSpeechBubble.StartTime,
                     currentSpeechBubble.EndTime,
-                    receivedWordTokens
-                ));
+                    receivedWordTokens));
             }
 
             return receivedSpeechBubbles;

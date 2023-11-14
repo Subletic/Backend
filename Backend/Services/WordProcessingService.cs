@@ -1,8 +1,8 @@
-﻿using Backend.Data;
+﻿namespace Backend.Services;
+
+using Backend.Data;
 using Backend.Hubs;
 using Microsoft.AspNetCore.SignalR;
-
-namespace Backend.Services;
 
 /// <summary>
 /// Service used for inserting new WordTokens into data-structure
@@ -21,8 +21,12 @@ public class WordProcessingService : IWordProcessingService
     private long nextSpeechBubbleId;
     private int? currentSpeaker;
 
-    public WordProcessingService(IHubContext<CommunicationHub> hubContext,
-        ISpeechBubbleListService speechBubbleListService)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="WordProcessingService"/> class.
+    /// </summary>
+    /// <param name="hubContext">The hub context.</param>
+    /// <param name="speechBubbleListService">The speech bubble list service.</param>
+    public WordProcessingService(IHubContext<CommunicationHub> hubContext, ISpeechBubbleListService speechBubbleListService)
     {
         this.wordTokenBuffer = new List<WordToken>();
         this.hubContext = hubContext;
@@ -30,7 +34,6 @@ public class WordProcessingService : IWordProcessingService
 
         nextSpeechBubbleId = 1;
     }
-
 
     /// <summary>
     /// Handles new WordToken given by the Speech-Recognition Software or Mock-Server.
@@ -49,11 +52,12 @@ public class WordProcessingService : IWordProcessingService
             switch (wordTokenBuffer.Count)
             {
                 case 0 when speechBubbleListService.GetSpeechBubbles().Count > 0:
-                {
-                    var lastSpeechBubble = speechBubbleListService.GetSpeechBubbles().Last();
-                    lastSpeechBubble.SpeechBubbleContent.Last().Word += wordToken.Word;
-                    return;
-                }
+                    {
+                        var lastSpeechBubble = speechBubbleListService.GetSpeechBubbles().Last();
+                        lastSpeechBubble.SpeechBubbleContent.Last().Word += wordToken.Word;
+                        return;
+                    }
+
                 case > 0:
                     wordTokenBuffer.Last().Word += wordToken.Word;
                     return;
@@ -70,6 +74,7 @@ public class WordProcessingService : IWordProcessingService
 
             wordTokenBuffer.Add(wordToken);
         }
+
         // Finish current SpeechBubble if new Speaker is detected
         else if (currentSpeaker != null && currentSpeaker != wordToken.Speaker)
         {
@@ -121,8 +126,7 @@ public class WordProcessingService : IWordProcessingService
             speaker: (int)currentSpeaker!,
             startTime: wordTokenBuffer.First().StartTime,
             endTime: wordTokenBuffer.Last().EndTime,
-            wordTokens: new List<WordToken>(wordTokenBuffer)
-        );
+            wordTokens: new List<WordToken>(wordTokenBuffer));
 
         nextSpeechBubbleId++;
         speechBubbleListService.AddNewSpeechBubble(nextSpeechBubble);
@@ -145,7 +149,7 @@ public class WordProcessingService : IWordProcessingService
     /// Sends an asynchronous request to the frontend via SignalR, to publish a new Speechbubble.
     /// The frontend can then subscribe to incoming Objects and handle them accordingly.
     /// </summary>
-    /// <param name="speechBubble"></param>
+    /// <param name="speechBubble">The speech bubble to send to the frontend.</param>
     private async Task SendNewSpeechBubbleMessageToFrontend(SpeechBubble speechBubble)
     {
         var listToSend = new List<SpeechBubble>() { speechBubble };
