@@ -4,10 +4,26 @@ using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_co
 
 namespace Backend.Data
 {
+    /**
+     * <summary>
+     * Klasse für ein Wörterbuch.
+     * </summary>
+     */
     public class Dictionary
     {
-        public StartRecognitionMessage_TranscriptionConfig StartRecognitionMessageTranscriptionConfig  { get; set; }
+        /**
+         * <summary>
+         * Transkriptionskonfiguration des StartRecognitionMessage.
+         * </summary>
+         */
+        public StartRecognitionMessage_TranscriptionConfig StartRecognitionMessageTranscriptionConfig { get; set; }
 
+        /**
+         * <summary>
+         * Konstruktor für Dictionary.
+         * </summary>
+         * <param name="startRecognitionMessageTranscriptionConfig">Die Transkriptionskonfiguration des StartRecognitionMessage.</param>
+         */
         public Dictionary(StartRecognitionMessage_TranscriptionConfig startRecognitionMessageTranscriptionConfig)
         {
             StartRecognitionMessageTranscriptionConfig = startRecognitionMessageTranscriptionConfig;

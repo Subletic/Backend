@@ -5,6 +5,11 @@ using Serilog;
 using System;
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_config;
 
+/**
+ * <summary>
+ * Controller für benutzerdefinierte Wörterbücher.
+ * </summary>
+ */
 namespace Backend.Controllers
 {
     [ApiController]
@@ -13,11 +18,24 @@ namespace Backend.Controllers
     {
         private readonly CustomDictionaryService _dictionaryService;
 
+        /**
+         * <summary>
+         * Konstruktor für den CustomDictionaryController. Initialisiert den Dienst für benutzerdefinierte Wörterbücher.
+         * </summary>
+         * <param name="dictionaryService">Der Dienst für benutzerdefinierte Wörterbücher.</param>
+         */
         public CustomDictionaryController(CustomDictionaryService dictionaryService)
         {
             _dictionaryService = dictionaryService ?? throw new ArgumentNullException(nameof(dictionaryService));
         }
 
+        /**
+         * <summary>
+         * API-Endpunkt zum Hochladen eines benutzerdefinierten Wörterbuchs.
+         * </summary>
+         * <param name="transcriptionConfig">Die Transkriptionskonfiguration für das benutzerdefinierte Wörterbuch.</param>
+         * <returns>ActionResult, das den Status der Anforderung widerspiegelt.</returns>
+         */
         [HttpPost("upload-custom-dictionary")]
         public IActionResult UploadCustomDictionary([FromBody] StartRecognitionMessage_TranscriptionConfig transcriptionConfig)
         {
