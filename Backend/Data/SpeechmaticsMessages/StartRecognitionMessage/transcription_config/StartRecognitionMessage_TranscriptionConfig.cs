@@ -13,6 +13,7 @@ namespace Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcriptio
       */
     public class StartRecognitionMessage_TranscriptionConfig
     {
+        private const int MAX_ADDITIONAL_VOCAB_COUNT = 1000;
 
         /**
           *  <summary>
@@ -31,12 +32,18 @@ namespace Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcriptio
         public StartRecognitionMessage_TranscriptionConfig(
           string language = "de",
           bool? enable_partials = false,
-          AdditionalVocab? additionalVocab = null)
+          List<AdditionalVocab>? additionalVocab = null)
         {
             this.language = language;
             this.enable_partials = enable_partials;
-            this.additionalVocab = additionalVocab ?? new AdditionalVocab("");
-        }
+            this.additionalVocab = additionalVocab ?? new List<AdditionalVocab>();
+
+            if (additionalVocab != null && additionalVocab.Count > MAX_ADDITIONAL_VOCAB_COUNT)
+            {
+                throw new ArgumentException($"additionalVocab list cannot exceed {MAX_ADDITIONAL_VOCAB_COUNT} elements.");
+            }
+
+        }   
 
         // not sure how to validate that language is an ISO language code
         /**
@@ -67,6 +74,6 @@ namespace Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcriptio
           *  Additional vocabulary for transcription.
           *  </value>
           */
-        public AdditionalVocab additionalVocab { get; set; }
+        public List<AdditionalVocab> additionalVocab { get; set; }
     }
 }

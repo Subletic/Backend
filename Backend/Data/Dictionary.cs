@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_config;
 
 namespace Backend.Data
 {
     public class Dictionary
     {
-        public TranscriptionConfig TranscriptionConfig { get; set; }
+        public StartRecognitionMessage_TranscriptionConfig StartRecognitionMessageTranscriptionConfig  { get; set; }
 
-        public Dictionary(TranscriptionConfig transcriptionConfig)
+        public Dictionary(StartRecognitionMessage_TranscriptionConfig startRecognitionMessageTranscriptionConfig)
         {
-            TranscriptionConfig = transcriptionConfig;
+            StartRecognitionMessageTranscriptionConfig = startRecognitionMessageTranscriptionConfig;
         }
     }
 }

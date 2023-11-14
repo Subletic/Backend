@@ -3,9 +3,10 @@ using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using System;
+using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_config;
 
-namespace Backend.Controllers {
-
+namespace Backend.Controllers
+{
     [ApiController]
     [Route("api/[controller]")]
     public class CustomDictionaryController : ControllerBase
@@ -14,15 +15,15 @@ namespace Backend.Controllers {
 
         public CustomDictionaryController(CustomDictionaryService dictionaryService)
         {
-            _dictionaryService = dictionaryService;
+            _dictionaryService = dictionaryService ?? throw new ArgumentNullException(nameof(dictionaryService));
         }
 
         [HttpPost("upload-custom-dictionary")]
-        public IActionResult UploadCustomDictionary([FromBody] TranscriptionConfig transcriptionConfig)
+        public IActionResult UploadCustomDictionary([FromBody] StartRecognitionMessage_TranscriptionConfig transcriptionConfig)
         {
             try
             {
-                if (transcriptionConfig == null || transcriptionConfig.AdditionalVocab == null)
+                if (transcriptionConfig == null || transcriptionConfig.additionalVocab == null)
                 {
                     return BadRequest("Invalid custom dictionary data.");
                 }
@@ -36,10 +37,9 @@ namespace Backend.Controllers {
             catch (Exception ex)
             {
                 // Loggen Sie die Ausnahme oder führen Sie andere Aktionen durch
-                Log.Error(ex, "Eine Ausnahme ist aufgetreten.");
+                Log.Error(ex, "An exception occurred.");
                 return StatusCode(500, "Internal Server Error");
             }
         }
     }
 }
-

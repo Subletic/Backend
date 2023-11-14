@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using Serilog;
+using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_config;
 
 namespace Backend.Services
 {
@@ -16,35 +17,35 @@ namespace Backend.Services
 
         public void ProcessCustomDictionary(Dictionary customDictionary)
         {
-            if (customDictionary == null || customDictionary.TranscriptionConfig == null)
+            if (customDictionary == null || customDictionary.StartRecognitionMessageTranscriptionConfig == null)
             {
                 throw new ArgumentException("Invalid custom dictionary data.");
             }
 
-            if (customDictionary.TranscriptionConfig.AdditionalVocab.Count > 1000)
+            if (customDictionary.StartRecognitionMessageTranscriptionConfig.additionalVocab.Count > 1000)
             {
                 throw new ArgumentException("additionalVocab list cannot exceed 1000 elements.");
             }
 
-            Log.Information($"Received custom dictionary for language {customDictionary.TranscriptionConfig.Language}");
+            Log.Information($"Received custom dictionary for language {customDictionary.StartRecognitionMessageTranscriptionConfig.language}");
 
             var existingDictionary = _customDictionaries.FirstOrDefault(d =>
-                d.TranscriptionConfig.AdditionalVocab.Any(av => av.Content == customDictionary.TranscriptionConfig.AdditionalVocab.FirstOrDefault()?.Content)
+                d.StartRecognitionMessageTranscriptionConfig.additionalVocab.Any(av => av.Content == customDictionary.StartRecognitionMessageTranscriptionConfig.additionalVocab.FirstOrDefault()?.Content)
             );
 
             if (existingDictionary != null)
             {
-                existingDictionary.TranscriptionConfig = customDictionary.TranscriptionConfig;
-                foreach (var av in existingDictionary.TranscriptionConfig.AdditionalVocab)
+                existingDictionary.StartRecognitionMessageTranscriptionConfig = customDictionary.StartRecognitionMessageTranscriptionConfig;
+                foreach (var av in existingDictionary.StartRecognitionMessageTranscriptionConfig.additionalVocab)
                 {
-                    av.SoundsLike = customDictionary.TranscriptionConfig.AdditionalVocab[0].SoundsLike;
+                    av.SoundsLike = customDictionary.StartRecognitionMessageTranscriptionConfig.additionalVocab[0].SoundsLike;
                 }
-                Log.Information($"Custom dictionary updated for content {customDictionary.TranscriptionConfig.AdditionalVocab.FirstOrDefault()?.Content}");
+                Log.Information($"Custom dictionary updated for content {customDictionary.StartRecognitionMessageTranscriptionConfig.additionalVocab.FirstOrDefault()?.Content}");
             }
             else
             {
                 _customDictionaries.Add(customDictionary);
-                Log.Information($"Custom dictionary added to the in-memory data structure for content {customDictionary.TranscriptionConfig.AdditionalVocab.FirstOrDefault()?.Content}");
+                Log.Information($"Custom dictionary added to the in-memory data structure for content {customDictionary.StartRecognitionMessageTranscriptionConfig.additionalVocab.FirstOrDefault()?.Content}");
             }
         }
 

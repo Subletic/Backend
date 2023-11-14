@@ -141,7 +141,25 @@ public class StartRecognitionMessageTests
         innerTranscriptionConfig.AppendJoin(", ", new string[] {
             @"""language"": ""de""",
             @"""enable_partials"": true",
-            @"""additional_vocab"": ???",
+            @"""additional_vocab"": [
+    {
+      ""content"": ""financial crisis""
+    },
+    {
+      ""content"": ""gnocchi"",
+      ""sounds_like"": [
+        ""nyohki"",
+        ""nokey"",
+        ""nochi""
+      ]
+    },
+    {
+      ""content"": ""CEO"",
+      ""sounds_like"": [
+        ""C.E.O.""
+      ]
+    }
+  ]",
         });
 
         var inner = new StringBuilder();

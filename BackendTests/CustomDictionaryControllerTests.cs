@@ -5,6 +5,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using Backend.Controllers;
+using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_config;
 
 namespace BackendTests
 {
@@ -24,7 +25,8 @@ namespace BackendTests
         [Test]
         public void UploadCustomDictionary_ValidData_ReturnsOk()
         {
-            var transcriptionConfig = new TranscriptionConfig("en", new List<AdditionalVocab>());
+            var additionalVocab = new AdditionalVocab("word");
+            var transcriptionConfig = new StartRecognitionMessage_TranscriptionConfig("en", false, new List<AdditionalVocab> { additionalVocab });
             var result = _customDictionaryController!.UploadCustomDictionary(transcriptionConfig);
 
             Assert.That(result, Is.TypeOf<OkObjectResult>());
