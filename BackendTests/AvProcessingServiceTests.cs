@@ -1,12 +1,12 @@
-﻿using Backend.Services;
-using Moq;
-using NUnit.Framework;
-using System;
-using System.IO;
-using System.Threading.Tasks;
-
-namespace BackendTests
+﻿namespace BackendTests
 {
+    using System;
+    using System.IO;
+    using System.Threading.Tasks;
+    using Backend.Services;
+    using Moq;
+    using NUnit.Framework;
+
     public class AvProcessingServiceTests
     {
         private readonly Mock<IWordProcessingService> wordProcessingServiceMock;

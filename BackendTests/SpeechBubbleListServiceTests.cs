@@ -1,14 +1,14 @@
-﻿using Backend.Data;
-using Backend.Services;
-
-namespace BackendTests
+﻿namespace BackendTests
 {
+    using Backend.Data;
+    using Backend.Services;
+
     [TestFixture]
     public class SpeechBubbleListServiceTests
     {
-        private SpeechBubbleListService speechBubbleListService;
         private readonly SpeechBubble testSpeechBubble1;
         private readonly SpeechBubble testSpeechBubble2;
+        private SpeechBubbleListService speechBubbleListService;
 
         public SpeechBubbleListServiceTests()
         {
@@ -19,23 +19,19 @@ namespace BackendTests
             var thirdWord = new WordToken(word: "Test3", confidence: 0.7f, startTime: 10, endTime: 11, speaker: 2);
             var fourthWord = new WordToken(word: "Test4", confidence: 0.7f, startTime: 12, endTime: 14, speaker: 2);
 
-            testSpeechBubble1 = new SpeechBubble
-            (
+            testSpeechBubble1 = new SpeechBubble(
                 1,
                 1,
                 1,
                 1,
-                new List<WordToken> { firstWord, secondWord, thirdWord, fourthWord }
-            );
+                new List<WordToken> { firstWord, secondWord, thirdWord, fourthWord });
 
-            testSpeechBubble2 = new SpeechBubble
-            (
+            testSpeechBubble2 = new SpeechBubble(
                 2,
                 1,
                 1,
                 1,
-                new List<WordToken> { firstWord, secondWord, thirdWord, fourthWord }
-            );
+                new List<WordToken> { firstWord, secondWord, thirdWord, fourthWord });
         }
 
         [SetUp]
@@ -80,32 +76,26 @@ namespace BackendTests
         {
             var fourthWord = new WordToken(word: "Test4", confidence: 0.7f, startTime: 12, endTime: 14, speaker: 2);
 
-            var testSpeechBubble1 = new SpeechBubble
-            (
+            var testSpeechBubble1 = new SpeechBubble(
                 1,
                 1,
                 1,
                 1,
-                new List<WordToken> { fourthWord }
-            );
+                new List<WordToken> { fourthWord });
 
-            var testSpeechBubble2 = new SpeechBubble
-            (
+            var testSpeechBubble2 = new SpeechBubble(
                 2,
                 1,
                 1,
                 1,
-                new List<WordToken> { fourthWord }
-            );
+                new List<WordToken> { fourthWord });
 
-            var testSpeechBubble3 = new SpeechBubble
-            (
+            var testSpeechBubble3 = new SpeechBubble(
                 1,
                 1,
                 1,
                 1,
-                new List<WordToken> { fourthWord }
-            );
+                new List<WordToken> { fourthWord });
 
             speechBubbleListService.AddNewSpeechBubble(testSpeechBubble1);
             speechBubbleListService.AddNewSpeechBubble(testSpeechBubble2);
@@ -126,41 +116,33 @@ namespace BackendTests
         {
             var fourthWord = new WordToken(word: "Test4", confidence: 0.7f, startTime: 12, endTime: 14, speaker: 2);
 
-            var testSpeechBubble1 = new SpeechBubble
-            (
+            var testSpeechBubble1 = new SpeechBubble(
                 1,
                 1,
                 1,
                 1,
-                new List<WordToken> { fourthWord }
-            );
+                new List<WordToken> { fourthWord });
 
-            var testSpeechBubble2 = new SpeechBubble
-            (
+            var testSpeechBubble2 = new SpeechBubble(
                 2,
                 1,
                 1,
                 1,
-                new List<WordToken> { fourthWord }
-            );
+                new List<WordToken> { fourthWord });
 
-            var testSpeechBubble3 = new SpeechBubble
-            (
+            var testSpeechBubble3 = new SpeechBubble(
                 3,
                 1,
                 1,
                 1,
-                new List<WordToken> { fourthWord }
-            );
+                new List<WordToken> { fourthWord });
 
-            var testSpeechBubble4 = new SpeechBubble
-            (
+            var testSpeechBubble4 = new SpeechBubble(
                 2,
                 1,
                 1,
                 1,
-                new List<WordToken> { fourthWord }
-            );
+                new List<WordToken> { fourthWord });
 
             speechBubbleListService.AddNewSpeechBubble(testSpeechBubble1);
             speechBubbleListService.AddNewSpeechBubble(testSpeechBubble2);
@@ -191,8 +173,11 @@ namespace BackendTests
         {
             var creationTime = testSpeechBubble1.CreationTime;
             var newSpeechBubble = new SpeechBubble(
-                testSpeechBubble1.Id, testSpeechBubble1.Speaker, testSpeechBubble1.StartTime,
-                testSpeechBubble1.EndTime, testSpeechBubble1.SpeechBubbleContent);
+                testSpeechBubble1.Id,
+                testSpeechBubble1.Speaker,
+                testSpeechBubble1.StartTime,
+                testSpeechBubble1.EndTime,
+                testSpeechBubble1.SpeechBubbleContent);
 
             newSpeechBubble.CreationTime += TimeSpan.FromMinutes(2);
 

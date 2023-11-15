@@ -1,9 +1,9 @@
-﻿using Backend.Data.SpeechmaticsMessages.RecognitionStartedMessage;
-using Backend.Data.SpeechmaticsMessages.RecognitionStartedMessage.language_pack_info;
+﻿namespace BackendTests.SpeechmaticsMessages;
+
 using System.Text;
 using System.Text.Json;
-
-namespace BackendTests.SpeechmaticsMessages;
+using Backend.Data.SpeechmaticsMessages.RecognitionStartedMessage;
+using Backend.Data.SpeechmaticsMessages.RecognitionStartedMessage.language_pack_info;
 
 public class RecognitionStartedMessageTests
 {
@@ -11,13 +11,14 @@ public class RecognitionStartedMessageTests
 
     private static readonly string messageValue = "RecognitionStarted";
 
-    [Test, Order(1)]
     // Valid constructor call must be accepted
+    [Test]
+    [Order(1)]
     public void ValidConstruction_DoesntThrow()
     {
         Assert.DoesNotThrow(() =>
         {
-            var _ = new RecognitionStartedMessage("somegreatid", new RecognitionStartedMessage_LanguagePackInfo(
+            var recognitionStartedMessage = new RecognitionStartedMessage("somegreatid", new RecognitionStartedMessage_LanguagePackInfo(
                 adapted: false,
                 itn: true,
                 language_description: "Something",
@@ -26,12 +27,14 @@ public class RecognitionStartedMessageTests
         });
     }
 
-    [Test, Order(2)]
     // Valid message must be accepted during deserialisation
+    [Test]
+    [Order(2)]
     public void ValidMessage_DoesntThrow()
     {
         var innerLanguagePackInfo = new StringBuilder();
-        innerLanguagePackInfo.AppendJoin(", ", new string[] {
+        innerLanguagePackInfo.AppendJoin(", ", new string[]
+        {
             @"""adapted"": true",
             @"""itn"": false",
             @"""language_description"": ""Someotherthing""",
@@ -40,17 +43,19 @@ public class RecognitionStartedMessageTests
         });
 
         var inner = new StringBuilder();
-        inner.AppendJoin(", ", new string[] {
+        inner.AppendJoin(", ", new string[]
+        {
             @"""message"": """ + messageValue + @"""",
             @"""id"": ""someevenbetterid""",
-            @"""language_pack_info"": { " + innerLanguagePackInfo.ToString() + " }"
+            @"""language_pack_info"": { " + innerLanguagePackInfo.ToString() + " }",
         });
 
         var outer = new StringBuilder();
-        outer.AppendJoin(" ", new string[] {
+        outer.AppendJoin(" ", new string[]
+        {
             "{",
             inner.ToString(),
-            "}"
+            "}",
         });
 
         Assert.DoesNotThrow(() =>
@@ -60,12 +65,14 @@ public class RecognitionStartedMessageTests
         Assert.NotNull(JsonSerializer.Deserialize<RecognitionStartedMessage>(outer.ToString(), jsonOptions));
     }
 
-    [Test, Order(3)]
     // Wrong message type must be rejected during deserialisation
+    [Test]
+    [Order(3)]
     public void WrongMessage_Throws()
     {
         var innerLanguagePackInfo = new StringBuilder();
-        innerLanguagePackInfo.AppendJoin(", ", new string[] {
+        innerLanguagePackInfo.AppendJoin(", ", new string[]
+        {
             @"""adapted"": true",
             @"""itn"": false",
             @"""language_description"": ""Someotherthing""",
@@ -74,17 +81,19 @@ public class RecognitionStartedMessageTests
         });
 
         var inner = new StringBuilder();
-        inner.AppendJoin(", ", new string[] {
+        inner.AppendJoin(", ", new string[]
+        {
             @"""message"": """ + "Not" + messageValue + @"""",
             @"""id"": ""someevenbetterid""",
-            @"""language_pack_info"": { " + innerLanguagePackInfo.ToString() + " }"
+            @"""language_pack_info"": { " + innerLanguagePackInfo.ToString() + " }",
         });
 
         var outer = new StringBuilder();
-        outer.AppendJoin(" ", new string[] {
+        outer.AppendJoin(" ", new string[]
+        {
             "{",
             inner.ToString(),
-            "}"
+            "}",
         });
 
         Assert.Throws<ArgumentException>(() =>
@@ -93,8 +102,8 @@ public class RecognitionStartedMessageTests
         });
     }
 
-    [Test]
     // Valid construction must report correct contents
+    [Test]
     public void ValidConstruction_CorrectContent()
     {
         string id = "807670e9-14af-4fa2-9e8f-5d525c22156e";
@@ -113,12 +122,13 @@ public class RecognitionStartedMessageTests
         Assert.That(message.language_pack_info, Is.EqualTo(lpi));
     }
 
-    [Test]
     // Valid message must report correct contents
+    [Test]
     public void ValidMessage_CorrectContent()
     {
         var innerLanguagePackInfo = new StringBuilder();
-        innerLanguagePackInfo.AppendJoin(", ", new string[] {
+        innerLanguagePackInfo.AppendJoin(", ", new string[]
+        {
             @"""adapted"": false",
             @"""itn"": true",
             @"""language_description"": ""German""",
@@ -127,21 +137,22 @@ public class RecognitionStartedMessageTests
         });
 
         var inner = new StringBuilder();
-        inner.AppendJoin(", ", new string[] {
+        inner.AppendJoin(", ", new string[]
+        {
             @"""message"": """ + messageValue + @"""",
             @"""id"": ""Pustekuchen""",
-            @"""language_pack_info"": { " + innerLanguagePackInfo.ToString() + " }"
+            @"""language_pack_info"": { " + innerLanguagePackInfo.ToString() + " }",
         });
 
         var outer = new StringBuilder();
-        outer.AppendJoin(" ", new string[] {
+        outer.AppendJoin(" ", new string[]
+        {
             "{",
             inner.ToString(),
-            "}"
+            "}",
         });
 
-        RecognitionStartedMessage message = JsonSerializer.Deserialize<RecognitionStartedMessage>(outer.ToString(),
-            jsonOptions)!;
+        RecognitionStartedMessage message = JsonSerializer.Deserialize<RecognitionStartedMessage>(outer.ToString(), jsonOptions)!;
 
         Assert.That(message.message, Is.EqualTo(messageValue));
         Assert.That(message.id, Is.EqualTo("Pustekuchen"));
