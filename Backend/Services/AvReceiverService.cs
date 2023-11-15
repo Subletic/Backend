@@ -10,46 +10,36 @@ using System.Threading.Tasks;
 using Backend.Data;
 using Backend.Services;
 
-/**
-  * <summary>
-  * A service that fetches new A/V data over a WebSocket and kicks off its transcription via AvProcessingService.
-  * </summary>
-  */
+/// <summary>
+/// A service that fetches new A/V data over a WebSocket and kicks off its transcription via AvProcessingService.
+/// </summary>
 public class AvReceiverService : IAvReceiverService
 {
-    /**
-      * <summary>
-      * Maximum amount of data to read from the WebSocket at once, in bytes
-      * </summary>
-      */
+    /// <summary>
+    /// Maximum amount of data to read from the WebSocket at once, in bytes
+    /// </summary>
     private const int MAXIMUM_READ_SIZE = 4096;
 
-    /**
-      * <summary>
-      * Dependency Injection for AvProcessingService to push fetched data into
-      * </summary>
-      */
+    /// <summary>
+    /// Dependency Injection for AvProcessingService to push fetched data into
+    /// </summary>
     private IAvProcessingService avProcessingService;
 
-    /**
-      * <summary>
-      * Initializes a new instance of the <see cref="AvReceiverService"/> class.
-      * </summary>
-      * <param name="avProcessingService">The AvProcessingService to push fetched data into</param>
-      */
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AvReceiverService"/> class.
+    /// </summary>
+    /// <param name="avProcessingService">The AvProcessingService to push fetched data into</param>
     public AvReceiverService(IAvProcessingService avProcessingService)
     {
         this.avProcessingService = avProcessingService;
     }
 
-    /**
-      * <summary>
-      * Starts the front part of the transcription pipeline (read A/V overWebSocket, push into AvProcessingService)
-      * </summary>
-      * <param name="webSocket">The WebSocket to read A/V data from</param>
-      * <param name="ctSource">The CancellationTokenSource to cancel the operation</param>
-      * <returns> A Task representing the asynchronous operation. </returns>
-      */
+    /// <summary>
+    /// Starts the front part of the transcription pipeline (read A/V overWebSocket, push into AvProcessingService)
+    /// </summary>
+    /// <param name="webSocket">The WebSocket to read A/V data from</param>
+    /// <param name="ctSource">The CancellationTokenSource to cancel the operation</param>
+    /// <returns> A Task representing the asynchronous operation. </returns>
     public async Task Start(WebSocket webSocket, CancellationTokenSource ctSource)
     {
         Pipe avPipe = new Pipe();

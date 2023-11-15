@@ -44,7 +44,7 @@ public class WordProcessingService : IWordProcessingService
     public void HandleNewWord(WordToken wordToken)
     {
         Console.WriteLine($"New word: {wordToken.Word}, confidence {wordToken.Confidence}");
-        SetSpeakerIfSpeakerIsNull(wordToken);
+        setSpeakerIfSpeakerIsNull(wordToken);
 
         // Append point or comma to last WordToken
         if (wordToken.Word is "." or "," or "!" or "?")
@@ -67,9 +67,9 @@ public class WordProcessingService : IWordProcessingService
         // Add new word Token to current Speech Bubble
         if (currentSpeaker != null && currentSpeaker == wordToken.Speaker)
         {
-            if (IsSpeechBubbleFull(wordToken))
+            if (speechBubbleFull(wordToken))
             {
-                FlushBufferToNewSpeechBubble();
+                flushBufferToNewSpeechBubble();
             }
 
             wordTokenBuffer.Add(wordToken);
@@ -78,7 +78,7 @@ public class WordProcessingService : IWordProcessingService
         // Finish current SpeechBubble if new Speaker is detected
         else if (currentSpeaker != null && currentSpeaker != wordToken.Speaker)
         {
-            FlushBufferToNewSpeechBubble();
+            flushBufferToNewSpeechBubble();
 
             currentSpeaker = wordToken.Speaker;
             wordTokenBuffer.Add(wordToken);
@@ -96,7 +96,7 @@ public class WordProcessingService : IWordProcessingService
     /// </summary>
     /// <param name="wordToken">The new Word Token received from the Mock-Server or Speech-Recognition Software</param>
     /// <returns>True if new WordToken should be in a new SpeechBubble</returns>
-    private bool IsSpeechBubbleFull(WordToken wordToken)
+    private bool speechBubbleFull(WordToken wordToken)
     {
         const int maxWordCount = 20;
         const int maxSecondsTimeDifference = 5;
@@ -119,7 +119,7 @@ public class WordProcessingService : IWordProcessingService
     /// Empties WordBuffer and appends new SpeechBubble to the End of the LinkedList
     /// Increments the SpeechBubbleId by 1, so each SpeechBubble has a unique Id.
     /// </summary>
-    private async void FlushBufferToNewSpeechBubble()
+    private async void flushBufferToNewSpeechBubble()
     {
         var nextSpeechBubble = new SpeechBubble(
             id: nextSpeechBubbleId,
@@ -132,7 +132,7 @@ public class WordProcessingService : IWordProcessingService
         speechBubbleListService.AddNewSpeechBubble(nextSpeechBubble);
         wordTokenBuffer.Clear();
 
-        await SendNewSpeechBubbleMessageToFrontend(nextSpeechBubble);
+        await sendNewSpeechBubbleMessageToFrontend(nextSpeechBubble);
     }
 
     /// <summary>
@@ -140,7 +140,7 @@ public class WordProcessingService : IWordProcessingService
     /// Should only be called for the first SpeechBubble
     /// </summary>
     /// <param name="wordToken">The new Word Token received from the Mock-Server or Speech-Recognition Software</param>
-    private void SetSpeakerIfSpeakerIsNull(WordToken wordToken)
+    private void setSpeakerIfSpeakerIsNull(WordToken wordToken)
     {
         currentSpeaker ??= wordToken.Speaker;
     }
@@ -150,7 +150,7 @@ public class WordProcessingService : IWordProcessingService
     /// The frontend can then subscribe to incoming Objects and handle them accordingly.
     /// </summary>
     /// <param name="speechBubble">The speech bubble to send to the frontend.</param>
-    private async Task SendNewSpeechBubbleMessageToFrontend(SpeechBubble speechBubble)
+    private async Task sendNewSpeechBubbleMessageToFrontend(SpeechBubble speechBubble)
     {
         var listToSend = new List<SpeechBubble>() { speechBubble };
 

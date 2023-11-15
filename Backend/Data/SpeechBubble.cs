@@ -26,7 +26,7 @@ public class SpeechBubble
     }
 
     /// <summary>
-    /// Gets or sets the unique identifier of the speech bubble.
+    /// Gets the unique identifier of the speech bubble.
     /// </summary>
     public long Id { get; init; }
 

@@ -10,58 +10,46 @@ using System.Threading.Tasks;
 using Backend.Data;
 using Backend.Services;
 
-/**
-  * <summary>
-  * Service responsible for exporting finished subtitles back over the WebSocket connection.
-  * </summary>
-  */
+/// <summary>
+/// Service responsible for exporting finished subtitles back over the WebSocket connection.
+/// </summary>
 public class SubtitleExporterService : ISubtitleExporterService
 {
-    /**
-      * <summary>
-      * Maximum amount of data to read from the converted subtitle at once, in bytes
-      * </summary>
-      */
+    /// <summary>
+    /// Maximum amount of data to read from the converted subtitle at once, in bytes
+    /// </summary>
     private const int MAXIMUM_READ_SIZE = 4096;
 
-    /**
-      * <summary>
-      * Pipe for reading converted subtitles from the converter
-      * </summary>
-      */
+    /// <summary>
+    /// Pipe for reading converted subtitles from the converter
+    /// </summary>
     private Pipe subtitlePipe;
 
-    /**
-      * <summary>
-      * The converter for translating SpeechBubbles into a preferred subtitle format
-      * </summary>
-      */
+    /// <summary>
+    /// The converter for translating SpeechBubbles into a preferred subtitle format
+    /// </summary>
     private ISubtitleConverter subtitleConverter;
 
-    /**
-      * <summary>
-      * Initializes a new instance of the <see cref="SubtitleExporterService"/> class.
-      * </summary>
-      * <remarks>
-      * This constructor is used to handle dependency injection.
-      * </remarks>
-      */
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SubtitleExporterService"/> class.
+    /// </summary>
+    /// <remarks>
+    /// This constructor is used to handle dependency injection.
+    /// </remarks>
     public SubtitleExporterService()
     {
         subtitlePipe = new Pipe();
         subtitleConverter = new WebVttConverter(subtitlePipe.Writer.AsStream(leaveOpen: true));
     }
 
-    /**
-      * <summary>
-      * Starts up the sending side of the processing pipeline.
-      * Awaits subtitles to be pushed into <c>ExportSubtitle</c>, receives converted subtitles from
-      * chosen subtitle converter and pushes them back through the WebSocket connection.
-      * </summary>
-      * <param name="webSocket">The WebSocket connection to send subtitles over</param>
-      * <param name="ctSource">The cancellation token source to cancel the export</param>
-      * <returns>Successful Task Completion</returns>
-      */
+    /// <summary>
+    /// Starts up the sending side of the processing pipeline.
+    /// Awaits subtitles to be pushed into <c>ExportSubtitle</c>, receives converted subtitles from
+    /// chosen subtitle converter and pushes them back through the WebSocket connection.
+    /// </summary>
+    /// <param name="webSocket">The WebSocket connection to send subtitles over</param>
+    /// <param name="ctSource">The cancellation token source to cancel the export</param>
+    /// <returns>Successful Task Completion</returns>
     public async Task Start(WebSocket webSocket, CancellationTokenSource ctSource)
     {
         Stream subtitleReaderStream = subtitlePipe.Reader.AsStream(leaveOpen: false);

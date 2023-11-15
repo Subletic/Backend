@@ -6,7 +6,7 @@
 public struct SpeechBubbleJson
 {
     /// <summary>
-    /// Gets or sets the ID of the speech bubble.
+    /// Gets the ID of the speech bubble.
     /// </summary>
     public long Id { get; init; }
 

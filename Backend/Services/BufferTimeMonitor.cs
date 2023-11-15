@@ -16,7 +16,6 @@ using Microsoft.Extensions.Hosting;
 /// </summary>
 public class BufferTimeMonitor : BackgroundService
 {
-
     private readonly IHubContext<CommunicationHub> hubContext;
 
     /// <summary>
@@ -81,7 +80,7 @@ public class BufferTimeMonitor : BackgroundService
 
             if (timeDifference.TotalMinutes > timeLimitInMinutes)
             {
-                await DeleteSpeechBubbleMessageToFrontend(oldestSpeechBubble.Value.Id);
+                await deleteSpeechBubbleMessageToFrontend(oldestSpeechBubble.Value.Id);
 
                 timedOutSpeechBubbles.Add(oldestSpeechBubble.Value);
                 speechBubbleListService.DeleteOldestSpeechBubble();
@@ -96,7 +95,7 @@ public class BufferTimeMonitor : BackgroundService
     /// The frontend can then subscribe to incoming Objects and handle them accordingly.
     /// </summary>
     /// <param name="id">The id of the Speechbubble to be deleted</param>
-    private async Task DeleteSpeechBubbleMessageToFrontend(long id)
+    private async Task deleteSpeechBubbleMessageToFrontend(long id)
     {
         try
         {

@@ -40,8 +40,7 @@ builder.Services.AddHostedService<BufferTimeMonitor>();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAngularFrontend",
-        policy =>
+    options.AddPolicy("AllowAngularFrontend", policy =>
         {
             policy.WithOrigins(frontendUrl) // Replace with your Angular app URL
                 .AllowAnyHeader()
