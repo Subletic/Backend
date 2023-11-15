@@ -11,7 +11,7 @@ namespace Backend.Services
      * Dienst zur Verwaltung benutzerdefinierter Wörterbücher.
      * </summary>
      */
-    public class CustomDictionaryService
+    public class CustomDictionaryService : ICustomDictionaryService
     {
         // List to store custom dictionaries.
         private List<Dictionary> _customDictionaries;

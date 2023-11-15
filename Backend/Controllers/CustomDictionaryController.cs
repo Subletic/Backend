@@ -16,7 +16,7 @@ namespace Backend.Controllers
     [Route("api/[controller]")]
     public class CustomDictionaryController : ControllerBase
     {
-        private readonly CustomDictionaryService _dictionaryService;
+        private readonly ICustomDictionaryService _dictionaryService;
 
         /**
          * <summary>
@@ -24,7 +24,7 @@ namespace Backend.Controllers
          * </summary>
          * <param name="dictionaryService">Der Dienst für benutzerdefinierte Wörterbücher.</param>
          */
-        public CustomDictionaryController(CustomDictionaryService dictionaryService)
+        public CustomDictionaryController(ICustomDictionaryService dictionaryService)
         {
             _dictionaryService = dictionaryService ?? throw new ArgumentNullException(nameof(dictionaryService));
         }
@@ -36,7 +36,7 @@ namespace Backend.Controllers
          * <param name="transcriptionConfig">Die Transkriptionskonfiguration für das benutzerdefinierte Wörterbuch.</param>
          * <returns>ActionResult, das den Status der Anforderung widerspiegelt.</returns>
          */
-        [HttpPost("upload-custom-dictionary")]
+        [HttpPost("upload")]
         public IActionResult UploadCustomDictionary([FromBody] StartRecognitionMessage_TranscriptionConfig transcriptionConfig)
         {
             try
