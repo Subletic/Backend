@@ -1,40 +1,33 @@
-﻿using System;
+﻿namespace Backend.Data;
+
+using System;
 using System.Collections.Generic;
 
-namespace Backend.Data
+/// <summary>
+/// Class for additional vocabulary.
+/// </summary>
+public class AdditionalVocab
 {
     /**
-     * <summary>
-     * Klasse für zusätzliches Vokabular.
-     * </summary>
-     */
-    public class AdditionalVocab
+    * <summary>
+    * Gets or sets the content of the additional vocabulary.
+    * </summary>
+    **/
+    public string Content { get; set; }
+
+    /// <summary>
+    /// Gets or sets the list of similar sounds (optional).
+    /// </summary>
+    public List<string>? SoundsLike { get; set; }
+
+    /// <summary>
+    /// Constructor for AdditionalVocab.
+    /// </summary>
+    /// <param name="content">The content of the additional vocabulary.</param>
+    /// <param name="soundsLike">List of similar sounds (optional).</param>
+    public AdditionalVocab(string content, List<string>? soundsLike = null)
     {
-        /**
-         * <summary>
-         * Inhalt des zusätzlichen Vokabulars.
-         * </summary>
-         */
-        public string Content { get; set; }
-
-        /**
-         * <summary>
-         * Liste von ähnlichen Klängen (optional).
-         * </summary>
-         */
-        public List<string>? SoundsLike { get; set; }
-
-        /**
-         * <summary>
-         * Konstruktor für AdditionalVocab.
-         * </summary>
-         * <param name="content">Der Inhalt des zusätzlichen Vokabulars.</param>
-         * <param name="soundsLike">Liste von ähnlichen Klängen (optional).</param>
-         */
-        public AdditionalVocab(string content, List<string>? soundsLike = null)
-        {
-            Content = content;
-            SoundsLike = soundsLike ?? new List<string>();
-        }
+        Content = content;
+        SoundsLike = soundsLike ?? new List<string>();
     }
 }

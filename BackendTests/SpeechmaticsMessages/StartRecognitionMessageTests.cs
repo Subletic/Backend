@@ -223,68 +223,9 @@ public class StartRecognitionMessageTests
         });
 
         var inner = new StringBuilder();
-        inner.AppendJoin(", ", new string[] {
-            @"""message"": """ + "Not" + messageValue + @"""",
-            @"""audio_format"": { " + innerAudioFormat.ToString() + " }",
-            @"""transcription_config"": { " + innerTranscriptionConfig.ToString() + " }"
-        });
-
-        var outer = new StringBuilder();
-        outer.AppendJoin(" ", new string[] {
-            "{",
-            inner.ToString(),
-            "}"
-        });
-
-        Assert.Throws<ArgumentException>(() =>
+        inner.AppendJoin(", ", new string[]
         {
-            JsonSerializer.Deserialize<StartRecognitionMessage>(outer.ToString(), jsonOptions);
-        });
-    }
-
-    [Test]
-    // Valid construction must report correct contents
-    public void ValidConstruction_CorrectContent()
-    {
-        StartRecognitionMessage_AudioFormat at = new StartRecognitionMessage_AudioFormat(type: "raw",
-            encoding: "mulaw",
-            sample_rate: 44100);
-
-        StartRecognitionMessage_TranscriptionConfig tc = new StartRecognitionMessage_TranscriptionConfig(
-            language: "en",
-            enable_partials: false);
-
-        StartRecognitionMessage message = new StartRecognitionMessage(audio_format: at,
-            transcription_config: tc);
-
-        Assert.That(message.message, Is.EqualTo(messageValue));
-        Assert.That(message.audio_format, Is.EqualTo(at));
-        Assert.That(message.transcription_config, Is.EqualTo(tc));
-    }
-
-    [Test]
-    // Valid message must report correct contents
-    public void ValidMessage_CorrectContent()
-    {
-        var innerAudioFormat = new StringBuilder();
-        innerAudioFormat.AppendJoin(", ", new string[] {
-            @"""type"": ""file""",
-            // encoding is raw-specific
-            @"""encoding"": null",
-            // sample_rate is raw-specific
-            @"""sample_rate"": null",
-        });
-
-        var innerTranscriptionConfig = new StringBuilder();
-        innerTranscriptionConfig.AppendJoin(", ", new string[] {
-            @"""language"": ""de""",
-            // enable_partials is optional
-            @"""enable_partials"": null",
-        });
-
-        var inner = new StringBuilder();
-        inner.AppendJoin(", ", new string[] {
-            @"""message"": """ + messageValue + @"""",
+            @"""message"": """ + "Not" + MESSAGE_VALUE + @"""",
             @"""audio_format"": { " + innerAudioFormat.ToString() + " }",
             @"""transcription_config"": { " + innerTranscriptionConfig.ToString() + " }",
         });
@@ -296,10 +237,70 @@ public class StartRecognitionMessageTests
             inner.ToString(),
             "}",
         });
-        StartRecognitionMessage message = JsonSerializer.Deserialize<StartRecognitionMessage>(outer.ToString(),
-            jsonOptions)!;
 
-        Assert.That(message.message, Is.EqualTo(messageValue));
+        Assert.Throws<ArgumentException>(() =>
+        {
+            JsonSerializer.Deserialize<StartRecognitionMessage>(outer.ToString(), jsonOptions);
+        });
+    }
+
+    // Valid construction must report correct contents
+    [Test]
+    public void ValidConstruction_CorrectContent()
+    {
+        StartRecognitionMessage_AudioFormat at = new StartRecognitionMessage_AudioFormat(
+            type: "raw",
+            encoding: "mulaw",
+            sample_rate: 44100);
+
+        StartRecognitionMessage_TranscriptionConfig tc = new StartRecognitionMessage_TranscriptionConfig(
+            language: "en",
+            enable_partials: false);
+
+        StartRecognitionMessage message = new StartRecognitionMessage(audio_format: at, transcription_config: tc);
+
+        Assert.That(message.message, Is.EqualTo(MESSAGE_VALUE));
+        Assert.That(message.audio_format, Is.EqualTo(at));
+        Assert.That(message.transcription_config, Is.EqualTo(tc));
+    }
+
+    // Valid message must report correct contents
+    [Test]
+    public void ValidMessage_CorrectContent()
+    {
+        var innerAudioFormat = new StringBuilder();
+        innerAudioFormat.AppendJoin(", ", new string[]
+        {
+            @"""type"": ""file""",
+            @"""encoding"": null", // encoding is raw-specific
+            @"""sample_rate"": null", // sample_rate is raw-specific
+        });
+
+        var innerTranscriptionConfig = new StringBuilder();
+        innerTranscriptionConfig.AppendJoin(", ", new string[]
+        {
+            @"""language"": ""de""",
+            @"""enable_partials"": null", // enable_partials is optional
+        });
+
+        var inner = new StringBuilder();
+        inner.AppendJoin(", ", new string[]
+        {
+            @"""message"": """ + MESSAGE_VALUE + @"""",
+            @"""audio_format"": { " + innerAudioFormat.ToString() + " }",
+            @"""transcription_config"": { " + innerTranscriptionConfig.ToString() + " }",
+        });
+
+        var outer = new StringBuilder();
+        outer.AppendJoin(" ", new string[]
+        {
+            "{",
+            inner.ToString(),
+            "}",
+        });
+        StartRecognitionMessage message = JsonSerializer.Deserialize<StartRecognitionMessage>(outer.ToString(), jsonOptions)!;
+
+        Assert.That(message.message, Is.EqualTo(MESSAGE_VALUE));
         Assert.That(message.audio_format.type, Is.EqualTo("file"));
         Assert.That(message.audio_format.encoding, Is.EqualTo(null));
         Assert.That(message.audio_format.sample_rate, Is.EqualTo(null));
