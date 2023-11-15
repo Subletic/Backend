@@ -15,10 +15,11 @@ public class StartRecognitionMessage_AudioFormatTests
     public void ValidValues_DoesntThrow()
     {
         // our defaults
-        Assert.DoesNotThrow (() => new StartRecognitionMessage_AudioFormat());
+        Assert.DoesNotThrow(() => new StartRecognitionMessage_AudioFormat());
 
         // raw type
-        Assert.DoesNotThrow (() => {
+        Assert.DoesNotThrow(() =>
+        {
             var _ = new StartRecognitionMessage_AudioFormat(type: "raw",
                 encoding: "pcm_f32le",
                 sample_rate: 16000);
@@ -31,7 +32,7 @@ public class StartRecognitionMessage_AudioFormatTests
         });
 
         // file type
-        Assert.DoesNotThrow (() => new StartRecognitionMessage_AudioFormat(type: "file",
+        Assert.DoesNotThrow(() => new StartRecognitionMessage_AudioFormat(type: "file",
             encoding: null,
             sample_rate: null));
     }
@@ -41,12 +42,12 @@ public class StartRecognitionMessage_AudioFormatTests
     public void InvalidValues_Throws()
     {
         // bad encoding
-        Assert.Throws<ArgumentException> (() => new StartRecognitionMessage_AudioFormat(type: "raw",
+        Assert.Throws<ArgumentException>(() => new StartRecognitionMessage_AudioFormat(type: "raw",
             encoding: "somethingelse",
             sample_rate: 8000));
 
         // bad sample_rate
-        Assert.Throws<ArgumentOutOfRangeException> (() => new StartRecognitionMessage_AudioFormat(type: "raw",
+        Assert.Throws<ArgumentOutOfRangeException>(() => new StartRecognitionMessage_AudioFormat(type: "raw",
             encoding: "mulaw",
             sample_rate: 0));
     }
@@ -85,22 +86,22 @@ public class StartRecognitionMessage_AudioFormatTests
 
         for (int i = 0; i < types.Length; ++i)
         {
-            StartRecognitionMessage_AudioFormat at = new StartRecognitionMessage_AudioFormat (type: types[i],
+            StartRecognitionMessage_AudioFormat at = new StartRecognitionMessage_AudioFormat(type: types[i],
                 encoding: encodings[i],
                 sample_rate: sample_rates[i]);
-            Assert.That (at.type, Is.EqualTo (types[i]));
-            Assert.That (at.encoding, Is.EqualTo (encodings[i]));
-            Assert.That (at.sample_rate, Is.EqualTo (sample_rates[i]));
+            Assert.That(at.type, Is.EqualTo(types[i]));
+            Assert.That(at.encoding, Is.EqualTo(encodings[i]));
+            Assert.That(at.sample_rate, Is.EqualTo(sample_rates[i]));
 
             if (at.type == "raw")
             {
-                Assert.That (at.GetEncodingInFFMpegFormat(), Is.EqualTo (encodingsFfmpeg[i]));
-                Assert.That (at.GetCheckedSampleRate(), Is.EqualTo (sample_rates[i]));
+                Assert.That(at.GetEncodingInFFMpegFormat(), Is.EqualTo(encodingsFfmpeg[i]));
+                Assert.That(at.GetCheckedSampleRate(), Is.EqualTo(sample_rates[i]));
             }
             else
             {
-                Assert.Throws<InvalidOperationException> (() => at.GetEncodingInFFMpegFormat());
-                Assert.Throws<InvalidOperationException> (() => at.GetCheckedSampleRate());
+                Assert.Throws<InvalidOperationException>(() => at.GetEncodingInFFMpegFormat());
+                Assert.Throws<InvalidOperationException>(() => at.GetCheckedSampleRate());
             }
         }
     }
@@ -116,9 +117,10 @@ public class StartRecognitionMessageTests
     // Valid constructor call must be accepted
     public void ValidConstruction_DoesntThrow()
     {
-        Assert.DoesNotThrow (() => {
+        Assert.DoesNotThrow(() =>
+        {
             // our defaults
-            var _ = new StartRecognitionMessage (null, null);
+            var _ = new StartRecognitionMessage(null, null);
 
             // TODO explicit preferences
         });
@@ -129,36 +131,56 @@ public class StartRecognitionMessageTests
     public void ValidMessage_DoesntThrow()
     {
         var innerAudioFormat = new StringBuilder();
-        innerAudioFormat.AppendJoin (", ", new string[] {
+        innerAudioFormat.AppendJoin(", ", new string[] {
             @"""type"": ""raw""",
             @"""encoding"": ""pcm_f32le""",
             @"""sample_rate"": 96000",
         });
 
         var innerTranscriptionConfig = new StringBuilder();
-        innerTranscriptionConfig.AppendJoin (", ", new string[] {
+        innerTranscriptionConfig.AppendJoin(", ", new string[] {
             @"""language"": ""de""",
             @"""enable_partials"": true",
+            @"""additional_vocab"": [
+    {
+      ""content"": ""financial crisis""
+    },
+    {
+      ""content"": ""gnocchi"",
+      ""sounds_like"": [
+        ""nyohki"",
+        ""nokey"",
+        ""nochi""
+      ]
+    },
+    {
+      ""content"": ""CEO"",
+      ""sounds_like"": [
+        ""C.E.O.""
+      ]
+    }
+  ]",
         });
 
         var inner = new StringBuilder();
-        inner.AppendJoin (", ", new string[] {
+        inner.AppendJoin(", ", new string[] {
             @"""message"": """ + messageValue + @"""",
             @"""audio_format"": { " + innerAudioFormat.ToString() + " }",
             @"""transcription_config"": { " + innerTranscriptionConfig.ToString() + " }"
         });
 
         var outer = new StringBuilder();
-        outer.AppendJoin (" ", new string[] {
+        outer.AppendJoin(" ", new string[] {
             "{",
             inner.ToString(),
             "}"
         });
 
-        Assert.DoesNotThrow (() => {
-            JsonSerializer.Deserialize<StartRecognitionMessage> (outer.ToString(), jsonOptions);
+        Assert.DoesNotThrow(() =>
+        {
+            JsonSerializer.Deserialize<StartRecognitionMessage>(outer.ToString(), jsonOptions);
         });
-        Assert.NotNull(JsonSerializer.Deserialize<StartRecognitionMessage> (outer.ToString(), jsonOptions));
+        Assert.NotNull(JsonSerializer.Deserialize<StartRecognitionMessage>(outer.ToString(), jsonOptions));
     }
 
     [Test, Order(3)]
@@ -166,34 +188,35 @@ public class StartRecognitionMessageTests
     public void WrongMessage_Throws()
     {
         var innerAudioFormat = new StringBuilder();
-        innerAudioFormat.AppendJoin (", ", new string[] {
+        innerAudioFormat.AppendJoin(", ", new string[] {
             @"""type"": ""raw""",
             @"""encoding"": ""f32le""",
             @"""sample_rate"": 96000",
         });
 
         var innerTranscriptionConfig = new StringBuilder();
-        innerTranscriptionConfig.AppendJoin (", ", new string[] {
+        innerTranscriptionConfig.AppendJoin(", ", new string[] {
             @"""language"": ""de""",
             @"""enable_partials"": true",
         });
 
         var inner = new StringBuilder();
-        inner.AppendJoin (", ", new string[] {
+        inner.AppendJoin(", ", new string[] {
             @"""message"": """ + "Not" + messageValue + @"""",
             @"""audio_format"": { " + innerAudioFormat.ToString() + " }",
             @"""transcription_config"": { " + innerTranscriptionConfig.ToString() + " }"
         });
 
         var outer = new StringBuilder();
-        outer.AppendJoin (" ", new string[] {
+        outer.AppendJoin(" ", new string[] {
             "{",
             inner.ToString(),
             "}"
         });
 
-        Assert.Throws<ArgumentException> (() => {
-            JsonSerializer.Deserialize<StartRecognitionMessage> (outer.ToString(), jsonOptions);
+        Assert.Throws<ArgumentException>(() =>
+        {
+            JsonSerializer.Deserialize<StartRecognitionMessage>(outer.ToString(), jsonOptions);
         });
     }
 
@@ -201,20 +224,20 @@ public class StartRecognitionMessageTests
     // Valid construction must report correct contents
     public void ValidConstruction_CorrectContent()
     {
-        StartRecognitionMessage_AudioFormat at = new StartRecognitionMessage_AudioFormat (type: "raw",
+        StartRecognitionMessage_AudioFormat at = new StartRecognitionMessage_AudioFormat(type: "raw",
             encoding: "mulaw",
             sample_rate: 44100);
 
-        StartRecognitionMessage_TranscriptionConfig tc = new StartRecognitionMessage_TranscriptionConfig (
+        StartRecognitionMessage_TranscriptionConfig tc = new StartRecognitionMessage_TranscriptionConfig(
             language: "en",
             enable_partials: false);
 
-        StartRecognitionMessage message = new StartRecognitionMessage (audio_format: at,
+        StartRecognitionMessage message = new StartRecognitionMessage(audio_format: at,
             transcription_config: tc);
 
-        Assert.That(message.message, Is.EqualTo (messageValue));
-        Assert.That(message.audio_format, Is.EqualTo (at));
-        Assert.That(message.transcription_config, Is.EqualTo (tc));
+        Assert.That(message.message, Is.EqualTo(messageValue));
+        Assert.That(message.audio_format, Is.EqualTo(at));
+        Assert.That(message.transcription_config, Is.EqualTo(tc));
     }
 
     [Test]
@@ -222,7 +245,7 @@ public class StartRecognitionMessageTests
     public void ValidMessage_CorrectContent()
     {
         var innerAudioFormat = new StringBuilder();
-        innerAudioFormat.AppendJoin (", ", new string[] {
+        innerAudioFormat.AppendJoin(", ", new string[] {
             @"""type"": ""file""",
             // encoding is raw-specific
             @"""encoding"": null",
@@ -231,34 +254,34 @@ public class StartRecognitionMessageTests
         });
 
         var innerTranscriptionConfig = new StringBuilder();
-        innerTranscriptionConfig.AppendJoin (", ", new string[] {
+        innerTranscriptionConfig.AppendJoin(", ", new string[] {
             @"""language"": ""de""",
             // enable_partials is optional
             @"""enable_partials"": null",
         });
 
         var inner = new StringBuilder();
-        inner.AppendJoin (", ", new string[] {
+        inner.AppendJoin(", ", new string[] {
             @"""message"": """ + messageValue + @"""",
             @"""audio_format"": { " + innerAudioFormat.ToString() + " }",
             @"""transcription_config"": { " + innerTranscriptionConfig.ToString() + " }",
         });
 
         var outer = new StringBuilder();
-        outer.AppendJoin (" ", new string[] {
+        outer.AppendJoin(" ", new string[] {
             "{",
             inner.ToString(),
             "}"
         });
 
-        StartRecognitionMessage message = JsonSerializer.Deserialize<StartRecognitionMessage> (outer.ToString(),
+        StartRecognitionMessage message = JsonSerializer.Deserialize<StartRecognitionMessage>(outer.ToString(),
             jsonOptions)!;
 
-        Assert.That(message.message, Is.EqualTo (messageValue));
-        Assert.That(message.audio_format.type, Is.EqualTo ("file"));
-        Assert.That(message.audio_format.encoding, Is.EqualTo (null));
-        Assert.That(message.audio_format.sample_rate, Is.EqualTo (null));
-        Assert.That(message.transcription_config.language, Is.EqualTo ("de"));
-        Assert.That(message.transcription_config.enable_partials, Is.EqualTo (null));
+        Assert.That(message.message, Is.EqualTo(messageValue));
+        Assert.That(message.audio_format.type, Is.EqualTo("file"));
+        Assert.That(message.audio_format.encoding, Is.EqualTo(null));
+        Assert.That(message.audio_format.sample_rate, Is.EqualTo(null));
+        Assert.That(message.transcription_config.language, Is.EqualTo("de"));
+        Assert.That(message.transcription_config.enable_partials, Is.EqualTo(null));
     }
 }
