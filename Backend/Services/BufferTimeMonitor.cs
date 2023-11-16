@@ -1,25 +1,21 @@
-﻿using Backend.Data;
-using Backend.Hubs;
-using Microsoft.AspNetCore.SignalR;
-using System.IO;
-using Microsoft.Extensions.Configuration;
+﻿namespace Backend.Services;
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Backend.Data;
+using Backend.Hubs;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-
-
-
-namespace Backend.Services;
 
 /// <summary>
 /// Service that monitors the time of the oldest SpeechBubble in the list.
 /// </summary>
 public class BufferTimeMonitor : BackgroundService
 {
-
     private readonly IHubContext<CommunicationHub> hubContext;
 
     /// <summary>
@@ -40,9 +36,15 @@ public class BufferTimeMonitor : BackgroundService
     /// <summary>
     /// Initializes the Dependency Injection and the List of timed out SpeechBubbles.
     /// </summary>
-    /// <param name="speechBubbleListService">Service given by the DI</param>
-    public BufferTimeMonitor(IConfiguration configuration, IHubContext<CommunicationHub> hubContext,
-        ISpeechBubbleListService speechBubbleListService, ISubtitleExporterService subtitleExporterService)
+    /// <param name="configuration">Configuration given by the DI</param>
+    /// <param name="hubContext">HubContext given by the DI</param>
+    /// <param name="speechBubbleListService">Service that provides access to the active SpeechBubbles</param>
+    /// <param name="subtitleExporterService">Service that Exports the Subtitles</param>
+    public BufferTimeMonitor(
+        IConfiguration configuration,
+        IHubContext<CommunicationHub> hubContext,
+        ISpeechBubbleListService speechBubbleListService,
+        ISubtitleExporterService subtitleExporterService)
     {
         this.configuration = configuration;
         this.timeLimitInMinutes = configuration.GetValue<int>("BufferTimeMonitorSettings:TimeLimitInMinutes");
@@ -59,12 +61,11 @@ public class BufferTimeMonitor : BackgroundService
     /// The time limit can be set using the timeLimitInMinutes constant.
     /// </summary>
     /// <param name="stoppingToken">Token used to stop the Task</param>
+    /// <returns>Task</returns>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-
         while (!stoppingToken.IsCancellationRequested)
         {
-
             await Task.Delay(delayMilliseconds, stoppingToken);
 
             var oldestSpeechBubble = speechBubbleListService.GetSpeechBubbles().First;
@@ -79,14 +80,13 @@ public class BufferTimeMonitor : BackgroundService
 
             if (timeDifference.TotalMinutes > timeLimitInMinutes)
             {
-                await DeleteSpeechBubbleMessageToFrontend(oldestSpeechBubble.Value.Id);
+                await deleteSpeechBubbleMessageToFrontend(oldestSpeechBubble.Value.Id);
 
                 timedOutSpeechBubbles.Add(oldestSpeechBubble.Value);
                 speechBubbleListService.DeleteOldestSpeechBubble();
 
                 await subtitleExporterService.ExportSubtitle(oldestSpeechBubble.Value);
             }
-
         }
     }
 
@@ -94,8 +94,8 @@ public class BufferTimeMonitor : BackgroundService
     /// Sends an asynchronous request to the frontend via SignalR, to inform the frontend that a Speechbubble, identified by id, has to be deleted.
     /// The frontend can then subscribe to incoming Objects and handle them accordingly.
     /// </summary>
-    /// <param name="id"></param>
-    private async Task DeleteSpeechBubbleMessageToFrontend(long id)
+    /// <param name="id">The id of the Speechbubble to be deleted</param>
+    private async Task deleteSpeechBubbleMessageToFrontend(long id)
     {
         try
         {

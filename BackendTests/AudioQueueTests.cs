@@ -1,9 +1,9 @@
-﻿using Backend.Data;
-using Moq;
+﻿namespace BackendTests;
+
 using System;
 using System.IO.Pipelines;
-
-namespace BackendTests;
+using Backend.Data;
+using Moq;
 
 public class AudioQueueTests
 {
@@ -23,51 +23,57 @@ public class AudioQueueTests
         pipe.Writer.Complete();
         pipe.Reader.Complete();
         pipe.Reset();
-        // not really designed to be reset / cleared
-        audioQueue = new AudioQueue(pipe.Writer);
+        audioQueue = new AudioQueue(pipe.Writer); // not really designed to be reset / cleared
     }
 
-    [Test, Order(1)]
     // Enqueuing must not throw, must not write to pipe
+    [Test]
+    [Order(1)]
     public void Enqueue_DoesntWrite()
     {
-        Assert.DoesNotThrowAsync (async () => await audioQueue.Enqueue(new short[48000]));
+        Assert.DoesNotThrowAsync(async () => await audioQueue.Enqueue(new short[48000]));
 
         byte[] buf = new byte[2];
         CancellationTokenSource cts = new CancellationTokenSource();
-        cts.CancelAfter (TimeSpan.FromSeconds (1));
-        Assert.ThrowsAsync<OperationCanceledException> (async () => {
+        cts.CancelAfter(TimeSpan.FromSeconds(1));
+        Assert.ThrowsAsync<OperationCanceledException>(async () =>
+        {
             await pipe.Reader.AsStream(true)
                 .ReadExactlyAsync(buf, cts.Token);
         });
     }
 
-    [Test, Order(2)]
     // Dequeuing without enqueuing must throw, must not write data to pipe
+    [Test]
+    [Order(2)]
     public void Dequeue_DoesntWrite()
     {
-        Assert.ThrowsAsync<InvalidOperationException> (async () => await audioQueue.Dequeue());
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await audioQueue.Dequeue());
 
         byte[] buf = new byte[2];
         CancellationTokenSource cts = new CancellationTokenSource();
-        cts.CancelAfter (TimeSpan.FromSeconds (1));
-        Assert.ThrowsAsync<OperationCanceledException> (async () => {
+        cts.CancelAfter(TimeSpan.FromSeconds(1));
+        Assert.ThrowsAsync<OperationCanceledException>(async () =>
+        {
             await pipe.Reader.AsStream(true)
                 .ReadExactlyAsync(buf, cts.Token);
         });
     }
 
-    [Test, Order(3)]
     // Enqueuing then dequeuing must not throw, must write data to pipe
+    [Test]
+    [Order(3)]
     public async Task EnqueueDequeue_Writes()
     {
-        await audioQueue.Enqueue (new short[48000]);
+        await audioQueue.Enqueue(new short[48000]);
 
         byte[] buf = new byte[2];
         CancellationTokenSource cts = new CancellationTokenSource();
-        cts.CancelAfter (TimeSpan.FromSeconds (1));
-        Assert.DoesNotThrowAsync(async () => {
+        cts.CancelAfter(TimeSpan.FromSeconds(1));
+        Assert.DoesNotThrowAsync(async () =>
+        {
             Task dequeueDone = audioQueue.Dequeue();
+
             // test that we can read *something*
             await pipe.Reader.AsStream(true)
                 .ReadExactlyAsync(buf, cts.Token);
@@ -76,8 +82,9 @@ public class AudioQueueTests
         });
     }
 
-    [Test, Order(4)]
     // Enqueuing then dequeuing must not throw, must write correct data to pipe
+    [Test]
+    [Order(4)]
     public async Task EnqueueDequeue_CorrectContent_Single()
     {
         // Prepare
@@ -85,16 +92,17 @@ public class AudioQueueTests
         byte[] inBufferBytes = new byte[inBuffer.Length * 2];
         byte rangeSweep = 0;
         for (var i = 0; i < inBufferBytes.Length; ++i) inBufferBytes[i] = rangeSweep++;
-        Buffer.BlockCopy (inBufferBytes, 0, inBuffer, 0, inBufferBytes.Length);
+        Buffer.BlockCopy(inBufferBytes, 0, inBuffer, 0, inBufferBytes.Length);
 
         // Queue / Dequeue
-        await audioQueue.Enqueue (inBuffer);
+        await audioQueue.Enqueue(inBuffer);
 
         // Read from Pipe
         byte[] buf = new byte[inBufferBytes.Length];
         CancellationTokenSource cts = new CancellationTokenSource();
-        cts.CancelAfter (TimeSpan.FromSeconds (1));
-        Assert.DoesNotThrowAsync(async () => {
+        cts.CancelAfter(TimeSpan.FromSeconds(1));
+        Assert.DoesNotThrowAsync(async () =>
+        {
             Task dequeueDone = audioQueue.Dequeue();
             await pipe.Reader.AsStream(true)
                 .ReadExactlyAsync(buf, cts.Token);
@@ -102,20 +110,21 @@ public class AudioQueueTests
         });
 
         // Check for equality
-        Assert.That (buf, Is.EqualTo (inBufferBytes));
+        Assert.That(buf, Is.EqualTo(inBufferBytes));
 
         // Check that pipe empty now
         buf = new byte[2];
         cts = new CancellationTokenSource();
-        cts.CancelAfter (TimeSpan.FromSeconds (1));
-        Assert.ThrowsAsync<OperationCanceledException>(async () => {
+        cts.CancelAfter(TimeSpan.FromSeconds(1));
+        Assert.ThrowsAsync<OperationCanceledException>(async () =>
+        {
             await pipe.Reader.AsStream(true)
                 .ReadExactlyAsync(buf, cts.Token);
         });
     }
 
-    [Test]
     // Multiple enqueues then dequeues must not throw, must write correct data in correct order to pipe
+    [Test]
     public async Task EnqueueDequeue_CorrectContent_Multiple()
     {
         // Prepare
@@ -127,17 +136,18 @@ public class AudioQueueTests
             buffers[i] = new short[48000];
             buffersBytes[i] = new byte[buffers[i].Length * 2];
             for (var j = 0; j < buffersBytes.Length; ++j) buffersBytes[i][j] = rangeSweep++;
-            Buffer.BlockCopy (buffersBytes[i], 0, buffers[i], 0, buffersBytes[i].Length);
+            Buffer.BlockCopy(buffersBytes[i], 0, buffers[i], 0, buffersBytes[i].Length);
         }
 
         // Queue
         for (var i = 0; i < buffers.Length; ++i)
         {
-            await audioQueue.Enqueue (buffers[i]);
+            await audioQueue.Enqueue(buffers[i]);
         }
 
         // Start dequeuing
-        Task doneDequeueing = Task.Run(async () => {
+        Task doneDequeueing = Task.Run(async () =>
+        {
             for (var i = 0; i < buffers.Length; ++i)
             {
                 await audioQueue.Dequeue();
@@ -150,14 +160,15 @@ public class AudioQueueTests
             // Read from Pipe
             byte[] buf = new byte[buffersBytes[i].Length];
             CancellationTokenSource cts = new CancellationTokenSource();
-            cts.CancelAfter (TimeSpan.FromSeconds (1));
-            Assert.DoesNotThrowAsync(async () => {
+            cts.CancelAfter(TimeSpan.FromSeconds(1));
+            Assert.DoesNotThrowAsync(async () =>
+            {
                 await pipeReaderStream
                     .ReadExactlyAsync(buf, cts.Token);
             });
 
             // Check for equality
-            Assert.That (buf, Is.EqualTo (buffersBytes[i]));
+            Assert.That(buf, Is.EqualTo(buffersBytes[i]));
         }
 
         // Await end of dequeuing
@@ -166,18 +177,20 @@ public class AudioQueueTests
         // Check that pipe empty now
         byte[] bufFinal = new byte[2];
         CancellationTokenSource ctsFinal = new CancellationTokenSource();
-        ctsFinal.CancelAfter (TimeSpan.FromSeconds (1));
-        Assert.ThrowsAsync<OperationCanceledException>(async () => {
+        ctsFinal.CancelAfter(TimeSpan.FromSeconds(1));
+        Assert.ThrowsAsync<OperationCanceledException>(async () =>
+        {
             await pipeReaderStream
                 .ReadExactlyAsync(bufFinal, ctsFinal.Token);
         });
     }
 
-    [Test]
     // Enqueues past the queue limit should trigger a dequeue of the oldest second. Order should be preserved.
+    [Test]
     public async Task EnqueueLimit_TriggersDequeueOfOldest()
     {
-        short[] bufferMarks = {
+        short[] bufferMarks =
+        {
             0,
             short.MaxValue,
             short.MinValue,
@@ -191,38 +204,39 @@ public class AudioQueueTests
         {
             buffers[i] = new short[48000];
             buffers[i][0] = bufferMarks[i];
-            bufferMarksBytes[i] = new byte[sizeof (short)];
-            Buffer.BlockCopy (bufferMarks, i * sizeof (short), bufferMarksBytes[i], 0, bufferMarksBytes[i].Length);
+            bufferMarksBytes[i] = new byte[sizeof(short)];
+            Buffer.BlockCopy(bufferMarks, i * sizeof(short), bufferMarksBytes[i], 0, bufferMarksBytes[i].Length);
         }
 
         short[] otherBuffer = new short[48000];
 
         for (var i = 0; i < buffers.Length; ++i)
         {
-            await audioQueue.Enqueue (buffers[i]);
+            await audioQueue.Enqueue(buffers[i]);
         }
 
         // TODO query AudioQueue for its max size instead of assuming 2 minutes
         for (var i = 0; i < (2 * 60) - buffers.Length; ++i)
         {
-            await audioQueue.Enqueue (otherBuffer);
+            await audioQueue.Enqueue(otherBuffer);
         }
 
         Stream pipeReaderStream = pipe.Reader.AsStream(true);
         for (var i = 0; i < buffers.Length; ++i)
         {
-            Task enqueuingDone = audioQueue.Enqueue (otherBuffer);
+            Task enqueuingDone = audioQueue.Enqueue(otherBuffer);
             byte[] buf = new byte[buffers[i].Length * 2];
             CancellationTokenSource cts = new CancellationTokenSource();
-            cts.CancelAfter (TimeSpan.FromSeconds (1));
-            Assert.DoesNotThrowAsync(async () => {
+            cts.CancelAfter(TimeSpan.FromSeconds(1));
+            Assert.DoesNotThrowAsync(async () =>
+            {
                 await pipeReaderStream
                     .ReadExactlyAsync(buf, cts.Token);
             });
 
-            byte[] bufMark = new byte[sizeof (short)];
-            Array.Copy (buf, 0, bufMark, 0, bufMark.Length);
-            Assert.That (bufMark, Is.EqualTo (bufferMarksBytes[i]));
+            byte[] bufMark = new byte[sizeof(short)];
+            Array.Copy(buf, 0, bufMark, 0, bufMark.Length);
+            Assert.That(bufMark, Is.EqualTo(bufferMarksBytes[i]));
         }
     }
 }

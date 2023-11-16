@@ -1,24 +1,24 @@
-﻿using System;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
-using Backend.Data;
-using Backend.Services;
-using NUnit.Framework;
-
-namespace BackendTests
+﻿namespace BackendTests
 {
+    using System;
+    using System.IO;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Backend.Data;
+    using Backend.Services;
+    using NUnit.Framework;
+
     [TestFixture]
     public class WebVttConverterTests
     {
-        private static IEnumerable<object[]> EXPORT_DATA()
+        private static IEnumerable<object[]> exportData()
         {
             var testData = new[]
             {
                 // No Bubbles
                 new object[]
                 {
-                    new List<SpeechBubble> {},
+                    new List<SpeechBubble> { },
                     @"WEBVTT",
                 },
 
@@ -27,7 +27,7 @@ namespace BackendTests
                 {
                     new List<SpeechBubble>
                     {
-                        new SpeechBubble(1, 1, 0.0, 1.0, new List<WordToken> {})
+                        new SpeechBubble(1, 1, 0.0, 1.0, new List<WordToken> { }),
                     },
                     @"WEBVTT
 
@@ -42,7 +42,7 @@ namespace BackendTests
                         new SpeechBubble(1, 1, 0.2, 0.8, new List<WordToken>
                         {
                              new WordToken("Test", 0.5f, 0.2, 0.8, 1),
-                        })
+                        }),
                     },
                     @"WEBVTT
 
@@ -59,7 +59,7 @@ Test",
                         {
                             new WordToken("Hello", 0.9f, 1.0, 1.2, 1),
                             new WordToken("world!", 0.9f, 1.3, 1.5, 1),
-                        })
+                        }),
                     },
                     @"WEBVTT
 
@@ -98,7 +98,8 @@ How are you?",
                 yield return test;
         }
 
-        [Test, TestCaseSource(nameof(EXPORT_DATA))]
+        [Test]
+        [TestCaseSource(nameof(exportData))]
         public void ConvertSpeechBubble_HandlesExampleCorrectly(List<SpeechBubble> speechBubbles, string expectedContent)
         {
             // Init converter
