@@ -1,4 +1,4 @@
-﻿namespace Backend.Data;
+namespace Backend.Data;
 
 using System;
 using System.Collections.Generic;
@@ -6,28 +6,28 @@ using System.Collections.Generic;
 /// <summary>
 /// Class for additional vocabulary.
 /// </summary>
-public class AdditionalVocab
+public class additionalVocab
 {
     /**
     * <summary>
     * Gets or sets the content of the additional vocabulary.
     * </summary>
     **/
-    public string Content { get; set; }
+    public string content { get; set; }
 
     /// <summary>
     /// Gets or sets the list of similar sounds (optional).
     /// </summary>
-    public List<string>? SoundsLike { get; set; }
+    public List<string>? sounds_like { get; set; }
 
     /// <summary>
     /// Constructor for AdditionalVocab.
     /// </summary>
     /// <param name="content">The content of the additional vocabulary.</param>
     /// <param name="soundsLike">List of similar sounds (optional).</param>
-    public AdditionalVocab(string content, List<string>? soundsLike = null)
+    public additionalVocab(string content, List<string>? sounds_like = null)
     {
-        Content = content;
-        SoundsLike = soundsLike ?? new List<string>();
+        this.content = content;
+        this.sounds_like = sounds_like ?? new List<string>();
     }
 }

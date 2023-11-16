@@ -1,4 +1,4 @@
-﻿namespace Backend.Services;
+namespace Backend.Services;
 
 using System;
 using System.Collections.Generic;
@@ -45,7 +45,7 @@ public class CustomDictionaryService : ICustomDictionaryService
 
         // Find an existing dictionary with similar content.
         var existingDictionary = customDictionaries.FirstOrDefault(d =>
-            d.StartRecognitionMessageTranscriptionConfig.additionalVocab.Any(av => av.Content == customDictionary.StartRecognitionMessageTranscriptionConfig.additionalVocab.FirstOrDefault()?.Content));
+            d.StartRecognitionMessageTranscriptionConfig.additionalVocab.Any(av => av.content == customDictionary.StartRecognitionMessageTranscriptionConfig.additionalVocab.FirstOrDefault()?.content));
 
         // If an existing dictionary is found, update it; otherwise, add the new dictionary.
         if (existingDictionary != null)
@@ -53,15 +53,15 @@ public class CustomDictionaryService : ICustomDictionaryService
             existingDictionary.StartRecognitionMessageTranscriptionConfig = customDictionary.StartRecognitionMessageTranscriptionConfig;
             foreach (var av in existingDictionary.StartRecognitionMessageTranscriptionConfig.additionalVocab)
             {
-                av.SoundsLike = customDictionary.StartRecognitionMessageTranscriptionConfig.additionalVocab[0].SoundsLike;
+                av.sounds_like = customDictionary.StartRecognitionMessageTranscriptionConfig.additionalVocab[0].sounds_like;
             }
 
-            Log.Information($"Custom dictionary updated for content {customDictionary.StartRecognitionMessageTranscriptionConfig.additionalVocab.FirstOrDefault()?.Content}");
+            Log.Information($"Custom dictionary updated for content {customDictionary.StartRecognitionMessageTranscriptionConfig.additionalVocab.FirstOrDefault()?.content}");
         }
         else
         {
             customDictionaries.Add(customDictionary);
-            Log.Information($"Custom dictionary added to the in-memory data structure for content {customDictionary.StartRecognitionMessageTranscriptionConfig.additionalVocab.FirstOrDefault()?.Content}");
+            Log.Information($"Custom dictionary added to the in-memory data structure for content {customDictionary.StartRecognitionMessageTranscriptionConfig.additionalVocab.FirstOrDefault()?.content}");
         }
     }
 

@@ -1,4 +1,4 @@
-﻿namespace BackendTests;
+namespace BackendTests;
 
 using System;
 using System.Collections.Generic;
@@ -25,8 +25,8 @@ public class CustomDictionaryControllerTests
     [Test]
     public void UploadCustomDictionary_ValidData_ReturnsOk()
     {
-        var additionalVocab = new AdditionalVocab("word");
-        var transcriptionConfig = new StartRecognitionMessage_TranscriptionConfig("en", false, new List<AdditionalVocab> { additionalVocab });
+        var additionalVocab = new additionalVocab("word");
+        var transcriptionConfig = new StartRecognitionMessage_TranscriptionConfig("en", false, new List<additionalVocab> { additionalVocab });
         var result = customDictionaryController!.UploadCustomDictionary(transcriptionConfig);
 
         Assert.That(result, Is.TypeOf<OkObjectResult>());
