@@ -1,4 +1,4 @@
-﻿namespace BackendTests;
+namespace BackendTests;
 
 using System;
 using System.Collections.Generic;

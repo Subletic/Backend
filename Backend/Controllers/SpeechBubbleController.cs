@@ -1,4 +1,4 @@
-﻿namespace Backend.Controllers
+namespace Backend.Controllers
 {
     using Backend.Data;
     using Backend.Services;

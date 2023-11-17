@@ -1,4 +1,4 @@
-﻿namespace Backend.Controllers;
+namespace Backend.Controllers;
 
 using System;
 using Backend.Data;
@@ -35,7 +35,7 @@ public class CustomDictionaryController : ControllerBase
     {
         try
         {
-            if (transcriptionConfig == null || transcriptionConfig.additionalVocab == null)
+            if (transcriptionConfig == null || transcriptionConfig.additional_vocab == null)
             {
                 return BadRequest("Invalid custom dictionary data.");
             }
