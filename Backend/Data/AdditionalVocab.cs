@@ -6,7 +6,7 @@ using System.Collections.Generic;
 /// <summary>
 /// Class for additional vocabulary.
 /// </summary>
-public class additionalVocab
+public class AdditionalVocab
 {
     /**
     * <summary>
@@ -25,7 +25,7 @@ public class additionalVocab
     /// </summary>
     /// <param name="content">The content of the additional vocabulary.</param>
     /// <param name="soundsLike">List of similar sounds (optional).</param>
-    public additionalVocab(string content, List<string>? sounds_like = null)
+    public AdditionalVocab(string content, List<string>? sounds_like = null)
     {
         this.content = content;
         this.sounds_like = sounds_like ?? new List<string>();

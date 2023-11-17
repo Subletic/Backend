@@ -26,11 +26,11 @@ public class StartRecognitionMessage_TranscriptionConfig
     public StartRecognitionMessage_TranscriptionConfig(
       string language = "de",
       bool? enable_partials = false,
-      List<additionalVocab>? additional_vocab = null)
+      List<AdditionalVocab>? additional_vocab = null)
     {
         this.language = language;
         this.enable_partials = enable_partials;
-        this.additional_vocab = additional_vocab ?? new List<additionalVocab>();
+        this.additional_vocab = additional_vocab ?? new List<AdditionalVocab>();
 
         if (additional_vocab != null && additional_vocab.Count > MAX_ADDITIONAL_VOCAB_COUNT)
         {
@@ -59,5 +59,5 @@ public class StartRecognitionMessage_TranscriptionConfig
     /// <summary>
     /// Gets or sets additional vocabulary for transcription.
     /// </summary>
-    public List<additionalVocab> additional_vocab { get; set; }
+    public List<AdditionalVocab> additional_vocab { get; set; }
 }

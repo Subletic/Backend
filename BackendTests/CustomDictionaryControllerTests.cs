@@ -25,8 +25,8 @@ public class CustomDictionaryControllerTests
     [Test]
     public void UploadCustomDictionary_ValidData_ReturnsOk()
     {
-        var additionalVocab = new additionalVocab("word");
-        var transcriptionConfig = new StartRecognitionMessage_TranscriptionConfig("en", false, new List<additionalVocab> { additionalVocab });
+        var additionalVocab = new AdditionalVocab("word");
+        var transcriptionConfig = new StartRecognitionMessage_TranscriptionConfig("en", false, new List<AdditionalVocab> { additionalVocab });
         var result = customDictionaryController!.UploadCustomDictionary(transcriptionConfig);
 
         Assert.That(result, Is.TypeOf<OkObjectResult>());

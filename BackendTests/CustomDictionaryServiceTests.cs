@@ -59,8 +59,8 @@ public class CustomDictionaryServiceTests
 
     private static Dictionary createSampleCustomDictionary(string language, string content, List<string> sounds_like = null!)
     {
-        var additionalVocab = new additionalVocab(content, sounds_like);
-        var transcriptionConfig = new StartRecognitionMessage_TranscriptionConfig(language, false, new List<additionalVocab> { additionalVocab });
+        var additionalVocab = new AdditionalVocab(content, sounds_like);
+        var transcriptionConfig = new StartRecognitionMessage_TranscriptionConfig(language, false, new List<AdditionalVocab> { additionalVocab });
         return new Dictionary(transcriptionConfig);
     }
 }
