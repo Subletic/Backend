@@ -1,0 +1,7 @@
+@startuml
+class AdditionalVocab {
+    + content : string <<get>> <<set>>
+    + sounds_like : List<string>? <<get>> <<set>>
+    + AdditionalVocab(content:string, sounds_like:List<string>?)
+}
+@enduml

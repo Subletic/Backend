@@ -1,0 +1,11 @@
+@startuml
+class InfoMessage {
+    + InfoMessage(code:int?, type:string, reason:string, quality:string?)
+    - <<const>> MESSAGE_TYPE : string = "Info"
+    + message : string <<get>> <<set>>
+    + code : int? <<get>> <<set>>
+    + type : string <<get>> <<set>>
+    + reason : string <<get>> <<set>>
+    + quality : string? <<get>> <<set>>
+}
+@enduml

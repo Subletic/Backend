@@ -1,7 +1,0 @@
-@startuml
-class EndOfStreamMessage {
-    + EndOfStreamMessage(last_seq_no:ulong)
-    + message : string <<get>> <<set>>
-    + last_seq_no : ulong <<get>> <<set>>
-}
-@enduml

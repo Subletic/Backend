@@ -1,0 +1,11 @@
+@startuml
+class CustomDictionaryService {
+    + CustomDictionaryService()
+    + ProcessCustomDictionary(customDictionary:Dictionary) : void
+    + GetCustomDictionaries() : List<Dictionary>
+}
+class "List`1"<T> {
+}
+ICustomDictionaryService <|-- CustomDictionaryService
+CustomDictionaryService --> "customDictionaries<Dictionary>" "List`1"
+@enduml

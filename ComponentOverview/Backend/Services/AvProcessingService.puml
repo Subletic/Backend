@@ -1,0 +1,28 @@
+@startuml
+class AvProcessingService <<partial>> {
+    - {static} <<readonly>> urlRecognitionTemplate : string = "wss://neu.rt.speechmatics.com/v2/de"
+    - {static} <<partial>> messageTypeRegex() : Regex
+    - apiKey : string?
+    - sentNum : ulong
+    - seqNum : ulong
+    + AvProcessingService(wordProcessingService:IWordProcessingService, sendingAudioService:FrontendAudioQueueService)
+    - {static} logSend(message:string) : void
+    - {static} logReceive(message:string) : void
+    - {static} deserializeMessage(buffer:string, messageName:string, descriptionOfMessage:string) : T
+    + Init(apiKeyVar:string) : bool
+    - {static} <<async>> sendStartRecognition(wsClient:ClientWebSocket) : Task<bool>
+    - <<async>> processAudioToStream(avStream:Stream, audioPipe:PipeWriter) : Task<bool>
+    - <<async>> sendAudio(wsClient:ClientWebSocket, avStream:Stream) : Task<bool>
+    - <<async>> sendEndOfStream(wsClient:ClientWebSocket) : Task<bool>
+    - handleSpeechmaticsResponse(responseString:string) : bool
+    - <<async>> receiveMessages(wsClient:ClientWebSocket) : Task<bool>
+    + <<async>> TranscribeAudio(avStream:Stream) : Task<bool>
+}
+IAvProcessingService <|-- AvProcessingService
+AvProcessingService o-> "audioFormat" StartRecognitionMessage_AudioFormat
+AvProcessingService o-> "jsonOptions" JsonSerializerOptions
+AvProcessingService --> "wordProcessingService" IWordProcessingService
+AvProcessingService --> "frontendAudioQueueService" FrontendAudioQueueService
+AvProcessingService o-> "audioMuxingPipe" Pipe
+AvProcessingService o-> "audioQueue" AudioQueue
+@enduml

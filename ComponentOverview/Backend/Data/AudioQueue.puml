@@ -1,0 +1,12 @@
+@startuml
+class AudioQueue {
+    - <<const>> MAX_QUEUE_COUNT : int = 120
+    + AudioQueue(outPipe:PipeWriter)
+    + <<async>> Enqueue(audioBuffer:short[]) : Task
+    + <<async>> Dequeue() : Task
+}
+class "Queue`1"<T> {
+}
+AudioQueue o-> "audioQueue<short[]>" "Queue`1"
+AudioQueue --> "outPipe" PipeWriter
+@enduml

@@ -1,0 +1,8 @@
+@startuml
+class CustomDictionaryController {
+    + CustomDictionaryController(dictionaryService:ICustomDictionaryService)
+    + UploadCustomDictionary(transcriptionConfig:StartRecognitionMessage_TranscriptionConfig) : IActionResult
+}
+ControllerBase <|-- CustomDictionaryController
+CustomDictionaryController --> "dictionaryService" ICustomDictionaryService
+@enduml

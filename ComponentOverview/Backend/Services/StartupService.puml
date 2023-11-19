@@ -1,0 +1,10 @@
+@startuml
+class StartupService {
+    - <<const>> SPEECHMATICS_API_KEY_ENVVAR : string = "SPEECHMATICS_API_KEY"
+    + StartupService(avProcessingService:IAvProcessingService)
+    + StartAsync(cancellationToken:CancellationToken) : Task
+    + StopAsync(cancellationToken:CancellationToken) : Task
+}
+IHostedService <|-- StartupService
+StartupService --> "avProcessingService" IAvProcessingService
+@enduml

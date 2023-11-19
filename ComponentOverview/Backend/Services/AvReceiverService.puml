@@ -1,0 +1,9 @@
+@startuml
+class AvReceiverService {
+    - <<const>> MAXIMUM_READ_SIZE : int = 4096
+    + AvReceiverService(avProcessingService:IAvProcessingService)
+    + <<async>> Start(webSocket:WebSocket, ctSource:CancellationTokenSource) : Task
+}
+IAvReceiverService <|-- AvReceiverService
+AvReceiverService --> "avProcessingService" IAvProcessingService
+@enduml

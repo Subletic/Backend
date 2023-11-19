@@ -1,0 +1,11 @@
+@startuml
+class SubtitleExporterService {
+    - <<const>> MAXIMUM_READ_SIZE : int = 4096
+    + SubtitleExporterService()
+    + <<async>> Start(webSocket:WebSocket, ctSource:CancellationTokenSource) : Task
+    + ExportSubtitle(speechBubble:SpeechBubble) : Task
+}
+ISubtitleExporterService <|-- SubtitleExporterService
+SubtitleExporterService --> "subtitlePipe" Pipe
+SubtitleExporterService --> "subtitleConverter" ISubtitleConverter
+@enduml

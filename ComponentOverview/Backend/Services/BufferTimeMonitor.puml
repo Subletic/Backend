@@ -1,0 +1,19 @@
+@startuml
+class BufferTimeMonitor {
+    - <<readonly>> timeLimitInMinutes : int
+    - <<readonly>> delayMilliseconds : int
+    + BufferTimeMonitor(configuration:IConfiguration, hubContext:IHubContext<CommunicationHub>, speechBubbleListService:ISpeechBubbleListService, subtitleExporterService:ISubtitleExporterService)
+    # <<override>> <<async>> ExecuteAsync(stoppingToken:CancellationToken) : Task
+    - <<async>> deleteSpeechBubbleMessageToFrontend(id:long) : Task
+}
+class "IHubContext`1"<T> {
+}
+class "List`1"<T> {
+}
+BackgroundService <|-- BufferTimeMonitor
+BufferTimeMonitor --> "hubContext<CommunicationHub>" "IHubContext`1"
+BufferTimeMonitor --> "timedOutSpeechBubbles<SpeechBubble>" "List`1"
+BufferTimeMonitor --> "speechBubbleListService" ISpeechBubbleListService
+BufferTimeMonitor --> "subtitleExporterService" ISubtitleExporterService
+BufferTimeMonitor --> "configuration" IConfiguration
+@enduml

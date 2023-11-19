@@ -1,7 +1,0 @@
-@startuml
-class WebVttConverter {
-    + WebVttConverter(outputStream:Stream)
-    + ConvertSpeechBubble(speechBubble:SpeechBubble) : void
-}
-ISubtitleConverter <|-- WebVttConverter
-@enduml

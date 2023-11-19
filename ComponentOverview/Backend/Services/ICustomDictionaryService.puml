@@ -1,0 +1,6 @@
+@startuml
+interface ICustomDictionaryService {
+    ProcessCustomDictionary(customDictionary:Dictionary) : void
+    GetCustomDictionaries() : List<Dictionary>
+}
+@enduml

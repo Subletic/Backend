@@ -1,9 +1,0 @@
-@startuml
-class ErrorMessage {
-    + ErrorMessage(code:int?, type:string, reason:string)
-    + message : string <<get>> <<set>>
-    + code : int? <<get>> <<set>>
-    + type : string <<get>> <<set>>
-    + reason : string <<get>> <<set>>
-}
-@enduml

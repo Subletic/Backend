@@ -1,8 +1,0 @@
-@startuml
-class CustomDictionaryService {
-    + CustomDictionaryService()
-    + ProcessCustomDictionary(customDictionary:Dictionary) : void
-    + GetCustomDictionaries() : List<Dictionary>
-}
-ICustomDictionaryService <|-- CustomDictionaryService
-@enduml

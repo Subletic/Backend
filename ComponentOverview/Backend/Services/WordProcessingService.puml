@@ -1,0 +1,20 @@
+@startuml
+class WordProcessingService {
+    - nextSpeechBubbleId : long
+    - currentSpeaker : int?
+    + WordProcessingService(hubContext:IHubContext<CommunicationHub>, speechBubbleListService:ISpeechBubbleListService)
+    + HandleNewWord(wordToken:WordToken) : void
+    - speechBubbleFull(wordToken:WordToken) : bool
+    - <<async>> flushBufferToNewSpeechBubble() : void
+    - setSpeakerIfSpeakerIsNull(wordToken:WordToken) : void
+    - <<async>> sendNewSpeechBubbleMessageToFrontend(speechBubble:SpeechBubble) : Task
+}
+class "IHubContext`1"<T> {
+}
+class "List`1"<T> {
+}
+IWordProcessingService <|-- WordProcessingService
+WordProcessingService --> "speechBubbleListService" ISpeechBubbleListService
+WordProcessingService --> "hubContext<CommunicationHub>" "IHubContext`1"
+WordProcessingService --> "wordTokenBuffer<WordToken>" "List`1"
+@enduml

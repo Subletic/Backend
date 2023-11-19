@@ -1,7 +1,0 @@
-@startuml
-class AudioQueue {
-    + AudioQueue(outPipe:PipeWriter)
-    + <<async>> Enqueue(audioBuffer:short[]) : Task
-    + <<async>> Dequeue() : Task
-}
-@enduml

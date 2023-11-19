@@ -1,0 +1,11 @@
+@startuml
+class WebVttConverter {
+    + WebVttConverter(outputStream:Stream)
+    + ConvertSpeechBubble(speechBubble:SpeechBubble) : void
+    - {static} convertToWebVttFormat(speechBubble:SpeechBubble) : string
+    - {static} FormatTime(time:double) : string
+    - <<async>> WriteToStream(content:string) : void
+}
+ISubtitleConverter <|-- WebVttConverter
+WebVttConverter --> "outputStream" Stream
+@enduml

@@ -1,0 +1,9 @@
+@startuml
+class RecognitionStartedMessage {
+    + RecognitionStartedMessage(id:string, language_pack_info:RecognitionStartedMessage_LanguagePackInfo)
+    - <<const>> MESSAGE_TYPE : string = "RecognitionStarted"
+    + message : string <<get>> <<set>>
+    + id : string <<get>> <<set>>
+}
+RecognitionStartedMessage --> "language_pack_info" RecognitionStartedMessage_LanguagePackInfo
+@enduml

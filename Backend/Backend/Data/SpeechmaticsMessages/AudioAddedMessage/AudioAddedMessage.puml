@@ -1,7 +1,0 @@
-@startuml
-class AudioAddedMessage {
-    + AudioAddedMessage(seq_no:ulong)
-    + message : string <<get>> <<set>>
-    + seq_no : ulong <<get>> <<set>>
-}
-@enduml

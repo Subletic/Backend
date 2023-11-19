@@ -1,0 +1,9 @@
+@startuml
+class ClientExchangeController {
+    + ClientExchangeController(subtitleExporterService:ISubtitleExporterService, avReceiverService:IAvReceiverService)
+    + <<async>> Get() : Task
+}
+ControllerBase <|-- ClientExchangeController
+ClientExchangeController --> "avReceiverService" IAvReceiverService
+ClientExchangeController --> "subtitleExporterService" ISubtitleExporterService
+@enduml

@@ -1,0 +1,10 @@
+@startuml
+class ErrorMessage {
+    + ErrorMessage(code:int?, type:string, reason:string)
+    - <<const>> MESSAGE_TYPE : string = "Error"
+    + message : string <<get>> <<set>>
+    + code : int? <<get>> <<set>>
+    + type : string <<get>> <<set>>
+    + reason : string <<get>> <<set>>
+}
+@enduml

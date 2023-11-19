@@ -1,8 +1,0 @@
-@startuml
-class SubtitleExporterService {
-    + SubtitleExporterService()
-    + <<async>> Start(webSocket:WebSocket, ctSource:CancellationTokenSource) : Task
-    + ExportSubtitle(speechBubble:SpeechBubble) : Task
-}
-ISubtitleExporterService <|-- SubtitleExporterService
-@enduml

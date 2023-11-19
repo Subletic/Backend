@@ -1,0 +1,11 @@
+@startuml
+class StartRecognitionMessage_TranscriptionConfig {
+    - <<const>> MAX_ADDITIONAL_VOCAB_COUNT : int = 1000
+    + StartRecognitionMessage_TranscriptionConfig(language:string, enable_partials:bool?, additional_vocab:List<AdditionalVocab>?)
+    + language : string <<get>> <<set>>
+    + enable_partials : bool? <<get>> <<set>>
+}
+class "List`1"<T> {
+}
+StartRecognitionMessage_TranscriptionConfig --> "additional_vocab<AdditionalVocab>" "List`1"
+@enduml
