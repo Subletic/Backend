@@ -1,20 +1,20 @@
-﻿namespace BackendTests
-{
-    using System;
-    using System.IO;
-    using System.Text;
-    using System.Threading.Tasks;
-    using Backend.Data;
-    using Backend.Services;
-    using NUnit.Framework;
+﻿namespace BackendTests;
 
-    [TestFixture]
-    public class WebVttConverterTests
+using System;
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
+using Backend.Data;
+using Backend.Services;
+using NUnit.Framework;
+
+[TestFixture]
+public class WebVttConverterTests
+{
+    private static IEnumerable<object[]> exportData()
     {
-        private static IEnumerable<object[]> exportData()
+        var testData = new[]
         {
-            var testData = new[]
-            {
                 // No Bubbles
                 new object[]
                 {
@@ -92,32 +92,31 @@ Hello, everyone!
 00:00:11.000 --> 00:00:12.500
 How are you?",
                 },
-            };
+        };
 
-            foreach (object[] test in testData)
-                yield return test;
-        }
+        foreach (object[] test in testData)
+            yield return test;
+    }
 
-        [Test]
-        [TestCaseSource(nameof(exportData))]
-        public void ConvertSpeechBubble_HandlesExampleCorrectly(List<SpeechBubble> speechBubbles, string expectedContent)
-        {
-            // Init converter
-            Stream outputStream = new MemoryStream();
-            ISubtitleConverter converter = new WebVttConverter(outputStream);
+    [Test]
+    [TestCaseSource(nameof(exportData))]
+    public void ConvertSpeechBubble_HandlesExampleCorrectly(List<SpeechBubble> speechBubbles, string expectedContent)
+    {
+        // Init converter
+        Stream outputStream = new MemoryStream();
+        ISubtitleConverter converter = new WebVttConverter(outputStream);
 
-            // Push SpeechBubbles through the converter
-            foreach (SpeechBubble speechBubble in speechBubbles)
-                converter.ConvertSpeechBubble(speechBubble);
+        // Push SpeechBubbles through the converter
+        foreach (SpeechBubble speechBubble in speechBubbles)
+            converter.ConvertSpeechBubble(speechBubble);
 
-            // Read converter result
-            outputStream.Position = 0;
-            string exportedContent = "";
-            using (var reader = new StreamReader(outputStream))
-                exportedContent = reader.ReadToEnd();
+        // Read converter result
+        outputStream.Position = 0;
+        string exportedContent = "";
+        using (var reader = new StreamReader(outputStream))
+            exportedContent = reader.ReadToEnd();
 
-            // Überprüfen Sie, ob die exportierte Ausgabe der erwarteten Ausgabe entspricht
-            Assert.That(exportedContent, Is.EqualTo(expectedContent));
-        }
+        // Überprüfen Sie, ob die exportierte Ausgabe der erwarteten Ausgabe entspricht
+        Assert.That(exportedContent, Is.EqualTo(expectedContent));
     }
 }
