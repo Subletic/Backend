@@ -1,0 +1,11 @@
+@startuml
+class AddTranscriptMessage_Result {
+    + AddTranscriptMessage_Result(type:string, start_time:double, end_time:double, is_eos:bool?, attaches_to:string?, alternatives:List<AddTranscriptMessage_Result_Alternative>?)
+    + type : string <<get>> <<set>>
+    + start_time : double <<get>> <<set>>
+    + end_time : double <<get>> <<set>>
+    + is_eos : bool? <<get>> <<set>>
+    + attaches_to : string? <<get>> <<set>>
+    + alternatives : List<AddTranscriptMessage_Result_Alternative>? <<get>> <<set>>
+}
+@enduml

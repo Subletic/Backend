@@ -1,0 +1,9 @@
+@startuml
+class SpeechBubbleController {
+    + SpeechBubbleController(speechBubbleListService:ISpeechBubbleListService, applicationLifetime:IHostApplicationLifetime)
+    + HandleUpdatedSpeechBubble(receivedList:SpeechBubbleChainJson) : IActionResult
+    + HandleRestartRequest() : IActionResult
+    + {static} ParseFrontendResponseToSpeechBubbleList(receivedList:SpeechBubbleChainJson) : List<SpeechBubble>
+}
+ControllerBase <|-- SpeechBubbleController
+@enduml

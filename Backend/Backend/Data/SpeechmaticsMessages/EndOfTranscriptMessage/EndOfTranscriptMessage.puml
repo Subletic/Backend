@@ -1,0 +1,6 @@
+@startuml
+class EndOfTranscriptMessage {
+    + EndOfTranscriptMessage()
+    + message : string <<get>> <<set>>
+}
+@enduml

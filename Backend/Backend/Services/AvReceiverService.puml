@@ -1,0 +1,7 @@
+@startuml
+class AvReceiverService {
+    + AvReceiverService(avProcessingService:IAvProcessingService)
+    + <<async>> Start(webSocket:WebSocket, ctSource:CancellationTokenSource) : Task
+}
+IAvReceiverService <|-- AvReceiverService
+@enduml

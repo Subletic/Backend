@@ -1,0 +1,12 @@
+@startuml
+struct SpeechBubbleJson {
+    + Id : long <<get>> <<init>>
+    + Speaker : int <<get>> <<set>>
+    + StartTime : double <<get>> <<set>>
+    + EndTime : double <<get>> <<set>>
+    + SpeechBubbleJson(id:long, speaker:int, startTime:double, endTime:double, wordTokens:List<WordToken>)
+}
+class "List`1"<T> {
+}
+SpeechBubbleJson --> "SpeechBubbleContent<WordToken>" "List`1"
+@enduml

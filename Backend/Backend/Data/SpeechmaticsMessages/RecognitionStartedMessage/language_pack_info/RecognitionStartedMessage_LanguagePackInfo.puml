@@ -1,0 +1,10 @@
+@startuml
+class RecognitionStartedMessage_LanguagePackInfo {
+    + RecognitionStartedMessage_LanguagePackInfo(adapted:bool, itn:bool, language_description:string, word_delimiter:string, writing_direction:string)
+    + adapted : bool <<get>> <<set>>
+    + itn : bool <<get>> <<set>>
+    + language_description : string <<get>> <<set>>
+    + word_delimiter : string <<get>> <<set>>
+    + writing_direction : string <<get>> <<set>>
+}
+@enduml

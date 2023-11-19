@@ -1,0 +1,6 @@
+@startuml
+interface IAvProcessingService {
+    + Init(apiKeyVar:string) : bool
+    + TranscribeAudio(avStream:Stream) : Task<bool>
+}
+@enduml

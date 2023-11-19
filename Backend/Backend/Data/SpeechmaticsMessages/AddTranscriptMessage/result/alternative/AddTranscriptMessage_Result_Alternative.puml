@@ -1,0 +1,9 @@
+@startuml
+class AddTranscriptMessage_Result_Alternative {
+    + AddTranscriptMessage_Result_Alternative(content:string, confidence:double, language:string?, speaker:string?)
+    + content : string <<get>> <<set>>
+    + confidence : double <<get>> <<set>>
+    + language : string? <<get>> <<set>>
+    + speaker : string? <<get>> <<set>>
+}
+@enduml

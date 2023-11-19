@@ -1,0 +1,5 @@
+@startuml
+interface ISubtitleConverter {
+    + ConvertSpeechBubble(speechBubble:SpeechBubble) : void
+}
+@enduml

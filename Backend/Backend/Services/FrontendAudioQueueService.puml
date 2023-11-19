@@ -1,0 +1,8 @@
+@startuml
+class FrontendAudioQueueService {
+    + <<new>> Enqueue(item:short[]) : void
+}
+class "ConcurrentQueue`1"<T> {
+}
+"ConcurrentQueue`1" "<short[]>" <|-- FrontendAudioQueueService
+@enduml

@@ -1,0 +1,11 @@
+@startuml
+class StartRecognitionMessage_AudioFormat {
+    + StartRecognitionMessage_AudioFormat(type:string, encoding:string?, sample_rate:int?)
+    + type : string <<get>> <<set>>
+    + encoding : string? <<get>> <<set>>
+    + sample_rate : int? <<get>> <<set>>
+    + GetCheckedSampleRate() : int
+    + GetEncodingInFFMpegFormat() : string
+    + GetBytesPerSample() : uint
+}
+@enduml

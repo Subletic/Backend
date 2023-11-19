@@ -1,0 +1,5 @@
+@startuml
+interface IWordProcessingService {
+    + HandleNewWord(wordToken:WordToken) : void
+}
+@enduml

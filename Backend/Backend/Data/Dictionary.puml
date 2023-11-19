@@ -1,0 +1,6 @@
+@startuml
+class Dictionary {
+    + Dictionary(startRecognitionMessageTranscriptionConfig:StartRecognitionMessage_TranscriptionConfig)
+}
+Dictionary --> "StartRecognitionMessageTranscriptionConfig" StartRecognitionMessage_TranscriptionConfig
+@enduml

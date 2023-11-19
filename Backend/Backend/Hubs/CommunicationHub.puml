@@ -1,0 +1,7 @@
+@startuml
+class CommunicationHub {
+    + CommunicationHub(sendingAudioService:FrontendAudioQueueService)
+    + <<async>> ReceiveAudioStream(cancellationToken:CancellationToken) : IAsyncEnumerable<short[]>
+}
+Hub <|-- CommunicationHub
+@enduml

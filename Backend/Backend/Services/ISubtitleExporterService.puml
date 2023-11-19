@@ -1,0 +1,6 @@
+@startuml
+interface ISubtitleExporterService {
+    + Start(webSocket:WebSocket, ctSource:CancellationTokenSource) : Task
+    + ExportSubtitle(speechBubble:SpeechBubble) : Task
+}
+@enduml

@@ -1,0 +1,13 @@
+@startuml
+class SpeechBubble {
+    + SpeechBubble(id:long, speaker:int, startTime:double, endTime:double, wordTokens:List<WordToken>)
+    + Id : long <<get>> <<init>>
+    + Speaker : int <<get>> <<set>>
+    + StartTime : double <<get>> <<set>>
+    + EndTime : double <<get>> <<set>>
+}
+class "List`1"<T> {
+}
+SpeechBubble --> "CreationTime" DateTime
+SpeechBubble --> "SpeechBubbleContent<WordToken>" "List`1"
+@enduml

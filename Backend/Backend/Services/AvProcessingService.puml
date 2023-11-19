@@ -1,0 +1,8 @@
+@startuml
+class AvProcessingService <<partial>> {
+    + AvProcessingService(wordProcessingService:IWordProcessingService, sendingAudioService:FrontendAudioQueueService)
+    + Init(apiKeyVar:string) : bool
+    + <<async>> TranscribeAudio(avStream:Stream) : Task<bool>
+}
+IAvProcessingService <|-- AvProcessingService
+@enduml

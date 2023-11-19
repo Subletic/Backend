@@ -1,0 +1,6 @@
+@startuml
+class BufferTimeMonitor {
+    + BufferTimeMonitor(configuration:IConfiguration, hubContext:IHubContext<CommunicationHub>, speechBubbleListService:ISpeechBubbleListService, subtitleExporterService:ISubtitleExporterService)
+}
+BackgroundService <|-- BufferTimeMonitor
+@enduml

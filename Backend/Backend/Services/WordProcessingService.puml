@@ -1,0 +1,7 @@
+@startuml
+class WordProcessingService {
+    + WordProcessingService(hubContext:IHubContext<CommunicationHub>, speechBubbleListService:ISpeechBubbleListService)
+    + HandleNewWord(wordToken:WordToken) : void
+}
+IWordProcessingService <|-- WordProcessingService
+@enduml

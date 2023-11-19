@@ -1,0 +1,10 @@
+@startuml
+class WarningMessage {
+    + WarningMessage(code:int?, type:string, reason:string, duration_limit:ulong?)
+    + message : string <<get>> <<set>>
+    + code : int? <<get>> <<set>>
+    + type : string <<get>> <<set>>
+    + reason : string <<get>> <<set>>
+    + duration_limit : ulong? <<get>> <<set>>
+}
+@enduml

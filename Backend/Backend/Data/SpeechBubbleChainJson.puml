@@ -1,0 +1,6 @@
+@startuml
+struct SpeechBubbleChainJson {
+    + SpeechbubbleChain : List<SpeechBubbleJson>? <<get>> <<set>>
+    + SpeechBubbleChainJson(postSpeechBubblesList:List<SpeechBubbleJson>)
+}
+@enduml

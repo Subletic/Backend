@@ -1,0 +1,10 @@
+@startuml
+class WordToken {
+    + WordToken(word:string, confidence:float, startTime:double, endTime:double, speaker:int)
+    + Word : string <<get>> <<set>>
+    + Confidence : float <<get>> <<set>>
+    + StartTime : double <<get>> <<set>>
+    + EndTime : double <<get>> <<set>>
+    + Speaker : int <<get>> <<set>>
+}
+@enduml

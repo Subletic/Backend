@@ -1,0 +1,10 @@
+@startuml
+class SpeechBubbleListService {
+    + SpeechBubbleListService()
+    + GetSpeechBubbles() : LinkedList<SpeechBubble>
+    + AddNewSpeechBubble(speechBubble:SpeechBubble) : void
+    + DeleteOldestSpeechBubble() : void
+    + ReplaceSpeechBubble(speechBubble:SpeechBubble) : void
+}
+ISpeechBubbleListService <|-- SpeechBubbleListService
+@enduml

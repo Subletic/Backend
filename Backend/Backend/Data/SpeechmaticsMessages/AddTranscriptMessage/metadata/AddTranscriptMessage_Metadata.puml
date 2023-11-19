@@ -1,0 +1,8 @@
+@startuml
+class AddTranscriptMessage_Metadata {
+    + AddTranscriptMessage_Metadata(transcript:string, start_time:double, end_time:double)
+    + transcript : string <<get>> <<set>>
+    + start_time : double <<get>> <<set>>
+    + end_time : double <<get>> <<set>>
+}
+@enduml

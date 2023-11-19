@@ -1,0 +1,5 @@
+@startuml
+interface IAvReceiverService {
+    + Start(webSocket:WebSocket, ctSource:CancellationTokenSource) : Task
+}
+@enduml

@@ -1,0 +1,240 @@
+@startuml
+class ClientExchangeController {
+    + ClientExchangeController(subtitleExporterService:ISubtitleExporterService, avReceiverService:IAvReceiverService)
+    + <<async>> Get() : Task
+}
+ControllerBase <|-- ClientExchangeController
+class CustomDictionaryController {
+    + CustomDictionaryController(dictionaryService:ICustomDictionaryService)
+    + UploadCustomDictionary(transcriptionConfig:StartRecognitionMessage_TranscriptionConfig) : IActionResult
+}
+ControllerBase <|-- CustomDictionaryController
+class SpeechBubbleController {
+    + SpeechBubbleController(speechBubbleListService:ISpeechBubbleListService, applicationLifetime:IHostApplicationLifetime)
+    + HandleUpdatedSpeechBubble(receivedList:SpeechBubbleChainJson) : IActionResult
+    + HandleRestartRequest() : IActionResult
+    + {static} ParseFrontendResponseToSpeechBubbleList(receivedList:SpeechBubbleChainJson) : List<SpeechBubble>
+}
+ControllerBase <|-- SpeechBubbleController
+class AdditionalVocab {
+    + Content : string <<get>> <<set>>
+    + SoundsLike : List<string>? <<get>> <<set>>
+    + AdditionalVocab(content:string, soundsLike:List<string>?)
+}
+class AudioQueue {
+    + AudioQueue(outPipe:PipeWriter)
+    + <<async>> Enqueue(audioBuffer:short[]) : Task
+    + <<async>> Dequeue() : Task
+}
+class Dictionary {
+    + Dictionary(startRecognitionMessageTranscriptionConfig:StartRecognitionMessage_TranscriptionConfig)
+}
+Dictionary --> "StartRecognitionMessageTranscriptionConfig" StartRecognitionMessage_TranscriptionConfig
+class SpeechBubble {
+    + SpeechBubble(id:long, speaker:int, startTime:double, endTime:double, wordTokens:List<WordToken>)
+    + Id : long <<get>> <<init>>
+    + Speaker : int <<get>> <<set>>
+    + StartTime : double <<get>> <<set>>
+    + EndTime : double <<get>> <<set>>
+}
+struct SpeechBubbleChainJson {
+    + SpeechbubbleChain : List<SpeechBubbleJson>? <<get>> <<set>>
+    + SpeechBubbleChainJson(postSpeechBubblesList:List<SpeechBubbleJson>)
+}
+struct SpeechBubbleJson {
+    + Id : long <<get>> <<init>>
+    + Speaker : int <<get>> <<set>>
+    + StartTime : double <<get>> <<set>>
+    + EndTime : double <<get>> <<set>>
+    + SpeechBubbleJson(id:long, speaker:int, startTime:double, endTime:double, wordTokens:List<WordToken>)
+}
+class WordToken {
+    + WordToken(word:string, confidence:float, startTime:double, endTime:double, speaker:int)
+    + Word : string <<get>> <<set>>
+    + Confidence : float <<get>> <<set>>
+    + StartTime : double <<get>> <<set>>
+    + EndTime : double <<get>> <<set>>
+    + Speaker : int <<get>> <<set>>
+}
+class CommunicationHub {
+    + CommunicationHub(sendingAudioService:FrontendAudioQueueService)
+    + <<async>> ReceiveAudioStream(cancellationToken:CancellationToken) : IAsyncEnumerable<short[]>
+}
+Hub <|-- CommunicationHub
+class AvProcessingService <<partial>> {
+    + AvProcessingService(wordProcessingService:IWordProcessingService, sendingAudioService:FrontendAudioQueueService)
+    + Init(apiKeyVar:string) : bool
+    + <<async>> TranscribeAudio(avStream:Stream) : Task<bool>
+}
+IAvProcessingService <|-- AvProcessingService
+class AvReceiverService {
+    + AvReceiverService(avProcessingService:IAvProcessingService)
+    + <<async>> Start(webSocket:WebSocket, ctSource:CancellationTokenSource) : Task
+}
+IAvReceiverService <|-- AvReceiverService
+class BufferTimeMonitor {
+    + BufferTimeMonitor(configuration:IConfiguration, hubContext:IHubContext<CommunicationHub>, speechBubbleListService:ISpeechBubbleListService, subtitleExporterService:ISubtitleExporterService)
+}
+class CustomDictionaryService {
+    + CustomDictionaryService()
+    + ProcessCustomDictionary(customDictionary:Dictionary) : void
+    + GetCustomDictionaries() : List<Dictionary>
+}
+ICustomDictionaryService <|-- CustomDictionaryService
+class FrontendAudioQueueService {
+    + <<new>> Enqueue(item:short[]) : void
+}
+interface IAvProcessingService {
+    + Init(apiKeyVar:string) : bool
+    + TranscribeAudio(avStream:Stream) : Task<bool>
+}
+interface IAvReceiverService {
+    + Start(webSocket:WebSocket, ctSource:CancellationTokenSource) : Task
+}
+interface ICustomDictionaryService {
+}
+interface ISpeechBubbleListService {
+    + GetSpeechBubbles() : LinkedList<SpeechBubble>
+    + AddNewSpeechBubble(speechBubble:SpeechBubble) : void
+    + DeleteOldestSpeechBubble() : void
+    + ReplaceSpeechBubble(speechBubble:SpeechBubble) : void
+}
+interface ISubtitleConverter {
+    + ConvertSpeechBubble(speechBubble:SpeechBubble) : void
+}
+interface ISubtitleExporterService {
+    + Start(webSocket:WebSocket, ctSource:CancellationTokenSource) : Task
+    + ExportSubtitle(speechBubble:SpeechBubble) : Task
+}
+interface IWordProcessingService {
+    + HandleNewWord(wordToken:WordToken) : void
+}
+class SpeechBubbleListService {
+    + SpeechBubbleListService()
+    + GetSpeechBubbles() : LinkedList<SpeechBubble>
+    + AddNewSpeechBubble(speechBubble:SpeechBubble) : void
+    + DeleteOldestSpeechBubble() : void
+    + ReplaceSpeechBubble(speechBubble:SpeechBubble) : void
+}
+ISpeechBubbleListService <|-- SpeechBubbleListService
+class StartupService {
+    + StartupService(avProcessingService:IAvProcessingService)
+    + StartAsync(cancellationToken:CancellationToken) : Task
+    + StopAsync(cancellationToken:CancellationToken) : Task
+}
+class SubtitleExporterService {
+    + SubtitleExporterService()
+    + <<async>> Start(webSocket:WebSocket, ctSource:CancellationTokenSource) : Task
+    + ExportSubtitle(speechBubble:SpeechBubble) : Task
+}
+ISubtitleExporterService <|-- SubtitleExporterService
+class WebVttConverter {
+    + WebVttConverter(outputStream:Stream)
+    + ConvertSpeechBubble(speechBubble:SpeechBubble) : void
+}
+ISubtitleConverter <|-- WebVttConverter
+class WordProcessingService {
+    + WordProcessingService(hubContext:IHubContext<CommunicationHub>, speechBubbleListService:ISpeechBubbleListService)
+    + HandleNewWord(wordToken:WordToken) : void
+}
+IWordProcessingService <|-- WordProcessingService
+class AddTranscriptMessage {
+    + AddTranscriptMessage(format:string, metadata:AddTranscriptMessage_Metadata, results:List<AddTranscriptMessage_Result>)
+    + message : string <<get>> <<set>>
+    + format : string <<get>> <<set>>
+}
+AddTranscriptMessage --> "metadata" AddTranscriptMessage_Metadata
+class AudioAddedMessage {
+    + AudioAddedMessage(seq_no:ulong)
+    + message : string <<get>> <<set>>
+    + seq_no : ulong <<get>> <<set>>
+}
+class EndOfStreamMessage {
+    + EndOfStreamMessage(last_seq_no:ulong)
+    + message : string <<get>> <<set>>
+    + last_seq_no : ulong <<get>> <<set>>
+}
+class EndOfTranscriptMessage {
+    + EndOfTranscriptMessage()
+    + message : string <<get>> <<set>>
+}
+class ErrorMessage {
+    + ErrorMessage(code:int?, type:string, reason:string)
+    + message : string <<get>> <<set>>
+    + code : int? <<get>> <<set>>
+    + type : string <<get>> <<set>>
+    + reason : string <<get>> <<set>>
+}
+class InfoMessage {
+    + InfoMessage(code:int?, type:string, reason:string, quality:string?)
+    + message : string <<get>> <<set>>
+    + code : int? <<get>> <<set>>
+    + type : string <<get>> <<set>>
+    + reason : string <<get>> <<set>>
+    + quality : string? <<get>> <<set>>
+}
+class RecognitionStartedMessage {
+    + RecognitionStartedMessage(id:string, language_pack_info:RecognitionStartedMessage_LanguagePackInfo)
+    + message : string <<get>> <<set>>
+    + id : string <<get>> <<set>>
+}
+RecognitionStartedMessage --> "language_pack_info" RecognitionStartedMessage_LanguagePackInfo
+class StartRecognitionMessage {
+    + StartRecognitionMessage(audio_format:StartRecognitionMessage_AudioFormat?, transcription_config:StartRecognitionMessage_TranscriptionConfig?)
+    + message : string <<get>> <<set>>
+}
+StartRecognitionMessage --> "audio_format" StartRecognitionMessage_AudioFormat
+StartRecognitionMessage --> "transcription_config" StartRecognitionMessage_TranscriptionConfig
+class WarningMessage {
+    + WarningMessage(code:int?, type:string, reason:string, duration_limit:ulong?)
+    + message : string <<get>> <<set>>
+    + code : int? <<get>> <<set>>
+    + type : string <<get>> <<set>>
+    + reason : string <<get>> <<set>>
+    + duration_limit : ulong? <<get>> <<set>>
+}
+class AddTranscriptMessage_Metadata {
+    + AddTranscriptMessage_Metadata(transcript:string, start_time:double, end_time:double)
+    + transcript : string <<get>> <<set>>
+    + start_time : double <<get>> <<set>>
+    + end_time : double <<get>> <<set>>
+}
+class AddTranscriptMessage_Result {
+    + AddTranscriptMessage_Result(type:string, start_time:double, end_time:double, is_eos:bool?, attaches_to:string?, alternatives:List<AddTranscriptMessage_Result_Alternative>?)
+    + type : string <<get>> <<set>>
+    + start_time : double <<get>> <<set>>
+    + end_time : double <<get>> <<set>>
+    + is_eos : bool? <<get>> <<set>>
+    + attaches_to : string? <<get>> <<set>>
+    + alternatives : List<AddTranscriptMessage_Result_Alternative>? <<get>> <<set>>
+}
+class RecognitionStartedMessage_LanguagePackInfo {
+    + RecognitionStartedMessage_LanguagePackInfo(adapted:bool, itn:bool, language_description:string, word_delimiter:string, writing_direction:string)
+    + adapted : bool <<get>> <<set>>
+    + itn : bool <<get>> <<set>>
+    + language_description : string <<get>> <<set>>
+    + word_delimiter : string <<get>> <<set>>
+    + writing_direction : string <<get>> <<set>>
+}
+class StartRecognitionMessage_AudioFormat {
+    + StartRecognitionMessage_AudioFormat(type:string, encoding:string?, sample_rate:int?)
+    + type : string <<get>> <<set>>
+    + encoding : string? <<get>> <<set>>
+    + sample_rate : int? <<get>> <<set>>
+    + GetCheckedSampleRate() : int
+    + GetEncodingInFFMpegFormat() : string
+    + GetBytesPerSample() : uint
+}
+class StartRecognitionMessage_TranscriptionConfig {
+    + StartRecognitionMessage_TranscriptionConfig(language:string, enable_partials:bool?, additionalVocab:List<AdditionalVocab>?)
+    + language : string <<get>> <<set>>
+    + enable_partials : bool? <<get>> <<set>>
+}
+class AddTranscriptMessage_Result_Alternative {
+    + AddTranscriptMessage_Result_Alternative(content:string, confidence:double, language:string?, speaker:string?)
+    + content : string <<get>> <<set>>
+    + confidence : double <<get>> <<set>>
+    + language : string? <<get>> <<set>>
+    + speaker : string? <<get>> <<set>>
+}
+@enduml

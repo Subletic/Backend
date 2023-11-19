@@ -1,0 +1,8 @@
+@startuml
+class StartRecognitionMessage {
+    + StartRecognitionMessage(audio_format:StartRecognitionMessage_AudioFormat?, transcription_config:StartRecognitionMessage_TranscriptionConfig?)
+    + message : string <<get>> <<set>>
+}
+StartRecognitionMessage --> "audio_format" StartRecognitionMessage_AudioFormat
+StartRecognitionMessage --> "transcription_config" StartRecognitionMessage_TranscriptionConfig
+@enduml
