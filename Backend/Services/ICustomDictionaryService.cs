@@ -1,24 +1,23 @@
-﻿namespace Backend.Services
+﻿namespace Backend.Services;
+
+using System;
+using System.Collections.Generic;
+using Backend.Data;
+
+/// <summary>
+/// Interface for the custom dictionary service.
+/// </summary>
+public interface ICustomDictionaryService
 {
-    using System;
-    using System.Collections.Generic;
-    using Backend.Data;
+    /// <summary>
+    /// Processes and adds a custom dictionary to the service for later use.
+    /// </summary>
+    /// <param name="customDictionary">The custom dictionary to process.</param>
+    void ProcessCustomDictionary(Dictionary customDictionary);
 
     /// <summary>
-    /// Interface for the custom dictionary service.
+    /// Gets the custom dictionaries.
     /// </summary>
-    public interface ICustomDictionaryService
-    {
-        /// <summary>
-        /// Processes and adds a custom dictionary to the service for later use.
-        /// </summary>
-        /// <param name="customDictionary">The custom dictionary to process.</param>
-        void ProcessCustomDictionary(Dictionary customDictionary);
-
-        /// <summary>
-        /// Gets the custom dictionaries.
-        /// </summary>
-        /// <returns>The custom dictionaries.</returns>
-        List<Dictionary> GetCustomDictionaries();
-    }
+    /// <returns>The custom dictionaries.</returns>
+    List<Dictionary> GetCustomDictionaries();
 }
