@@ -1,4 +1,6 @@
-﻿using System;
+﻿namespace BackendTests;
+
+using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -6,19 +8,17 @@ using Backend.Data;
 using Backend.Services;
 using NUnit.Framework;
 
-namespace BackendTests
+[TestFixture]
+public class WebVttConverterTests
 {
-    [TestFixture]
-    public class WebVttConverterTests
+    private static IEnumerable<object[]> exportData()
     {
-        private static IEnumerable<object[]> EXPORT_DATA()
+        var testData = new[]
         {
-            var testData = new[]
-            {
                 // No Bubbles
                 new object[]
                 {
-                    new List<SpeechBubble> {},
+                    new List<SpeechBubble> { },
                     @"WEBVTT",
                 },
 
@@ -27,7 +27,7 @@ namespace BackendTests
                 {
                     new List<SpeechBubble>
                     {
-                        new SpeechBubble(1, 1, 0.0, 1.0, new List<WordToken> {})
+                        new SpeechBubble(1, 1, 0.0, 1.0, new List<WordToken> { }),
                     },
                     @"WEBVTT
 
@@ -42,7 +42,7 @@ namespace BackendTests
                         new SpeechBubble(1, 1, 0.2, 0.8, new List<WordToken>
                         {
                              new WordToken("Test", 0.5f, 0.2, 0.8, 1),
-                        })
+                        }),
                     },
                     @"WEBVTT
 
@@ -59,7 +59,7 @@ Test",
                         {
                             new WordToken("Hello", 0.9f, 1.0, 1.2, 1),
                             new WordToken("world!", 0.9f, 1.3, 1.5, 1),
-                        })
+                        }),
                     },
                     @"WEBVTT
 
@@ -92,31 +92,31 @@ Hello, everyone!
 00:00:11.000 --> 00:00:12.500
 How are you?",
                 },
-            };
+        };
 
-            foreach (object[] test in testData)
-                yield return test;
-        }
+        foreach (object[] test in testData)
+            yield return test;
+    }
 
-        [Test, TestCaseSource(nameof(EXPORT_DATA))]
-        public void ConvertSpeechBubble_HandlesExampleCorrectly(List<SpeechBubble> speechBubbles, string expectedContent)
-        {
-            // Init converter
-            Stream outputStream = new MemoryStream();
-            ISubtitleConverter converter = new WebVttConverter(outputStream);
+    [Test]
+    [TestCaseSource(nameof(exportData))]
+    public void ConvertSpeechBubble_HandlesExampleCorrectly(List<SpeechBubble> speechBubbles, string expectedContent)
+    {
+        // Init converter
+        Stream outputStream = new MemoryStream();
+        ISubtitleConverter converter = new WebVttConverter(outputStream);
 
-            // Push SpeechBubbles through the converter
-            foreach (SpeechBubble speechBubble in speechBubbles)
-                converter.ConvertSpeechBubble(speechBubble);
+        // Push SpeechBubbles through the converter
+        foreach (SpeechBubble speechBubble in speechBubbles)
+            converter.ConvertSpeechBubble(speechBubble);
 
-            // Read converter result
-            outputStream.Position = 0;
-            string exportedContent = "";
-            using (var reader = new StreamReader(outputStream))
-                exportedContent = reader.ReadToEnd();
+        // Read converter result
+        outputStream.Position = 0;
+        string exportedContent = "";
+        using (var reader = new StreamReader(outputStream))
+            exportedContent = reader.ReadToEnd();
 
-            // Überprüfen Sie, ob die exportierte Ausgabe der erwarteten Ausgabe entspricht
-            Assert.That(exportedContent, Is.EqualTo(expectedContent));
-        }
+        // Überprüfen Sie, ob die exportierte Ausgabe der erwarteten Ausgabe entspricht
+        Assert.That(exportedContent, Is.EqualTo(expectedContent));
     }
 }

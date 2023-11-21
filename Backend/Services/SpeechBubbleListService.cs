@@ -1,7 +1,7 @@
+namespace Backend.Services;
+
 using Backend.Data;
 using Newtonsoft.Json;
-
-namespace Backend.Services;
 
 /// <summary>
 /// Service to manage the list of speech bubbles.
@@ -76,6 +76,7 @@ public class SpeechBubbleListService : ISpeechBubbleListService
                 speechBubbleList.Remove(currentSpeechBubble);
                 return;
             }
+
             currentSpeechBubble = currentSpeechBubble.Next; // Move to the next node
         }
     }

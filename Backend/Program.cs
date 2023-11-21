@@ -32,6 +32,8 @@ builder.Services.AddSingleton<IAvReceiverService, AvReceiverService>();
 
 builder.Services.AddSingleton<ISubtitleExporterService, SubtitleExporterService>();
 
+builder.Services.AddSingleton<ICustomDictionaryService, CustomDictionaryService>();
+
 builder.Services.AddSingleton<FrontendAudioQueueService, FrontendAudioQueueService>();
 
 builder.Services.AddHostedService<StartupService>();
@@ -40,8 +42,7 @@ builder.Services.AddHostedService<BufferTimeMonitor>();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAngularFrontend",
-        policy =>
+    options.AddPolicy("AllowAngularFrontend", policy =>
         {
             policy.WithOrigins(frontendUrl) // Replace with your Angular app URL
                 .AllowAnyHeader()

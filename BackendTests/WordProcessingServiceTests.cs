@@ -1,11 +1,11 @@
-﻿using Backend.Controllers;
+﻿namespace BackendTests;
+
+using Backend.Controllers;
 using Backend.Data;
 using Backend.Hubs;
 using Backend.Services;
 using Microsoft.AspNetCore.SignalR;
 using Moq;
-
-namespace BackendTests;
 
 public class WordProcessingServiceTests
 {
@@ -24,7 +24,6 @@ public class WordProcessingServiceTests
     {
         speechBubbleListService.Invocations.Clear();
     }
-
 
     [Test]
     public void Insert19NewWords_SpeechBubbleListEmpty()
@@ -61,7 +60,6 @@ public class WordProcessingServiceTests
         // Assert
         speechBubbleListService.Verify(sl => sl.AddNewSpeechBubble(It.IsAny<SpeechBubble>()), Times.Exactly(1));
     }
-
 
     [Test]
     public void Insert40NewWords_SpeechBubbleListContains2Bubbles()
