@@ -31,19 +31,20 @@ public class CustomDictionaryController : ControllerBase
     /// <param name="transcriptionConfig">Die Transkriptionskonfiguration für das benutzerdefinierte Wörterbuch.</param>
     /// <returns>ActionResult, das den Status der Anforderung widerspiegelt.</returns>
     [HttpPost("upload")]
-    public IActionResult UploadCustomDictionary([FromBody] StartRecognitionMessage_TranscriptionConfig transcriptionConfig)
+    public IActionResult UploadCustomDictionary([FromBody] ConfigurationData configuration)
     {
         try
         {
-            if (transcriptionConfig == null || transcriptionConfig.additional_vocab == null)
+            if (configuration == null || configuration.dictionary.StartRecognitionMessageTranscriptionConfig.additional_vocab == null)
             {
                 return BadRequest("Invalid custom dictionary data.");
             }
 
             // Erstellen Sie eine Instanz von Dictionary und übergeben Sie sie an den Service
-            var customDictionary = new Dictionary(transcriptionConfig);
+            var customDictionary = new Dictionary(configuration.dictionary.StartRecognitionMessageTranscriptionConfig);
             dictionaryService.ProcessCustomDictionary(customDictionary);
-
+            dictionaryService.AddDelayLength(customDictionary,configuration.delayLength);
+                                        
             return Ok("Custom dictionary uploaded successfully.");
         }
         catch (Exception ex)

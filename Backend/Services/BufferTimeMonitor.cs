@@ -1,4 +1,4 @@
-﻿namespace Backend.Services;
+namespace Backend.Services;
 
 using System;
 using System.Collections.Generic;
@@ -22,6 +22,8 @@ public class BufferTimeMonitor : BackgroundService
     /// List containing all SpeechBubbles that have timed out.
     /// </summary>
     private readonly List<SpeechBubble> timedOutSpeechBubbles;
+
+    private readonly List<ConfigurationData> configData;
 
     private readonly ISpeechBubbleListService speechBubbleListService;
 
@@ -48,11 +50,22 @@ public class BufferTimeMonitor : BackgroundService
     {
         this.configuration = configuration;
         this.timeLimitInMinutes = configuration.GetValue<int>("BufferTimeMonitorSettings:TimeLimitInMinutes");
-        this.delayMilliseconds = configuration.GetValue<int>("BufferTimeMonitorSettings:DelayMilliseconds");
+        this.delayMilliseconds = UpdateDelayMilliseconds(configData);
         this.speechBubbleListService = speechBubbleListService;
         this.hubContext = hubContext;
         this.timedOutSpeechBubbles = new List<SpeechBubble>();
         this.subtitleExporterService = subtitleExporterService;
+        this.configData = new List<ConfigurationData>();
+    }
+
+    /// <summary>
+    /// Updates the delay time in milliseconds based on the provided list of configuration data.
+    /// </summary>
+    /// <param name="configData">The list of configuration data containing delay lengths.</param>
+    /// <returns>The updated delay time in milliseconds.</returns>
+    private int UpdateDelayMilliseconds(List<ConfigurationData> configData)
+    {
+        // logic for Return the last known delay value
     }
 
     /// <summary>

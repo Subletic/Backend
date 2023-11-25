@@ -14,12 +14,14 @@ public class CustomDictionaryService : ICustomDictionaryService
     // List to store custom dictionaries.
     private List<Dictionary> customDictionaries;
 
+    private List<ConfigurationData> configurationDataList;
     /// <summary>
-    /// Konstruktor für den CustomDictionaryService. Initialisiert die Liste der benutzerdefinierten Wörterbücher.
+    /// Konstruktor für den CustomDict  ionaryService. Initialisiert die Liste der benutzerdefinierten Wörterbücher.
     /// </summary>
     public CustomDictionaryService()
     {
         customDictionaries = new List<Dictionary>();
+        configurationDataList = new List<ConfigurationData>();
     }
 
     /// <summary>
@@ -65,6 +67,14 @@ public class CustomDictionaryService : ICustomDictionaryService
         }
     }
 
+    // Methode zum Speichern von delayLength in der Liste der Konfigurationsdaten
+    public void AddDelayLength(Dictionary dictionary, int delayLength)
+    {
+        // Erstelle eine neue Instanz von ConfigurationData und füge sie zur Liste hinzu
+        var configData = new ConfigurationData(dictionary, delayLength);
+        configurationDataList.Add(configData);
+    }
+
     /// <summary>
     /// Gibt die Liste der benutzerdefinierten Wörterbücher zurück.
     /// </summary>
@@ -72,5 +82,10 @@ public class CustomDictionaryService : ICustomDictionaryService
     public List<Dictionary> GetCustomDictionaries()
     {
         return customDictionaries;
+    }
+
+    public List<ConfigurationData> GetconfigurationDataList()
+    {
+        return configurationDataList;
     }
 }
