@@ -11,7 +11,7 @@ using Serilog;
 /// Controller für benutzerdefinierte Wörterbücher.
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/Configuration")]
 public class CustomDictionaryController : ControllerBase
 {
     private readonly ICustomDictionaryService dictionaryService;
@@ -35,16 +35,22 @@ public class CustomDictionaryController : ControllerBase
     {
         try
         {
-            if (configuration == null || configuration.dictionary.StartRecognitionMessageTranscriptionConfig.additional_vocab == null)
+            if (configuration == null)
             {
                 return BadRequest("Invalid custom dictionary data.");
             }
 
-            // Erstellen Sie eine Instanz von Dictionary und übergeben Sie sie an den Service
-            var customDictionary = new Dictionary(configuration.dictionary.StartRecognitionMessageTranscriptionConfig);
-            dictionaryService.ProcessCustomDictionary(customDictionary);
-            dictionaryService.AddDelayLength(customDictionary,configuration.delayLength);
-                                        
+            // Überprüfen, ob die Konfiguration gültig ist und keine leere Instanz ist.
+            // Wenn das benutzerdefinierte Wörterbuch in der Konfiguration vorhanden ist, verarbeiten und übergeben Sie es an den Service.
+            if (configuration.dictionary.transcription_config.additional_vocab != null)
+            {
+                var customDictionary = new Dictionary(configuration.dictionary.transcription_config);
+                dictionaryService.ProcessCustomDictionary(customDictionary);
+            }
+
+            // Die Verzögerungslänge aus der Konfiguration festlegen.
+            dictionaryService.SetDelay(configuration.delayLength);
+
             return Ok("Custom dictionary uploaded successfully.");
         }
         catch (Exception ex)

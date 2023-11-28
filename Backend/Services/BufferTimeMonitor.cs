@@ -18,20 +18,17 @@ public class BufferTimeMonitor : BackgroundService
 {
     private readonly IHubContext<CommunicationHub> hubContext;
 
-    /// <summary>
-    /// List containing all SpeechBubbles that have timed out.
-    /// </summary>
     private readonly List<SpeechBubble> timedOutSpeechBubbles;
 
-    private readonly List<ConfigurationData> configData;
-
     private readonly ISpeechBubbleListService speechBubbleListService;
+
+    private readonly ICustomDictionaryService configurationService;
 
     private readonly ISubtitleExporterService subtitleExporterService;
 
     private readonly IConfiguration configuration;
 
-    private readonly int timeLimitInMinutes;
+    private float timeLimitInMinutes;
 
     private readonly int delayMilliseconds;
 
@@ -43,29 +40,20 @@ public class BufferTimeMonitor : BackgroundService
     /// <param name="speechBubbleListService">Service that provides access to the active SpeechBubbles</param>
     /// <param name="subtitleExporterService">Service that Exports the Subtitles</param>
     public BufferTimeMonitor(
+        ICustomDictionaryService configurationService,
         IConfiguration configuration,
         IHubContext<CommunicationHub> hubContext,
         ISpeechBubbleListService speechBubbleListService,
         ISubtitleExporterService subtitleExporterService)
     {
+        this.configurationService = configurationService;
         this.configuration = configuration;
-        this.timeLimitInMinutes = configuration.GetValue<int>("BufferTimeMonitorSettings:TimeLimitInMinutes");
-        this.delayMilliseconds = UpdateDelayMilliseconds(configData);
+        this.timeLimitInMinutes = 0.5f;
+        this.delayMilliseconds = configuration.GetValue<int>("BufferTimeMonitorSettings:DelayMilliseconds");
         this.speechBubbleListService = speechBubbleListService;
         this.hubContext = hubContext;
         this.timedOutSpeechBubbles = new List<SpeechBubble>();
         this.subtitleExporterService = subtitleExporterService;
-        this.configData = new List<ConfigurationData>();
-    }
-
-    /// <summary>
-    /// Updates the delay time in milliseconds based on the provided list of configuration data.
-    /// </summary>
-    /// <param name="configData">The list of configuration data containing delay lengths.</param>
-    /// <returns>The updated delay time in milliseconds.</returns>
-    private int UpdateDelayMilliseconds(List<ConfigurationData> configData)
-    {
-        // logic for Return the last known delay value
     }
 
     /// <summary>
@@ -79,6 +67,7 @@ public class BufferTimeMonitor : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
+            timeLimitInMinutes = configurationService.GetDelay();
             await Task.Delay(delayMilliseconds, stoppingToken);
 
             var oldestSpeechBubble = speechBubbleListService.GetSpeechBubbles().First;

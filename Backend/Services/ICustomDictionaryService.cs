@@ -16,21 +16,20 @@ public interface ICustomDictionaryService
     void ProcessCustomDictionary(Dictionary customDictionary);
 
     /// <summary>
-    /// Adds a delay length to the service configuration for dictionary processing.
-    /// </summary>
-    /// <param name="dictionary">The dictionary for which the delay length is added.</param>
-    /// <param name="delayLength">The delay length to be added.</param>
-    void AddDelayLength(Dictionary dictionary, int delayLength);
-
-    /// <summary>
     /// Gets the custom dictionaries.
     /// </summary>
     /// <returns>The custom dictionaries.</returns>
     List<Dictionary> GetCustomDictionaries();
 
     /// <summary>
-    /// Gets the list of configuration data associated with the custom dictionaries.
+    /// Sets the delay length for a specific operation.
     /// </summary>
-    /// <returns>The list of configuration data.</returns>
-    List<ConfigurationData> GetconfigurationDataList();
+    /// <param name="delay">The delay length to be set.</param>
+    public void SetDelay(float delay);
+
+    /// <summary>
+    /// Retrieves the delay length for a specific operation.
+    /// </summary>
+    /// <returns>The delay length.</returns>
+    public float GetDelay(); 
 }

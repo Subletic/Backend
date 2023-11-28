@@ -14,14 +14,14 @@ public class CustomDictionaryService : ICustomDictionaryService
     // List to store custom dictionaries.
     private List<Dictionary> customDictionaries;
 
-    private List<ConfigurationData> configurationDataList;
+    private float Delay;
+
     /// <summary>
     /// Konstruktor für den CustomDict  ionaryService. Initialisiert die Liste der benutzerdefinierten Wörterbücher.
     /// </summary>
     public CustomDictionaryService()
     {
         customDictionaries = new List<Dictionary>();
-        configurationDataList = new List<ConfigurationData>();
     }
 
     /// <summary>
@@ -67,14 +67,6 @@ public class CustomDictionaryService : ICustomDictionaryService
         }
     }
 
-    // Methode zum Speichern von delayLength in der Liste der Konfigurationsdaten
-    public void AddDelayLength(Dictionary dictionary, int delayLength)
-    {
-        // Erstelle eine neue Instanz von ConfigurationData und füge sie zur Liste hinzu
-        var configData = new ConfigurationData(dictionary, delayLength);
-        configurationDataList.Add(configData);
-    }
-
     /// <summary>
     /// Gibt die Liste der benutzerdefinierten Wörterbücher zurück.
     /// </summary>
@@ -84,8 +76,21 @@ public class CustomDictionaryService : ICustomDictionaryService
         return customDictionaries;
     }
 
-    public List<ConfigurationData> GetconfigurationDataList()
+    /// <summary>
+    /// Gibt den Wert der Verzögerung zurück.
+    /// </summary>
+    /// <returns>Die Verzögerung.</returns>
+    public float GetDelay()
     {
-        return configurationDataList;
+        return this.Delay;
+    }
+
+    /// <summary>
+    /// Setzt den Wert der Verzögerung.
+    /// </summary>
+    /// <param name="delay">Die neue Verzögerung.</param>
+    public void SetDelay(float delay)
+    {
+        this.Delay = delay;
     }
 }
