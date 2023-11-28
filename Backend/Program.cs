@@ -7,7 +7,7 @@ using Serilog.Core;
 var builder = WebApplication.CreateBuilder(args);
 
 // If frontend URL is not specified, use default value (localhost:4200)
-var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:4200";
+var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:40110";
 
 // Reads configuration information from appsettings.json and appsettings.Production.json (or another environment file).
 var configuration = new ConfigurationBuilder()
