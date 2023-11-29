@@ -10,13 +10,13 @@ using Microsoft.AspNetCore.Mvc;
 using NUnit.Framework;
 
 [TestFixture]
-public class CustomDictionaryServiceTests
+public class ConfigurationServiceTests
 {
-    private CustomDictionaryService customDictionaryService;
+    private ConfigurationService customDictionaryService;
 
-    public CustomDictionaryServiceTests()
+    public ConfigurationServiceTests()
     {
-        customDictionaryService = new CustomDictionaryService();
+        customDictionaryService = new ConfigurationService();
     }
 
     [Test]

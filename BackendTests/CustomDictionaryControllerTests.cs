@@ -10,16 +10,16 @@ using NUnit.Framework;
 namespace BackendTests
 {
     [TestFixture]
-    public class CustomDictionaryControllerTests
+    public class ConfigurationControllerTests
     {
-        private CustomDictionaryController customDictionaryController;
-        private CustomDictionaryService customDictionaryService;
+        private ConfigurationController? customDictionaryController;
+        private ConfigurationService? customDictionaryService;
 
         [SetUp]
         public void Setup()
         {
-            customDictionaryService = new CustomDictionaryService();
-            customDictionaryController = new CustomDictionaryController(customDictionaryService);
+            customDictionaryService = new ConfigurationService();
+            customDictionaryController = new ConfigurationController(customDictionaryService);
         }
 
         [Test]
@@ -28,7 +28,7 @@ namespace BackendTests
             // Arrange
             var additionalVocab = new AdditionalVocab("word");
             var transcriptionConfig = new StartRecognitionMessage_TranscriptionConfig("en", false, new List<AdditionalVocab> { additionalVocab });
-            var frontendDictionary = new FrondendDictionary(transcriptionConfig);
+            var frontendDictionary = new SoundslikeDictionary(transcriptionConfig);
 
             // Act
             var configurationData = new ConfigurationData(frontendDictionary, 2.0f);

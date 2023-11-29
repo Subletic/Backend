@@ -9,17 +9,18 @@ using Serilog;
 /// <summary>
 /// Dienst zur Verwaltung benutzerdefinierter Wörterbücher.
 /// </summary>
-public class CustomDictionaryService : ICustomDictionaryService
+public class ConfigurationService : IConfigurationService
 {
     // List to store custom dictionaries.
     private List<Dictionary> customDictionaries;
 
+    //Delay speichert zeitbasierte Wartezeit für Funktionen im CustomDictionaryService und BufferTimeMonitor.
     private float Delay;
 
     /// <summary>
-    /// Konstruktor für den CustomDict  ionaryService. Initialisiert die Liste der benutzerdefinierten Wörterbücher.
+    /// Konstruktor für den CustomDictionaryService. Initialisiert die Liste der benutzerdefinierten Wörterbücher.
     /// </summary>
-    public CustomDictionaryService()
+    public ConfigurationService()
     {
         customDictionaries = new List<Dictionary>();
     }

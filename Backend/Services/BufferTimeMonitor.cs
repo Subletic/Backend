@@ -22,13 +22,13 @@ public class BufferTimeMonitor : BackgroundService
 
     private readonly ISpeechBubbleListService speechBubbleListService;
 
-    private readonly ICustomDictionaryService configurationService;
+    private readonly IConfigurationService configurationService;
 
     private readonly ISubtitleExporterService subtitleExporterService;
 
     private readonly IConfiguration configuration;
 
-    private float timeLimitInMinutes;
+    private  float timeLimitInMinutes;
 
     private readonly int delayMilliseconds;
 
@@ -40,7 +40,7 @@ public class BufferTimeMonitor : BackgroundService
     /// <param name="speechBubbleListService">Service that provides access to the active SpeechBubbles</param>
     /// <param name="subtitleExporterService">Service that Exports the Subtitles</param>
     public BufferTimeMonitor(
-        ICustomDictionaryService configurationService,
+        IConfigurationService configurationService,
         IConfiguration configuration,
         IHubContext<CommunicationHub> hubContext,
         ISpeechBubbleListService speechBubbleListService,
@@ -48,8 +48,8 @@ public class BufferTimeMonitor : BackgroundService
     {
         this.configurationService = configurationService;
         this.configuration = configuration;
-        this.timeLimitInMinutes = 0.5f;
-        this.delayMilliseconds = configuration.GetValue<int>("BufferTimeMonitorSettings:DelayMilliseconds");
+        this.timeLimitInMinutes = configuration.GetValue<float>("BufferTimeMonitorSettings:DEFAULT_TIME_LIMIT_IN_MINUTES"); ;
+        this.delayMilliseconds = configuration.GetValue<int>("BufferTimeMonitorSettings:DEFAULT_DEALY_MILLISECONDS");
         this.speechBubbleListService = speechBubbleListService;
         this.hubContext = hubContext;
         this.timedOutSpeechBubbles = new List<SpeechBubble>();

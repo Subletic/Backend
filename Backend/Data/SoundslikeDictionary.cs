@@ -7,7 +7,7 @@ using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_co
 /// <summary>
 /// Class for the frondend dictionary.
 /// </summary>
-public class FrondendDictionary
+public class SoundslikeDictionary
 {
     /// <summary>
     /// Gets or sets the TranscriptionConfig of the StartRecognitionMessage.
@@ -18,7 +18,7 @@ public class FrondendDictionary
     /// Constructor of the frondend Dictionary class.
     /// </summary>
     /// <param name="startRecognitionMessageTranscriptionConfig">The TranscriptionConfig of the StartRecognitionMessage.</param>
-    public FrondendDictionary(StartRecognitionMessage_TranscriptionConfig transcription_config)
+    public SoundslikeDictionary(StartRecognitionMessage_TranscriptionConfig transcription_config)
     {
         this.transcription_config = transcription_config;
     }

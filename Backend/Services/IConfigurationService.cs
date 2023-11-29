@@ -7,7 +7,7 @@ using Backend.Data;
 /// <summary>
 /// Interface for the custom dictionary service.
 /// </summary>
-public interface ICustomDictionaryService
+public interface IConfigurationService
 {
     /// <summary>
     /// Processes and adds a custom dictionary to the service for later use.

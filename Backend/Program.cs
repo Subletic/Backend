@@ -32,7 +32,7 @@ builder.Services.AddSingleton<IAvReceiverService, AvReceiverService>();
 
 builder.Services.AddSingleton<ISubtitleExporterService, SubtitleExporterService>();
 
-builder.Services.AddSingleton<ICustomDictionaryService, CustomDictionaryService>();
+builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
 
 builder.Services.AddSingleton<FrontendAudioQueueService, FrontendAudioQueueService>();
 

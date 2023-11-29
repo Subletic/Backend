@@ -12,15 +12,15 @@ using Serilog;
 /// </summary>
 [ApiController]
 [Route("api/Configuration")]
-public class CustomDictionaryController : ControllerBase
+public class ConfigurationController : ControllerBase
 {
-    private readonly ICustomDictionaryService dictionaryService;
+    private readonly IConfigurationService dictionaryService;
 
     /// <summary>
     /// Konstruktor für den CustomDictionaryController. Initialisiert den Dienst für benutzerdefinierte Wörterbücher.
     /// </summary>
     /// <param name="dictionaryService">Der Dienst für benutzerdefinierte Wörterbücher.</param>
-    public CustomDictionaryController(ICustomDictionaryService dictionaryService)
+    public ConfigurationController(IConfigurationService dictionaryService)
     {
         this.dictionaryService = dictionaryService ?? throw new ArgumentNullException(nameof(dictionaryService));
     }
