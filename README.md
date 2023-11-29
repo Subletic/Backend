@@ -1,6 +1,6 @@
 # Backend
 
-Contains an ASP.NET Core project for our Subletic-Backend.
+Contains an ASP.NET Core project for our Subletic-Backend. It provides a WebSocket-Service/Server, that transcribes an audio-stream an returns a Subtitle. If the Frontend is connected, additional correction of the Subtitles can be made, before sending the subtitle back to the Client.
 
 ## Usage
 
@@ -25,8 +25,9 @@ To start the software a few environment-variables have to be set:
 
 ## Ports
 
-| Software | Port  |
-|----------|-------|
-| Frontend | 40110 |
-| Backend  | 40114 |
+| Software    | Port  |
+|-------------|-------|
+| Frontend    | 40110 |
+| Backend     | 40114 |
+| Mock Server | 40118 |
 
