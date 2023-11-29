@@ -1,5 +1,3 @@
-namespace BackendTests;
-
 using System;
 using System.Collections.Generic;
 using Backend.Controllers;
@@ -9,37 +7,47 @@ using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
 using NUnit.Framework;
 
-[TestFixture]
-public class CustomDictionaryControllerTests
+namespace BackendTests
 {
-    private CustomDictionaryController? customDictionaryController;
-    private CustomDictionaryService? customDictionaryService;
-
-    [SetUp]
-    public void Setup()
+    [TestFixture]
+    public class CustomDictionaryControllerTests
     {
-        customDictionaryService = new CustomDictionaryService();
-        customDictionaryController = new CustomDictionaryController(customDictionaryService!);
-    }
+        private CustomDictionaryController customDictionaryController;
+        private CustomDictionaryService customDictionaryService;
 
-    [Test]
-    public void UploadCustomDictionary_ValidData_ReturnsOk()
-    {
-        var additionalVocab = new AdditionalVocab("word");
-        var transcriptionConfig = new StartRecognitionMessage_TranscriptionConfig("en", false, new List<AdditionalVocab> { additionalVocab });
-        var result = customDictionaryController!.UploadCustomDictionary(transcriptionConfig);
+        [SetUp]
+        public void Setup()
+        {
+            customDictionaryService = new CustomDictionaryService();
+            customDictionaryController = new CustomDictionaryController(customDictionaryService);
+        }
 
-        Assert.That(result, Is.TypeOf<OkObjectResult>());
-        Assert.That(((OkObjectResult)result).Value, Is.EqualTo("Custom dictionary uploaded successfully."));
-    }
+        [Test]
+        public void UploadCustomDictionary_ValidData_ReturnsOk()
+        {
+            // Arrange
+            var additionalVocab = new AdditionalVocab("word");
+            var transcriptionConfig = new StartRecognitionMessage_TranscriptionConfig("en", false, new List<AdditionalVocab> { additionalVocab });
+            var frontendDictionary = new FrondendDictionary(transcriptionConfig);
 
-    [Test]
-    public void UploadCustomDictionary_InvalidData_ReturnsBadRequest()
-    {
-        // Simuliere ungültige Daten
-        var result = customDictionaryController!.UploadCustomDictionary(null!);
+            // Act
+            var configurationData = new ConfigurationData(frontendDictionary, 2.0f);
+            var result = customDictionaryController.UploadCustomDictionary(configurationData);
 
-        Assert.That(result, Is.TypeOf<BadRequestObjectResult>());
-        Assert.That(((BadRequestObjectResult)result).Value, Is.EqualTo("Invalid custom dictionary data."));
+            // Assert
+            Assert.That(result, Is.TypeOf<OkObjectResult>());
+            Assert.That(((OkObjectResult)result).Value, Is.EqualTo("Custom dictionary uploaded successfully."));
+        }
+
+        [Test]
+        public void UploadCustomDictionary_InvalidData_ReturnsBadRequest()
+        {
+            // Act with invalid data (for example, passing null)
+            var result = customDictionaryController.UploadCustomDictionary(null);
+
+            // Assert
+            Assert.That(result, Is.TypeOf<BadRequestObjectResult>());
+            Assert.That(((BadRequestObjectResult)result).Value, Is.EqualTo("Invalid custom dictionary data."));
+        }
     }
 }
