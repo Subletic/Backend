@@ -35,7 +35,9 @@ namespace BackendTests
             var result = customDictionaryController.UploadCustomDictionary(configurationData);
 
             // Assert
+            Assert.IsNotNull(result, "Result should not be null.");
             Assert.That(result, Is.TypeOf<OkObjectResult>());
+            Assert.IsNotNull(((OkObjectResult)result)?.Value, "Result value should not be null.");
             Assert.That(((OkObjectResult)result).Value, Is.EqualTo("Custom dictionary uploaded successfully."));
         }
 
@@ -46,7 +48,10 @@ namespace BackendTests
             var result = customDictionaryController.UploadCustomDictionary(null);
 
             // Assert
+            Assert.IsNotNull(customDictionaryController, "Custom dictionary controller should not be null.");
+            Assert.IsNotNull(result, "Result should not be null.");
             Assert.That(result, Is.TypeOf<BadRequestObjectResult>());
+            Assert.IsNotNull(((BadRequestObjectResult)result)?.Value, "Result value should not be null.");
             Assert.That(((BadRequestObjectResult)result).Value, Is.EqualTo("Invalid custom dictionary data."));
         }
     }
