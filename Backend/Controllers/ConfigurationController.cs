@@ -15,6 +15,9 @@ public class ConfigurationController : ControllerBase
 {
     private readonly IConfigurationService dictionaryService;
 
+    // Array mit gültigen delayLength-Werten
+    private readonly double[] validDelayLengths = { 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10 };
+
     /// <summary>
     /// Konstruktor für den CustomDictionaryController. Initialisiert den Dienst für benutzerdefinierte Wörterbücher.
     /// </summary>
@@ -27,7 +30,7 @@ public class ConfigurationController : ControllerBase
     /// <summary>
     /// API-Endpunkt zum Hochladen eines benutzerdefinierten Wörterbuchs.
     /// </summary>
-    /// <param name="transcriptionConfig">Die Transkriptionskonfiguration für das benutzerdefinierte Wörterbuch.</param>
+    /// <param name="configuration">Die Transkriptionskonfiguration für das benutzerdefinierte Wörterbuch.</param>
     /// <returns>ActionResult, das den Status der Anforderung widerspiegelt.</returns>
     [HttpPost("upload")]
     public IActionResult UploadCustomDictionary([FromBody] ConfigurationData configuration)
@@ -60,12 +63,14 @@ public class ConfigurationController : ControllerBase
                 dictionaryService.ProcessCustomDictionary(customDictionary);
             }
 
-            // Die Verzögerungslänge aus der Konfiguration festlegen.
-            if (configuration.delayLength > 0.5 && configuration.delayLength <= 10.0)
+            // Validate delayLength
+            if (!validDelayLengths.Contains(configuration.delayLength))
             {
-                dictionaryService.SetDelay(configuration.delayLength);
+                return BadRequest("Invalid delayLength specified. Valid values are: 0.5, 1, 1.5, ..., 10.");
             }
-            
+
+            dictionaryService.SetDelay(configuration.delayLength);
+
             return Ok("Custom dictionary uploaded successfully.");
         }
         catch (Exception ex)
