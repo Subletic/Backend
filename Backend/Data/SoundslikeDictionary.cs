@@ -17,7 +17,7 @@ public class SoundslikeDictionary
     /// <summary>
     /// Constructor of the frondend Dictionary class.
     /// </summary>
-    /// <param name="startRecognitionMessageTranscriptionConfig">The TranscriptionConfig of the StartRecognitionMessage.</param>
+    /// <param name="transcription_config">The TranscriptionConfig of the StartRecognitionMessage.</param>
     public SoundslikeDictionary(StartRecognitionMessage_TranscriptionConfig transcription_config)
     {
         this.transcription_config = transcription_config;

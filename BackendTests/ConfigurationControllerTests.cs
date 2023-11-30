@@ -32,7 +32,7 @@ namespace BackendTests
 
             // Act
             var configurationData = new ConfigurationData(frontendDictionary, 2.0f);
-            var result = customDictionaryController.UploadCustomDictionary(configurationData);
+            var result = customDictionaryController?.UploadCustomDictionary(configurationData);
 
             // Assert
             Assert.IsNotNull(result, "Result should not be null.");
@@ -45,7 +45,7 @@ namespace BackendTests
         public void UploadCustomDictionary_InvalidData_ReturnsBadRequest()
         {
             // Act with invalid data (for example, passing null)
-            var result = customDictionaryController.UploadCustomDictionary(null);
+            var result = customDictionaryController?.UploadCustomDictionary(null);
 
             // Assert
             Assert.IsNotNull(customDictionaryController, "Custom dictionary controller should not be null.");
