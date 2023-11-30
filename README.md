@@ -1,6 +1,6 @@
 # Backend
 
-Contains an ASP.NET Core project for our Subletic-Backend. It provides a WebSocket-Service/Server, that transcribes an audio-stream an returns a Subtitle. If the Frontend is connected, additional correction of the Subtitles can be made, before sending the subtitle back to the Client.
+Contains an ASP.NET Core project for our Subletic-Backend. It provides a WebSocket-Service/Server, that transcribes an audio-stream an returns a subtitle. If the Frontend is connected, additional correction of the subtitles can be made, before sending the subtitle back to the client.
 
 ## Usage
 
@@ -18,7 +18,7 @@ Please also ensure that the `ffmpeg.exe` lies on the PATH of your OS. In Windows
 
 ## Connection
 
-To start the software a few **environment-variables** have to be set. When the Software ist run for development purpose a **`launchSettings.json`** can be used to set these values. Also note the Port **`40114`** the Backend is started on.
+To start the software a few **environment-variables** have to be set. When the software is run for development purpose a **`launchSettings.json`** can be used to set these values. Also note the port **`40114`** the Backend is started on.
 
 | Variable-Name | Value | Development | Production |
 |---|---|---|---|
