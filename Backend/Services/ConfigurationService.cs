@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using Backend.Data;
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_config;
+using Serilog;
+using Serilog.Events;
 
 /// <summary>
 /// Dienst zur Verwaltung benutzerdefinierter Wörterbücher.
@@ -16,12 +18,16 @@ public class ConfigurationService : IConfigurationService
     /// Variable, um zeitbasierte Wartezeiten für Funktionen im ConfigurationServiceController und BufferTimeMonitor zu speichern.
     private float Delay;
 
+    // Das private readonly Feld logger wird verwendet, um den Logger für die Protokollierung innerhalb dieser Klasse zu halten.
+    private readonly Serilog.ILogger logger;
+
     /// <summary>
     /// Konstruktor für den ConfigurationService. Initialisiert die Liste der benutzerdefinierten Wörterbücher.
     /// </summary>
-    public ConfigurationService()
+    public ConfigurationService(Serilog.ILogger logger)
     {
         customDictionaries = new List<Dictionary>();
+        this.logger = logger;
     }
 
     /// <summary>
@@ -43,7 +49,7 @@ public class ConfigurationService : IConfigurationService
         }
 
         // Log information about the received custom dictionary.
-        Console.WriteLine($"Received custom dictionary for language {customDictionary.StartRecognitionMessageTranscriptionConfig.language}");
+        logger.Information($"Received custom dictionary for language {customDictionary.StartRecognitionMessageTranscriptionConfig.language}");
 
         // Find an existing dictionary with similar content.
         var existingDictionary = customDictionaries.FirstOrDefault(d =>
@@ -58,12 +64,12 @@ public class ConfigurationService : IConfigurationService
                 av.sounds_like = customDictionary.StartRecognitionMessageTranscriptionConfig.additional_vocab[0].sounds_like;
             }
 
-            Console.WriteLine($"Custom dictionary updated for content {customDictionary.StartRecognitionMessageTranscriptionConfig.additional_vocab.FirstOrDefault()?.content}");
+            logger.Information($"Custom dictionary updated for content {customDictionary.StartRecognitionMessageTranscriptionConfig.additional_vocab.FirstOrDefault()?.content}");
         }
         else
         {
             customDictionaries.Add(customDictionary);
-            Console.WriteLine($"Custom dictionary added to the in-memory data structure for content {customDictionary.StartRecognitionMessageTranscriptionConfig.additional_vocab.FirstOrDefault()?.content}");
+            logger.Information($"Custom dictionary added to the in-memory data structure for content {customDictionary.StartRecognitionMessageTranscriptionConfig.additional_vocab.FirstOrDefault()?.content}");
         }
     }
 

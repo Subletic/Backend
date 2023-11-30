@@ -6,6 +6,8 @@ using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_co
 using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
 using NUnit.Framework;
+using Serilog;
+
 
 namespace BackendTests
 {
@@ -18,8 +20,10 @@ namespace BackendTests
         [SetUp]
         public void Setup()
         {
-            customDictionaryService = new ConfigurationService();
-            customDictionaryController = new ConfigurationController(customDictionaryService);
+            var logger = new LoggerConfiguration().CreateLogger(); 
+
+            customDictionaryService = new ConfigurationService(logger);
+            customDictionaryController = new ConfigurationController(customDictionaryService, logger); 
         }
 
         [Test]
@@ -28,7 +32,7 @@ namespace BackendTests
             // Arrange
             var additionalVocab = new AdditionalVocab("word");
             var transcriptionConfig = new StartRecognitionMessage_TranscriptionConfig("en", false, new List<AdditionalVocab> { additionalVocab });
-            var frontendDictionary = new SoundslikeDictionary(transcriptionConfig);
+            var frontendDictionary = new Dictionary(transcriptionConfig);
 
             // Act
             var configurationData = new ConfigurationData(frontendDictionary, 2.0f);

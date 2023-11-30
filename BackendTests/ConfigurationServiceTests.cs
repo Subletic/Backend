@@ -8,6 +8,8 @@ using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_co
 using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
 using NUnit.Framework;
+using Serilog;
+
 
 [TestFixture]
 public class ConfigurationServiceTests
@@ -16,7 +18,10 @@ public class ConfigurationServiceTests
 
     public ConfigurationServiceTests()
     {
-        customDictionaryService = new ConfigurationService();
+        var logger = new LoggerConfiguration().CreateLogger();
+
+        customDictionaryService = new ConfigurationService(logger);
+        customDictionaryService = new ConfigurationService(logger);
     }
 
     [Test]

@@ -1,5 +1,9 @@
 using Backend.Hubs;
 using Backend.Services;
+using Serilog;
+using Microsoft.Extensions.Configuration;
+using Serilog.Settings.Configuration;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,9 +15,16 @@ var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
     .Build();
 
-builder.Services.AddSingleton<IConfiguration>(configuration);
+var logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(configuration)
+    .CreateLogger();
+
 
 // Add services to the container.
+builder.Services.AddSingleton<Serilog.ILogger>(logger);
+
+builder.Services.AddSingleton<IConfiguration>(configuration);
+
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
