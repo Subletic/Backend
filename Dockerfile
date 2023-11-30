@@ -31,7 +31,7 @@ RUN apt-get -y upgrade
 RUN apt-get install -y ffmpeg
 
 # Setze den Port, auf dem die API lauscht
-EXPOSE 5003
+EXPOSE 40114
 
 # Starte die ASP.NET API
 ENTRYPOINT ["dotnet", "Backend.dll"]
