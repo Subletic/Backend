@@ -21,7 +21,6 @@ public class ConfigurationServiceTests
         var logger = new LoggerConfiguration().CreateLogger();
 
         customDictionaryService = new ConfigurationService(logger);
-        customDictionaryService = new ConfigurationService(logger);
     }
 
     [Test]
@@ -36,9 +35,9 @@ public class ConfigurationServiceTests
         // Assert
         var dictionaries = customDictionaryService.GetCustomDictionaries();
         Assert.That(dictionaries.Count, Is.EqualTo(1));
-        Assert.That(dictionaries[0]?.StartRecognitionMessageTranscriptionConfig?.language, Is.EqualTo("en"));
-        Assert.That(dictionaries[0]?.StartRecognitionMessageTranscriptionConfig?.additional_vocab?[0]?.content, Is.EqualTo("SampleContent"));
-        Assert.That(dictionaries[0]?.StartRecognitionMessageTranscriptionConfig?.additional_vocab?[0]?.sounds_like?.Count, Is.EqualTo(0));
+        Assert.That(dictionaries[0]?.transcription_config?.language, Is.EqualTo("en"));
+        Assert.That(dictionaries[0]?.transcription_config?.additional_vocab?[0]?.content, Is.EqualTo("SampleContent"));
+        Assert.That(dictionaries[0]?.transcription_config?.additional_vocab?[0]?.sounds_like?.Count, Is.EqualTo(0));
     }
 
     [Test]
@@ -50,16 +49,16 @@ public class ConfigurationServiceTests
 
         // Act
         // Update the existing dictionary with the same language and content
-        customDictionary.StartRecognitionMessageTranscriptionConfig.additional_vocab[0].content = "UpdatedContent";
-        customDictionary.StartRecognitionMessageTranscriptionConfig.additional_vocab[0].sounds_like = new List<string> { "SimilarWord" };
+        customDictionary.transcription_config.additional_vocab[0].content = "UpdatedContent";
+        customDictionary.transcription_config.additional_vocab[0].sounds_like = new List<string> { "SimilarWord" };
         customDictionaryService.ProcessCustomDictionary(customDictionary);
 
         // Assert
         var dictionaries = customDictionaryService.GetCustomDictionaries();
         Assert.That(dictionaries.Count, Is.EqualTo(1));
-        Assert.That(dictionaries[0]?.StartRecognitionMessageTranscriptionConfig?.additional_vocab?[0]?.content, Is.EqualTo("UpdatedContent"));
-        Assert.That(dictionaries[0]?.StartRecognitionMessageTranscriptionConfig?.additional_vocab?[0]?.sounds_like?.Count, Is.EqualTo(1));
-        Assert.That(dictionaries[0]?.StartRecognitionMessageTranscriptionConfig?.additional_vocab?[0]?.sounds_like?[0], Is.EqualTo("SimilarWord"));
+        Assert.That(dictionaries[0]?.transcription_config?.additional_vocab?[0]?.content, Is.EqualTo("UpdatedContent"));
+        Assert.That(dictionaries[0]?.transcription_config?.additional_vocab?[0]?.sounds_like?.Count, Is.EqualTo(1));
+        Assert.That(dictionaries[0]?.transcription_config?.additional_vocab?[0]?.sounds_like?[0], Is.EqualTo("SimilarWord"));
     }
 
     private static Dictionary createSampleCustomDictionary(string language, string content, List<string> sounds_like = null!)

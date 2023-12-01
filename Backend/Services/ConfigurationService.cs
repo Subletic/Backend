@@ -37,39 +37,39 @@ public class ConfigurationService : IConfigurationService
     /// <exception cref="ArgumentException">Ausgelöst, wenn die Daten des benutzerdefinierten Wörterbuchs ungültig sind.</exception>
     public void ProcessCustomDictionary(Dictionary customDictionary)
     {
-        if (customDictionary == null || customDictionary.StartRecognitionMessageTranscriptionConfig == null)
+        if (customDictionary == null || customDictionary.transcription_config == null)
         {
             throw new ArgumentException("Invalid custom dictionary data.");
         }
 
         // Check if the additionalVocab list exceeds the limit.
-        if (customDictionary.StartRecognitionMessageTranscriptionConfig.additional_vocab.Count > 1000)
+        if (customDictionary.transcription_config.additional_vocab.Count > 1000)
         {
             throw new ArgumentException("additionalVocab list cannot exceed 1000 elements.");
         }
 
         // Log information about the received custom dictionary.
-        logger.Information($"Received custom dictionary for language {customDictionary.StartRecognitionMessageTranscriptionConfig.language}");
+        logger.Information($"Received custom dictionary for language {customDictionary.transcription_config.language}");
 
         // Find an existing dictionary with similar content.
         var existingDictionary = customDictionaries.FirstOrDefault(d =>
-            d.StartRecognitionMessageTranscriptionConfig.additional_vocab.Any(av => av.content == customDictionary.StartRecognitionMessageTranscriptionConfig.additional_vocab.FirstOrDefault()?.content));
+            d.transcription_config.additional_vocab.Any(av => av.content == customDictionary.transcription_config.additional_vocab.FirstOrDefault()?.content));
 
         // If an existing dictionary is found, update it; otherwise, add the new dictionary.
         if (existingDictionary != null)
         {
-            existingDictionary.StartRecognitionMessageTranscriptionConfig = customDictionary.StartRecognitionMessageTranscriptionConfig;
-            foreach (var av in existingDictionary.StartRecognitionMessageTranscriptionConfig.additional_vocab)
+            existingDictionary.transcription_config = customDictionary.transcription_config;
+            foreach (var av in existingDictionary.transcription_config.additional_vocab)
             {
-                av.sounds_like = customDictionary.StartRecognitionMessageTranscriptionConfig.additional_vocab[0].sounds_like;
+                av.sounds_like = customDictionary.transcription_config.additional_vocab[0].sounds_like;
             }
 
-            logger.Information($"Custom dictionary updated for content {customDictionary.StartRecognitionMessageTranscriptionConfig.additional_vocab.FirstOrDefault()?.content}");
+            logger.Information($"Custom dictionary updated for content {customDictionary.transcription_config.additional_vocab.FirstOrDefault()?.content}");
         }
         else
         {
             customDictionaries.Add(customDictionary);
-            logger.Information($"Custom dictionary added to the in-memory data structure for content {customDictionary.StartRecognitionMessageTranscriptionConfig.additional_vocab.FirstOrDefault()?.content}");
+            logger.Information($"Custom dictionary added to the in-memory data structure for content {customDictionary.transcription_config.additional_vocab.FirstOrDefault()?.content}");
         }
     }
 

@@ -43,6 +43,8 @@ public class ConfigurationController : ControllerBase
     {
         try
         {
+            Console.WriteLine($"Language: {configuration.delayLength}");
+
             if (configuration == null)
             {
                 return BadRequest("Invalid custom dictionary data.");
@@ -50,22 +52,22 @@ public class ConfigurationController : ControllerBase
 
             // Überprüfen, ob die Konfiguration gültig ist und keine leere Instanz ist.
             // Wenn das benutzerdefinierte Wörterbuch in der Konfiguration vorhanden ist, verarbeiten und übergeben Sie es an den Service.
-            if (configuration.dictionary.StartRecognitionMessageTranscriptionConfig.additional_vocab != null)
+            if (configuration.dictionary.transcription_config.additional_vocab != null)
             {
                 // Validate empty content with filled sounds_like in additional_vocab
-                if (configuration.dictionary.StartRecognitionMessageTranscriptionConfig.additional_vocab.Any(av => string.IsNullOrEmpty(av.content) && av.sounds_like != null && av.sounds_like.Any()))
+                if (configuration.dictionary.transcription_config.additional_vocab.Any(av => string.IsNullOrEmpty(av.content) && av.sounds_like != null && av.sounds_like.Any()))
                 {
                     return BadRequest("Invalid custom dictionary data: Dictionaries with empty content and filled sounds_like are not allowed.");
                 }
 
                 // Validate language
-                if (string.IsNullOrEmpty(configuration.dictionary.StartRecognitionMessageTranscriptionConfig.language) ||
-                    (configuration.dictionary.StartRecognitionMessageTranscriptionConfig.language != "de" && configuration.dictionary.StartRecognitionMessageTranscriptionConfig.language != "en"))
+                if (string.IsNullOrEmpty(configuration.dictionary.transcription_config.language) ||
+                    (configuration.dictionary.transcription_config.language != "de" && configuration.dictionary.transcription_config.language != "en"))
                 {
                     return BadRequest("Invalid language specified. Please provide 'de' or 'en'.");
                 }
 
-                var customDictionary = new Dictionary(configuration.dictionary.StartRecognitionMessageTranscriptionConfig);
+                var customDictionary = new Dictionary(configuration.dictionary.transcription_config);
                 dictionaryService.ProcessCustomDictionary(customDictionary);
             }
 
