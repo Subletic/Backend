@@ -43,8 +43,6 @@ public class ConfigurationController : ControllerBase
     {
         try
         {
-            Console.WriteLine($"Language: {configuration.delayLength}");
-
             if (configuration == null)
             {
                 return BadRequest("Invalid custom dictionary data.");
