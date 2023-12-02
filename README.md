@@ -24,6 +24,7 @@ To start the software a few **environment-variables** have to be set. When the s
 |---|---|---|---|
 | SPEECHMATICS_API_KEY | >is located in the credentials location< | ✅ | ✅ |
 | FRONTEND_URL | http://d.projekte.swe.htwk-leipzig.de:40110 | ❌ | ✅ |
+| BACKEND_URL | http://0.0.0.0:40114 | ❌ | ✅ |
 
 **`Properties/launchSettings.json`:**
 ```json
