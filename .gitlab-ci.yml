@@ -136,7 +136,7 @@ build-docker:
 
 deploy:
     variables:
-        CI_REGISTRY_IMAGE: "gitlab.dit.htwk-leipzig.de:5050/live-stream-editor-zur-korrektur-von-untertiteln/backend"
+        CI_REGISTRY_IMAGE: "gitlab.dit.htwk-leipzig.de:5050/live-stream-editor-zur-korrektur-von-untertiteln/backend:latest"
     stage: deploy
     rules:
         - if: $CI_COMMIT_TAG
@@ -145,6 +145,6 @@ deploy:
         apt-get install -y sshpass
         sshpass -p $DEPLOYMENT_SERVER_PASSWORD projekt2@141.57.21.99
         podman-compose down
-        podman pull $CI_REGISTRY_IMAGE:latest
+        podman pull $CI_REGISTRY_IMAGE
         podman-compose up -d
         exit
