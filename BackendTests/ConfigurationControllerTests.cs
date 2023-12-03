@@ -17,11 +17,17 @@ public class ConfigurationControllerTests
     private ConfigurationService customDictionaryService;
     private Serilog.ILogger logger;
 
+    public ConfigurationControllerTests()
+    {
+        logger = new LoggerConfiguration().CreateLogger();
+        customDictionaryService = new ConfigurationService(logger);
+        customDictionaryController = new ConfigurationController(customDictionaryService, logger);
+    }
+
     [SetUp]
     public void Setup()
     {
-        logger = new LoggerConfiguration().CreateLogger();
-
+        // Reset
         customDictionaryService = new ConfigurationService(logger);
         customDictionaryController = new ConfigurationController(customDictionaryService, logger);
     }
