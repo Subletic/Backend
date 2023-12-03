@@ -33,10 +33,21 @@ namespace BackendTests
 
             // Assert
             var dictionaries = customDictionaryService?.GetCustomDictionaries();
-            Assert.That(dictionaries?.Count ?? 0, Is.EqualTo(1));
-            Assert.That(dictionaries[0]?.language, Is.EqualTo("de"));
-            Assert.That(dictionaries[0]?.additional_vocab?[0]?.content, Is.EqualTo("SampleContent"));
-            Assert.That(dictionaries[0]?.additional_vocab?[0]?.sounds_like?.Count, Is.EqualTo(0));
+            Assert.IsNotNull(dictionaries);
+            Assert.That(dictionaries!.Count, Is.EqualTo(1));
+
+            var firstDictionary = dictionaries[0];
+            Assert.IsNotNull(firstDictionary);
+            Assert.That(firstDictionary!.language, Is.EqualTo("de"));
+
+            var additionalVocab = firstDictionary.additional_vocab;
+            Assert.IsNotNull(additionalVocab);
+            Assert.That(additionalVocab!.Count, Is.EqualTo(1));
+
+            var firstAdditionalVocab = additionalVocab[0];
+            Assert.IsNotNull(firstAdditionalVocab);
+            Assert.That(firstAdditionalVocab!.content, Is.EqualTo("SampleContent"));
+            Assert.That(firstAdditionalVocab!.sounds_like?.Count ?? 0, Is.EqualTo(0));
         }
 
         [Test]
@@ -54,11 +65,16 @@ namespace BackendTests
 
             // Assert
             var dictionaries = customDictionaryService?.GetCustomDictionaries();
-            Assert.That(dictionaries?.Count ?? 0, Is.EqualTo(1));
-            Assert.That(dictionaries[0]?.additional_vocab?[0]?.content, Is.EqualTo("UpdatedContent"));
-            Assert.That(dictionaries[0]?.additional_vocab?[0]?.sounds_like?.Count, Is.EqualTo(1));
-            Assert.That(dictionaries[0]?.additional_vocab?[0]?.sounds_like?[0], Is.EqualTo("SimilarWord"));
+            Assert.IsNotNull(dictionaries);
+            Assert.That(dictionaries!.Count, Is.EqualTo(1));
+
+            var firstAdditionalVocab = dictionaries[0].additional_vocab?[0];
+            Assert.IsNotNull(firstAdditionalVocab);
+            Assert.That(firstAdditionalVocab!.content, Is.EqualTo("UpdatedContent"));
+            Assert.That(firstAdditionalVocab!.sounds_like?.Count ?? 0, Is.EqualTo(1));
+            Assert.That(firstAdditionalVocab!.sounds_like?[0], Is.EqualTo("SimilarWord"));
         }
+
 
         private static StartRecognitionMessage_TranscriptionConfig createSampleCustomDictionary(string language, string content, List<string>? sounds_like = null)
         {
