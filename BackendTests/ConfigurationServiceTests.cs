@@ -32,7 +32,7 @@ namespace BackendTests
             customDictionaryService?.ProcessCustomDictionary(customDictionary);
 
             // Assert
-            var dictionaries = customDictionaryService.GetCustomDictionaries();
+            var dictionaries = customDictionaryService?.GetCustomDictionaries();
             Assert.That(dictionaries.Count, Is.EqualTo(1));
             Assert.That(dictionaries[0]?.language, Is.EqualTo("de"));
             Assert.That(dictionaries[0]?.additional_vocab?[0]?.content, Is.EqualTo("SampleContent"));
@@ -53,7 +53,7 @@ namespace BackendTests
             customDictionaryService.ProcessCustomDictionary(customDictionary);
 
             // Assert
-            var dictionaries = customDictionaryService.GetCustomDictionaries();
+            var dictionaries = customDictionaryService?.GetCustomDictionaries();
             Assert.That(dictionaries.Count, Is.EqualTo(1));
             Assert.That(dictionaries[0]?.additional_vocab?[0]?.content, Is.EqualTo("UpdatedContent"));
             Assert.That(dictionaries[0]?.additional_vocab?[0]?.sounds_like?.Count, Is.EqualTo(1));
