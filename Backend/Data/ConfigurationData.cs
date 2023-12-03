@@ -30,5 +30,3 @@ public class ConfigurationData
         this.delayLength = delayLength;
     }
 }
-
-

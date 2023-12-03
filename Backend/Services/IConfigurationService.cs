@@ -32,5 +32,5 @@ public interface IConfigurationService
     /// Retrieves the delay length for a specific operation.
     /// </summary>
     /// <returns>The delay length.</returns>
-    public float GetDelay(); 
+    public float GetDelay();
 }

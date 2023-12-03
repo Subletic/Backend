@@ -12,14 +12,14 @@ using Serilog.Events;
 /// </summary>
 public class ConfigurationService : IConfigurationService
 {
+    // Das private readonly Feld logger wird verwendet, um den Logger für die Protokollierung innerhalb dieser Klasse zu halten.
+    private readonly Serilog.ILogger logger;
+
     // List to store custom dictionaries.
     private List<StartRecognitionMessage_TranscriptionConfig> customDictionaries;
 
     /// Variable, um zeitbasierte Wartezeiten für Funktionen im ConfigurationServiceController und BufferTimeMonitor zu speichern.
     private float delay;
-
-    // Das private readonly Feld logger wird verwendet, um den Logger für die Protokollierung innerhalb dieser Klasse zu halten.
-    private readonly Serilog.ILogger logger;
 
     /// <summary>
     /// Konstruktor für den ConfigurationService. Initialisiert die Liste der benutzerdefinierten Wörterbücher.

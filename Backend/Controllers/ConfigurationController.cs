@@ -39,7 +39,7 @@ public class ConfigurationController : ControllerBase
     /// <param name="configuration">Die Transkriptionskonfiguration für das benutzerdefinierte Wörterbuch.</param>
     /// <returns>ActionResult, das den Status der Anforderung widerspiegelt.</returns>
     [HttpPost("upload")]
-    public IActionResult UploadCustomDictionary([FromBody] ConfigurationData configuration)
+    public IActionResult UploadCustomDictionary([FromBody] ConfigurationData? configuration)
     {
         try
         {
@@ -53,33 +53,33 @@ public class ConfigurationController : ControllerBase
 
             // Überprüfen, ob die Konfiguration gültig ist und keine leere Instanz ist.
             // Wenn das benutzerdefinierte Wörterbuch in der Konfiguration vorhanden ist, verarbeiten und übergeben Sie es an den Service.
-            if (configuration.dictionary.additional_vocab != null)
+            if (configuration!.dictionary.additional_vocab != null)
             {
                 // Validate empty content with filled sounds_like in additional_vocab
-                if (configuration.dictionary.additional_vocab.Any(av => string.IsNullOrEmpty(av.content) && av.sounds_like != null && av.sounds_like.Any()))
+                if (configuration!.dictionary.additional_vocab.Any(av => string.IsNullOrEmpty(av.content) && av.sounds_like != null && av.sounds_like.Any()))
                 {
                     logger.Warning("Received dictionary with empty content and filled sounds_like.");
                     return BadRequest("Invalid custom dictionary data: Dictionaries with empty content and filled sounds_like are not allowed.");
                 }
 
                 // Validate language
-                if (string.IsNullOrEmpty(configuration.dictionary.language) || configuration.dictionary.language != "de")
+                if (string.IsNullOrEmpty(configuration!.dictionary.language) || configuration!.dictionary.language != "de")
                 {
                     logger.Warning("Invalid language specified.");
                     return BadRequest("Invalid language specified. Please provide 'de'.");
                 }
 
-                dictionaryService.ProcessCustomDictionary(configuration.dictionary);
+                dictionaryService.ProcessCustomDictionary(configuration!.dictionary);
             }
 
             // Validate delayLength
-            if (!validDelayLengths.Contains(configuration.delayLength))
+            if (!validDelayLengths.Contains(configuration!.delayLength))
             {
                 logger.Warning("Invalid delayLength specified.");
                 return BadRequest($"Invalid delayLength specified. Valid values are: {string.Join(" ", validDelayLengths)}.");
             }
 
-            dictionaryService.SetDelay(configuration.delayLength);
+            dictionaryService.SetDelay(configuration!.delayLength);
 
             logger.Information("Custom dictionary uploaded successfully.");
             return Ok("Custom dictionary uploaded successfully.");

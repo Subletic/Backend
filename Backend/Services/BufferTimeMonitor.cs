@@ -28,9 +28,9 @@ public class BufferTimeMonitor : BackgroundService
 
     private readonly IConfiguration configuration;
 
-    private float timeLimitInMinutes;
-
     private readonly int delayMilliseconds;
+
+    private float timeLimitInMinutes;
 
     /// <summary>
     /// Initializes the Dependency Injection and the List of timed out SpeechBubbles.
