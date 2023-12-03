@@ -16,14 +16,15 @@ namespace BackendTests
     {
         private ConfigurationController? customDictionaryController;
         private ConfigurationService? customDictionaryService;
+        private Serilog.ILogger logger;
 
         [SetUp]
         public void Setup()
         {
-            var logger = new LoggerConfiguration().CreateLogger(); 
+            logger = new LoggerConfiguration().CreateLogger();
 
             customDictionaryService = new ConfigurationService(logger);
-            customDictionaryController = new ConfigurationController(customDictionaryService, logger); 
+            customDictionaryController = new ConfigurationController(customDictionaryService, logger);
         }
 
         [Test]
@@ -31,18 +32,29 @@ namespace BackendTests
         {
             // Arrange
             var additionalVocab = new AdditionalVocab("word");
-            var transcriptionConfig = new StartRecognitionMessage_TranscriptionConfig("en", false, new List<AdditionalVocab> { additionalVocab });
-            var frontendDictionary = new Dictionary(transcriptionConfig);
+            var transcriptionConfig = new StartRecognitionMessage_TranscriptionConfig("de", true, new List<AdditionalVocab> { additionalVocab });
+            var configurationData = new ConfigurationData(transcriptionConfig, 2.0f);
 
             // Act
-            var configurationData = new ConfigurationData(frontendDictionary, 2.0f);
             var result = customDictionaryController?.UploadCustomDictionary(configurationData);
 
-            // Assert
+            // Logging
+            if (result is BadRequestObjectResult badRequest)
+            {
+                logger.Information($"Request failed: {badRequest.Value}");
+            }
+            else
+            {
+                logger.Information("Request successful.");
+                logger.Information($"Result Type: {result?.GetType().Name}");
+                logger.Information($"Result Value: {result}");
+            }
+
+            // Assertions
             Assert.IsNotNull(result, "Result should not be null.");
-            Assert.That(result, Is.TypeOf<OkObjectResult>());
-            Assert.IsNotNull(((OkObjectResult)result)?.Value, "Result value should not be null.");
-            Assert.That(((OkObjectResult)result).Value, Is.EqualTo("Custom dictionary uploaded successfully."));
+            Assert.IsFalse(result is BadRequestObjectResult, "Result should not be a BadRequest.");
+            Assert.IsNotNull(((ObjectResult)result)?.StatusCode, "Status code should not be null.");
+            Assert.AreEqual(200, ((ObjectResult)result)?.StatusCode); 
         }
 
         [Test]

@@ -28,7 +28,7 @@ public class BufferTimeMonitor : BackgroundService
 
     private readonly IConfiguration configuration;
 
-    private  float timeLimitInMinutes;
+    private float timeLimitInMinutes;
 
     private readonly int delayMilliseconds;
 

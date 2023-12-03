@@ -3,6 +3,7 @@ namespace Backend.Services;
 using System;
 using System.Collections.Generic;
 using Backend.Data;
+using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_config;
 
 /// <summary>
 /// Interface for the custom dictionary service.
@@ -13,13 +14,13 @@ public interface IConfigurationService
     /// Processes and adds a custom dictionary to the service for later use.
     /// </summary>
     /// <param name="customDictionary">The custom dictionary to process.</param>
-    void ProcessCustomDictionary(Dictionary customDictionary);
+    void ProcessCustomDictionary(StartRecognitionMessage_TranscriptionConfig customDictionary);
 
     /// <summary>
     /// Gets the custom dictionaries.
     /// </summary>
     /// <returns>The custom dictionaries.</returns>
-    List<Dictionary> GetCustomDictionaries();
+    List<StartRecognitionMessage_TranscriptionConfig> GetCustomDictionaries();
 
     /// <summary>
     /// Sets the delay length for a specific operation.

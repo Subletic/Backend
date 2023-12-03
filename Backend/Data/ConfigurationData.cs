@@ -12,7 +12,7 @@ public class ConfigurationData
     /// <summary>
     /// Gets or sets the dictionary configuration data.
     /// </summary>
-    public Dictionary dictionary { get; set; }
+    public StartRecognitionMessage_TranscriptionConfig dictionary { get; set; }
 
     /// <summary>
     /// Gets or sets the delay length associated with the configuration data.
@@ -24,7 +24,7 @@ public class ConfigurationData
     /// </summary>
     /// <param name="dictionary">The dictionary configuration.</param>
     /// <param name="delayLength">The delay length associated with the configuration.</param>
-    public ConfigurationData(Dictionary dictionary, float delayLength)
+    public ConfigurationData(StartRecognitionMessage_TranscriptionConfig dictionary, float delayLength)
     {
         this.dictionary = dictionary;
         this.delayLength = delayLength;

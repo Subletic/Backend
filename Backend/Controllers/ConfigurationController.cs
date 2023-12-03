@@ -43,40 +43,50 @@ public class ConfigurationController : ControllerBase
     {
         try
         {
+            logger.Information("Received request for uploading custom dictionary.");
+
             if (configuration == null)
             {
+                logger.Warning("Received null configuration data.");
                 return BadRequest("Invalid custom dictionary data.");
             }
 
             // Überprüfen, ob die Konfiguration gültig ist und keine leere Instanz ist.
             // Wenn das benutzerdefinierte Wörterbuch in der Konfiguration vorhanden ist, verarbeiten und übergeben Sie es an den Service.
-            if (configuration.dictionary.transcription_config.additional_vocab != null)
+            if (configuration.dictionary.additional_vocab != null)
             {
                 // Validate empty content with filled sounds_like in additional_vocab
-                if (configuration.dictionary.transcription_config.additional_vocab.Any(av => string.IsNullOrEmpty(av.content) && av.sounds_like != null && av.sounds_like.Any()))
+                if (configuration.dictionary.additional_vocab.Any(av => string.IsNullOrEmpty(av.content) && av.sounds_like != null && av.sounds_like.Any()))
                 {
+                    logger.Warning("Received dictionary with empty content and filled sounds_like.");
                     return BadRequest("Invalid custom dictionary data: Dictionaries with empty content and filled sounds_like are not allowed.");
                 }
 
                 // Validate language
-                if (string.IsNullOrEmpty(configuration.dictionary.transcription_config.language) ||
-                    (configuration.dictionary.transcription_config.language != "de" && configuration.dictionary.transcription_config.language != "en"))
+                if (string.IsNullOrEmpty(configuration.dictionary.language) || configuration.dictionary.language != "de")
                 {
-                    return BadRequest("Invalid language specified. Please provide 'de' or 'en'.");
+                    logger.Warning("Invalid language specified.");
+                    return BadRequest("Invalid language specified. Please provide 'de'.");
                 }
 
-                var customDictionary = new Dictionary(configuration.dictionary.transcription_config);
+                var customDictionary = new StartRecognitionMessage_TranscriptionConfig(
+                                            configuration.dictionary.language,
+                                            configuration.dictionary.enable_partials,
+                                            configuration.dictionary.additional_vocab
+                                           );
                 dictionaryService.ProcessCustomDictionary(customDictionary);
             }
 
             // Validate delayLength
             if (!validDelayLengths.Contains(configuration.delayLength))
             {
-                return BadRequest("Invalid delayLength specified. Valid values are: 0.5, 1, 1.5, ..., 10.");
+                logger.Warning("Invalid delayLength specified.");
+                return BadRequest($"Invalid delayLength specified. Valid values are: {string.Join(" ", validDelayLengths)}.");
             }
 
             dictionaryService.SetDelay(configuration.delayLength);
 
+            logger.Information("Custom dictionary uploaded successfully.");
             return Ok("Custom dictionary uploaded successfully.");
         }
         catch (Exception ex)
