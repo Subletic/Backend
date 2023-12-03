@@ -33,7 +33,7 @@ namespace BackendTests
 
             // Assert
             var dictionaries = customDictionaryService?.GetCustomDictionaries();
-            Assert.That(dictionaries.Count, Is.EqualTo(1));
+            Assert.That(dictionaries?.Count ?? 0, Is.EqualTo(1));
             Assert.That(dictionaries[0]?.language, Is.EqualTo("de"));
             Assert.That(dictionaries[0]?.additional_vocab?[0]?.content, Is.EqualTo("SampleContent"));
             Assert.That(dictionaries[0]?.additional_vocab?[0]?.sounds_like?.Count, Is.EqualTo(0));
@@ -50,11 +50,11 @@ namespace BackendTests
             // Update the existing dictionary with the same language and content
             customDictionary.additional_vocab[0].content = "UpdatedContent";
             customDictionary.additional_vocab[0].sounds_like = new List<string> { "SimilarWord" };
-            customDictionaryService.ProcessCustomDictionary(customDictionary);
+            customDictionaryService?.ProcessCustomDictionary(customDictionary);
 
             // Assert
             var dictionaries = customDictionaryService?.GetCustomDictionaries();
-            Assert.That(dictionaries.Count, Is.EqualTo(1));
+            Assert.That(dictionaries?.Count ?? 0, Is.EqualTo(1));
             Assert.That(dictionaries[0]?.additional_vocab?[0]?.content, Is.EqualTo("UpdatedContent"));
             Assert.That(dictionaries[0]?.additional_vocab?[0]?.sounds_like?.Count, Is.EqualTo(1));
             Assert.That(dictionaries[0]?.additional_vocab?[0]?.sounds_like?[0], Is.EqualTo("SimilarWord"));
