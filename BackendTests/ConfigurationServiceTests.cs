@@ -13,7 +13,7 @@ namespace BackendTests
     [TestFixture]
     public class ConfigurationServiceTests
     {
-        private ConfigurationService customDictionaryService;
+        private ConfigurationService? customDictionaryService;
 
         [SetUp]
         public void Setup()
