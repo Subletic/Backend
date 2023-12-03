@@ -69,12 +69,7 @@ public class ConfigurationController : ControllerBase
                     return BadRequest("Invalid language specified. Please provide 'de'.");
                 }
 
-                var customDictionary = new StartRecognitionMessage_TranscriptionConfig(
-                                            configuration.dictionary.language,
-                                            configuration.dictionary.enable_partials,
-                                            configuration.dictionary.additional_vocab
-                                           );
-                dictionaryService.ProcessCustomDictionary(customDictionary);
+                dictionaryService.ProcessCustomDictionary(configuration.dictionary);
             }
 
             // Validate delayLength
