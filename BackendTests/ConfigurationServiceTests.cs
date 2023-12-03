@@ -26,15 +26,15 @@ namespace BackendTests
         public void ProcessCustomDictionary_AddsNewDictionary()
         {
             // Arrange
-            var customDictionary = createSampleCustomDictionary("en", "SampleContent");
+            var customDictionary = createSampleCustomDictionary("de", "SampleContent");
 
             // Act
-            customDictionaryService.ProcessCustomDictionary(customDictionary);
+            customDictionaryService?.ProcessCustomDictionary(customDictionary);
 
             // Assert
             var dictionaries = customDictionaryService.GetCustomDictionaries();
             Assert.That(dictionaries.Count, Is.EqualTo(1));
-            Assert.That(dictionaries[0]?.language, Is.EqualTo("en"));
+            Assert.That(dictionaries[0]?.language, Is.EqualTo("de"));
             Assert.That(dictionaries[0]?.additional_vocab?[0]?.content, Is.EqualTo("SampleContent"));
             Assert.That(dictionaries[0]?.additional_vocab?[0]?.sounds_like?.Count, Is.EqualTo(0));
         }
@@ -43,8 +43,8 @@ namespace BackendTests
         public void ProcessCustomDictionary_UpdatesExistingDictionary()
         {
             // Arrange
-            var customDictionary = createSampleCustomDictionary("en", "SampleContent");
-            customDictionaryService.ProcessCustomDictionary(customDictionary);
+            var customDictionary = createSampleCustomDictionary("de", "SampleContent");
+            customDictionaryService?.ProcessCustomDictionary(customDictionary);
 
             // Act
             // Update the existing dictionary with the same language and content
