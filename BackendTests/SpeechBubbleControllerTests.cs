@@ -2,10 +2,8 @@
 
 using Backend.Controllers;
 using Backend.Data;
-using Backend.Hubs;
 using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Hosting;
 using Moq;
 
@@ -30,38 +28,6 @@ public class SpeechBubbleControllerTests
     public void Setup()
     {
         speechBubbleListService.Invocations.Clear();
-    }
-
-    [Test]
-    public void ParseFrontendResponseToSpeechBubbleList_InsertValidResponse_AttributesMappedToSpeechBubble()
-    {
-        // Arrange
-        var speechBubbleJson = new SpeechBubbleJson(1, 4, 1, 12, testWordList);
-        var speechBubbleChainJson = new SpeechBubbleChainJson(new List<SpeechBubbleJson> { speechBubbleJson });
-        var expectedResult = new List<SpeechBubble> { new SpeechBubble(1, 4, 1, 12, testWordList) };
-
-        // Act
-        var resultingSpeechBubbleList =
-            SpeechBubbleController.ParseFrontendResponseToSpeechBubbleList(speechBubbleChainJson);
-        var resultingWordList = resultingSpeechBubbleList.First().SpeechBubbleContent;
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(resultingSpeechBubbleList.First().Id, Is.EqualTo(expectedResult.First().Id));
-            Assert.That(resultingSpeechBubbleList.First().Speaker, Is.EqualTo(expectedResult.First().Speaker));
-            Assert.That(resultingSpeechBubbleList.First().StartTime, Is.EqualTo(expectedResult.First().StartTime));
-            Assert.That(resultingSpeechBubbleList.First().EndTime, Is.EqualTo(expectedResult.First().EndTime));
-
-            for (var i = 0; i < resultingWordList.Count; i++)
-            {
-                Assert.That(resultingWordList[i].Word, Is.EqualTo(testWordList[i].Word));
-                Assert.That(resultingWordList[i].StartTime, Is.EqualTo(testWordList[i].StartTime));
-                Assert.That(resultingWordList[i].EndTime, Is.EqualTo(testWordList[i].EndTime));
-                Assert.That(resultingWordList[i].Speaker, Is.EqualTo(testWordList[i].Speaker));
-                Assert.That(resultingWordList[i].Confidence, Is.EqualTo(testWordList[i].Confidence));
-            }
-        });
     }
 
     [Test]

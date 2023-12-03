@@ -22,7 +22,7 @@ public class StartRecognitionMessage_TranscriptionConfig
     /// <param name="language">Language model to process audio, usually in ISO language code format.</param>
     /// <param name="enable_partials">Whether to send partial transcripts (<c>AddPartialTranscript</c>
     /// messages).</param>
-    /// <param name="additionalVocab">Additional vocabulary for transcription.</param>
+    /// <param name="additional_vocab">Additional vocabulary for transcription.</param>
     public StartRecognitionMessage_TranscriptionConfig(
       string language = "de",
       bool? enable_partials = false,
