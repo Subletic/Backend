@@ -16,9 +16,6 @@ public class SpeechBubbleChainJsonTests
         };
     }
 
-    [SetUp]
-    public void Setup() { }
-
     [Test]
     public void ToSpeechBubbleList_InsertValidSpeechBubbleChainJson_MappedToCorrectSpeechBubble()
     {
