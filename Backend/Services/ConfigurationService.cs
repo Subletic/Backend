@@ -18,7 +18,7 @@ public class ConfigurationService : IConfigurationService
     // List to store custom dictionaries.
     private List<StartRecognitionMessage_TranscriptionConfig> customDictionaries;
 
-    /// Variable, um zeitbasierte Wartezeiten für Funktionen im ConfigurationServiceController und BufferTimeMonitor zu speichern.
+    // Variable, um zeitbasierte Wartezeiten für Funktionen im ConfigurationServiceController und BufferTimeMonitor zu speichern.
     private float delay;
 
     /// <summary>
