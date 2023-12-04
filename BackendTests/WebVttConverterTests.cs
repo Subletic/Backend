@@ -41,7 +41,7 @@ public class WebVttConverterTests
                     {
                         new SpeechBubble(1, 1, 0.2, 0.8, new List<WordToken>
                         {
-                             new WordToken("Test", 0.5f, 0.2, 0.8, 1),
+                            new WordToken("Test", 0.5f, 0.2, 0.8, 1),
                         }),
                     },
                     @"WEBVTT
