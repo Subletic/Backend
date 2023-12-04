@@ -19,7 +19,7 @@ public class WebVttConverterTests
                 new object[]
                 {
                     new List<SpeechBubble> { },
-                    @"WEBVTT",
+                    "WEBVTT",
                 },
 
                 // 1 Bubble, no Tokens
@@ -29,9 +29,12 @@ public class WebVttConverterTests
                     {
                         new SpeechBubble(1, 1, 0.0, 1.0, new List<WordToken> { }),
                     },
-                    @"WEBVTT
-
-00:00:00.000 --> 00:00:01.000",
+                    string.Join("\n", new string[]
+                    {
+                        "WEBVTT",
+                        "",
+                        "00:00:00.000 --> 00:00:01.000",
+                    }),
                 },
 
                 // 1 Bubble, 1 Token, 1 Speaker
@@ -44,10 +47,13 @@ public class WebVttConverterTests
                             new WordToken("Test", 0.5f, 0.2, 0.8, 1),
                         }),
                     },
-                    @"WEBVTT
-
-00:00:00.200 --> 00:00:00.800
-Test",
+                    string.Join("\n", new string[]
+                    {
+                        "WEBVTT",
+                        "",
+                        "00:00:00.200 --> 00:00:00.800",
+                        "Test",
+                    }),
                 },
 
                 // 1 Bubble, multiple Tokens, 1 Speaker
@@ -61,10 +67,13 @@ Test",
                             new WordToken("world!", 0.9f, 1.3, 1.5, 1),
                         }),
                     },
-                    @"WEBVTT
-
-00:00:01.000 --> 00:00:02.500
-Hello world!",
+                    string.Join("\n", new string[]
+                    {
+                        "WEBVTT",
+                        "",
+                        "00:00:01.000 --> 00:00:02.500",
+                        "Hello world!",
+                    }),
                 },
 
                 // Multiple Bubbles, multiple Tokens, 1 Speaker
@@ -84,13 +93,16 @@ Hello world!",
                             new WordToken("you?", 1.0f, 12.0, 12.5, 1),
                         }),
                     },
-                    @"WEBVTT
-
-00:00:07.800 --> 00:00:09.600
-Hello, everyone!
-
-00:00:11.000 --> 00:00:12.500
-How are you?",
+                    string.Join("\n", new string[]
+                    {
+                        "WEBVTT",
+                        "",
+                        "00:00:07.800 --> 00:00:09.600",
+                        "Hello, everyone!",
+                        "",
+                        "00:00:11.000 --> 00:00:12.500",
+                        "How are you?",
+                    }),
                 },
         };
 
