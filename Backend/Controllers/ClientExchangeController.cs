@@ -1,4 +1,4 @@
-﻿namespace Backend.Controllers;
+namespace Backend.Controllers;
 
 using System.Net;
 using System.Net.WebSockets;
