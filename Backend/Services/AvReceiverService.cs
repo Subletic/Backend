@@ -58,7 +58,6 @@ public class AvReceiverService : IAvReceiverService
             if (avResult.MessageType == WebSocketMessageType.Close)
             {
                 Console.WriteLine("Received WebSocket close request");
-                ctSource.Cancel();
                 break;
             }
 

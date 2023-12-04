@@ -42,6 +42,8 @@ builder.Services.AddSingleton<ISubtitleExporterService, SubtitleExporterService>
 
 builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
 
+builder.Services.AddSingleton<IAvReceiverService, AvReceiverService>();
+
 builder.Services.AddSingleton<IFrontendCommunicationService, FrontendCommunicationService>();
 
 builder.Services.AddHostedService<StartupService>();

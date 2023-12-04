@@ -10,7 +10,7 @@ public interface IAvProcessingService
     /// </summary>
     /// <param name="apiKeyVar">Contains the api key to send to Speechmatics.</param>
     /// <returns>True if the initialization was successful, false otherwise.</returns>
-    public bool Init(string apiKeyVar);
+    //public bool Init(string apiKeyVar);
 
     /// <summary>
     /// Transcribes the audio stream using Speechmatics.

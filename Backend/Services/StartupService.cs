@@ -9,13 +9,22 @@ public class StartupService : IHostedService
 
     private readonly IAvProcessingService avProcessingService;
 
+    private readonly ISpeechmaticsExchangeService speechmaticsExchangeService;
+
+    private readonly Serilog.ILogger log;
+
     /// <summary>
     /// Represents a service that handles startup operations.
     /// </summary>
     /// <param name="avProcessingService">The AV processing service.</param>
-    public StartupService(IAvProcessingService avProcessingService)
+    public StartupService(
+        IAvProcessingService avProcessingService,
+        ISpeechmaticsExchangeService speechmaticsExchangeService,
+        Serilog.ILogger log)
     {
         this.avProcessingService = avProcessingService;
+        this.speechmaticsExchangeService = speechmaticsExchangeService;
+        this.log = log;
     }
 
     /// <summary>
@@ -24,13 +33,12 @@ public class StartupService : IHostedService
     /// <param name="cancellationToken">Cancellation Token</param>
     /// <returns>Successful Task Completion</returns>
     /// <exception cref="InvalidOperationException">Thrown if AvProcessingService is lacking an Speechmatics API key</exception>
-    public Task StartAsync(CancellationToken cancellationToken)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
-        Console.WriteLine($"Taking Speechmatics API key from environment variable {SPEECHMATICS_API_KEY_ENVVAR}");
-        if (!avProcessingService.Init(SPEECHMATICS_API_KEY_ENVVAR))
+        log.Information($"Taking Speechmatics API key from environment variable {SPEECHMATICS_API_KEY_ENVVAR}");
+        if (!await speechmaticsExchangeService.RegisterApiKey(SPEECHMATICS_API_KEY_ENVVAR))
             throw new InvalidOperationException("Speechmatics API key is not set");
-
-        return Task.CompletedTask;
+        log.Information("Ready for communication");
     }
 
     /// <summary>

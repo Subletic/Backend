@@ -50,12 +50,6 @@ using FFMpegCore.Pipes;
 public partial class AvProcessingService : IAvProcessingService
 {
     /// <summary>
-    /// A URL template for the Speechmatics RT API.
-    /// The received RT API access token shall be filled in to get the URL we'll need to use.
-    /// </summary>
-    private static readonly string urlRecognitionTemplate = "wss://neu.rt.speechmatics.com/v2/de";
-
-    /// <summary>
     /// A description of the audio format we'll send to the RT API.
     /// <see cref="StartRecognitionMessage_AudioFormat" />
     /// </summary>
@@ -183,30 +177,6 @@ public partial class AvProcessingService : IAvProcessingService
 
         Console.WriteLine($"Speechmatics sent {descriptionOfMessage}");
         return messageMaybe!;
-    }
-
-    /// <summary>
-    /// Initialise the RT API access token held in <c>apiKey</c>.
-    /// <param name="apiKeyVar">The name of the environment variable that holds your API key.</param>
-    /// </summary>
-    /// <see cref="deserializeMessage{T}" />
-    /// <see cref="apiKey" />
-    /// <param name="apiKeyVar">The name of the environment variable that holds your API key.</param>
-    /// <returns>
-    /// A <c>bool</c> indicating if the envvar was set and the RT API can be used.
-    /// </returns>
-    public bool Init(string apiKeyVar)
-    {
-        // TODO is it safer to only read a file path to the secret from envvar?
-        string? apiKeyEnvMaybe = Environment.GetEnvironmentVariable(apiKeyVar);
-        if (apiKeyEnvMaybe == null)
-        {
-            Console.WriteLine($"Requested {apiKeyVar} envvar is not set");
-            return false;
-        }
-
-        apiKey = apiKeyEnvMaybe!;
-        return true;
     }
 
     /// <summary>
@@ -604,9 +574,9 @@ public partial class AvProcessingService : IAvProcessingService
 
         ClientWebSocket wsClient = new ClientWebSocket();
         wsClient.Options.SetRequestHeader("Authorization", $"Bearer {apiKey!}");
-        await wsClient.ConnectAsync(
-            new Uri(urlRecognitionTemplate),
-            CancellationToken.None);
+        //await wsClient.ConnectAsync(
+        //    new Uri(urlRecognitionTemplate),
+        //    CancellationToken.None);
 
         // start tracking sent & confirmed audio packet counts
         sentNum = 0;
