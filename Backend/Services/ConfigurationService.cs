@@ -60,11 +60,10 @@ public class ConfigurationService : IConfigurationService
         {
             customDictionaries.Add(customDictionary);
             logger.Information($"Custom dictionary added to the in-memory data structure for content {customDictionary.additional_vocab.FirstOrDefault()?.content}");
-            return throw new ArgumentException("Valid custom dictionary data.");
+            return;
         }
 
         existingDictionary = customDictionary;
-
         foreach (var av in existingDictionary.additional_vocab)
         {
             av.sounds_like = customDictionary.additional_vocab[0].sounds_like;
