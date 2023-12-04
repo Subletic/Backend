@@ -11,5 +11,5 @@ public interface ISpeechmaticsExchangeService
 
     public Task<bool> Connect(CancellationTokenSource cts);
 
-    public Task Disconnect(CancellationTokenSource cts);
+    public Task<bool> Disconnect(CancellationTokenSource cts);
 }

@@ -49,7 +49,7 @@ public class AvReceiverService : IAvReceiverService
 
         Console.WriteLine("Start reading AV data from WebSocket");
 
-        Task<bool> transcriptionTask = avProcessingService.TranscribeAudio(avPipe.Reader.AsStream(leaveOpen: true));
+        Task<bool> transcriptionTask = avProcessingService.PushProcessedAudio(avPipe.Reader.AsStream(leaveOpen: true));
 
         do
         {

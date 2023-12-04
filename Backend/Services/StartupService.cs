@@ -37,7 +37,7 @@ public class StartupService : IHostedService
     {
         log.Information($"Taking Speechmatics API key from environment variable {SPEECHMATICS_API_KEY_ENVVAR}");
         if (!await speechmaticsExchangeService.RegisterApiKey(SPEECHMATICS_API_KEY_ENVVAR))
-            throw new InvalidOperationException("Speechmatics API key is not set");
+            throw new InvalidOperationException("Speechmatics API not available");
         log.Information("Ready for communication");
     }
 
