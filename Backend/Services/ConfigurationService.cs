@@ -56,21 +56,21 @@ public class ConfigurationService : IConfigurationService
             d.additional_vocab.Any(av => av.content == customDictionary.additional_vocab.FirstOrDefault()?.content));
 
         // If an existing dictionary is found, update it; otherwise, add the new dictionary.
-        if (existingDictionary != null)
-        {
-            existingDictionary = customDictionary;
-            foreach (var av in existingDictionary.additional_vocab)
-            {
-                av.sounds_like = customDictionary.additional_vocab[0].sounds_like;
-            }
-
-            logger.Information($"Custom dictionary updated for content {customDictionary.additional_vocab.FirstOrDefault()?.content}");
-        }
-        else
+        if (existingDictionary == null)
         {
             customDictionaries.Add(customDictionary);
             logger.Information($"Custom dictionary added to the in-memory data structure for content {customDictionary.additional_vocab.FirstOrDefault()?.content}");
+            return throw new ArgumentException("Valid custom dictionary data.");
         }
+
+        existingDictionary = customDictionary;
+
+        foreach (var av in existingDictionary.additional_vocab)
+        {
+            av.sounds_like = customDictionary.additional_vocab[0].sounds_like;
+        }
+
+        logger.Information($"Custom dictionary updated for content {customDictionary.additional_vocab.FirstOrDefault()?.content}");
     }
 
     /// <summary>

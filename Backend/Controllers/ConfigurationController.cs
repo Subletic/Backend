@@ -45,32 +45,28 @@ public class ConfigurationController : ControllerBase
         {
             logger.Information("Received request for uploading custom dictionary.");
 
-            if (configuration == null)
+            if (configuration == null || configuration.dictionary == null || configuration.dictionary.additional_vocab == null)
             {
-                logger.Warning("Received null configuration data.");
+                logger.Warning("Invalid custom dictionary data: Dictionary or its content is null.");
                 return BadRequest("Invalid custom dictionary data.");
             }
 
             // Überprüfen, ob die Konfiguration gültig ist und keine leere Instanz ist.
-            // Wenn das benutzerdefinierte Wörterbuch in der Konfiguration vorhanden ist, verarbeiten und übergeben Sie es an den Service.
-            if (configuration!.dictionary.additional_vocab != null)
+            // Validate empty content with filled sounds_like in additional_vocab
+            if (configuration!.dictionary.additional_vocab.Any(av => string.IsNullOrEmpty(av.content) && av.sounds_like != null && av.sounds_like.Any()))
             {
-                // Validate empty content with filled sounds_like in additional_vocab
-                if (configuration!.dictionary.additional_vocab.Any(av => string.IsNullOrEmpty(av.content) && av.sounds_like != null && av.sounds_like.Any()))
-                {
-                    logger.Warning("Received dictionary with empty content and filled sounds_like.");
-                    return BadRequest("Invalid custom dictionary data: Dictionaries with empty content and filled sounds_like are not allowed.");
-                }
-
-                // Validate language
-                if (string.IsNullOrEmpty(configuration!.dictionary.language) || configuration!.dictionary.language != "de")
-                {
-                    logger.Warning("Invalid language specified.");
-                    return BadRequest("Invalid language specified. Please provide 'de'.");
-                }
-
-                dictionaryService.ProcessCustomDictionary(configuration!.dictionary);
+                logger.Warning("Received dictionary with empty content and filled sounds_like.");
+                return BadRequest("Invalid custom dictionary data: Dictionaries with empty content and filled sounds_like are not allowed.");
             }
+
+            // Validate language
+            if (string.IsNullOrEmpty(configuration!.dictionary.language) || configuration!.dictionary.language != "de")
+            {
+                logger.Warning("Invalid language specified.");
+                return BadRequest("Invalid language specified. Please provide 'de'.");
+            }
+
+            dictionaryService.ProcessCustomDictionary(configuration!.dictionary);
 
             // Validate delayLength
             if (!validDelayLengths.Contains(configuration!.delayLength))
