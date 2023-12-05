@@ -6,9 +6,6 @@ using Serilog.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:40110";
-Console.WriteLine($"Expecting Frontend on: {frontendUrl}");
-
 // Reads configuration information from appsettings.json and appsettings.Production.json (or another environment file).
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
@@ -51,6 +48,9 @@ builder.Services.AddHostedService<StartupService>();
 
 builder.Services.AddHostedService<BufferTimeMonitor>();
 
+var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:40110";
+Console.WriteLine($"Expecting Frontend on: {frontendUrl}");
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngularFrontend", policy =>
@@ -87,4 +87,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+var backendUrl = Environment.GetEnvironmentVariable("BACKEND_URL") ?? "http://localhost:40114";
+Console.WriteLine($"Starting Backend on: {backendUrl}");
+
+app.Run(backendUrl);
