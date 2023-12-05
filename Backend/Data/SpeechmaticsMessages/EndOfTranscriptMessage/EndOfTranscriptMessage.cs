@@ -1,4 +1,4 @@
-﻿#pragma warning disable IDE1006
+#pragma warning disable IDE1006
 #pragma warning disable SA1300
 namespace Backend.Data.SpeechmaticsMessages.EndOfTranscriptMessage;
 

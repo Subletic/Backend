@@ -24,9 +24,9 @@ public class StartRecognitionMessage_TranscriptionConfig
     /// messages).</param>
     /// <param name="additional_vocab">Additional vocabulary for transcription.</param>
     public StartRecognitionMessage_TranscriptionConfig(
-      string language = "de",
-      bool? enable_partials = false,
-      List<AdditionalVocab>? additional_vocab = null)
+        string language = "de",
+        bool? enable_partials = false,
+        List<AdditionalVocab>? additional_vocab = null)
     {
         this.language = language;
         this.enable_partials = enable_partials;

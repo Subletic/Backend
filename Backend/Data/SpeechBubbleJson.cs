@@ -1,4 +1,4 @@
-﻿namespace Backend.Data;
+namespace Backend.Data;
 
 /// <summary>
 /// Struct used for receiving updated speech bubbles from the frontend.

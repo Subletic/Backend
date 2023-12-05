@@ -1,4 +1,4 @@
-﻿namespace Backend.Services;
+namespace Backend.Services;
 
 using Backend.Data;
 using Backend.Services;

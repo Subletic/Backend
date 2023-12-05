@@ -1,4 +1,4 @@
-﻿namespace BackendTests;
+namespace BackendTests;
 
 using Backend.Controllers;
 using Backend.Data;

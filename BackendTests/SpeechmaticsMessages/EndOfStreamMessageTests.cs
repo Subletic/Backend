@@ -1,4 +1,4 @@
-﻿namespace BackendTests.SpeechmaticsMessages;
+namespace BackendTests.SpeechmaticsMessages;
 
 using System.Text;
 using System.Text.Json;
