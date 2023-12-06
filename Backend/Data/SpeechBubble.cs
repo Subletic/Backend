@@ -1,4 +1,4 @@
-﻿namespace Backend.Data;
+namespace Backend.Data;
 
 using System.Transactions;
 

@@ -1,19 +1,27 @@
+using System;
 using Backend.Hubs;
 using Backend.Services;
+using Serilog;
+using Serilog.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// If frontend URL is not specified, use default value (localhost:4200)
-var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:4200";
-
+// Reads configuration information from appsettings.json and appsettings.Production.json (or another environment file).
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json")
     .Build();
 
-builder.Services.AddSingleton<IConfiguration>(configuration);
+// Configures the logger based on the previously loaded configuration.
+var logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(configuration)
+    .CreateLogger();
 
 // Add services to the container.
+builder.Services.AddSingleton<Serilog.ILogger>(logger);
+
+builder.Services.AddSingleton<IConfiguration>(configuration);
+
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -32,13 +40,16 @@ builder.Services.AddSingleton<IAvReceiverService, AvReceiverService>();
 
 builder.Services.AddSingleton<ISubtitleExporterService, SubtitleExporterService>();
 
-builder.Services.AddSingleton<ICustomDictionaryService, CustomDictionaryService>();
+builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
 
 builder.Services.AddSingleton<FrontendAudioQueueService, FrontendAudioQueueService>();
 
 builder.Services.AddHostedService<StartupService>();
 
 builder.Services.AddHostedService<BufferTimeMonitor>();
+
+var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:40110";
+Console.WriteLine($"Expecting Frontend on: {frontendUrl}");
 
 builder.Services.AddCors(options =>
 {
@@ -76,4 +87,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+var backendUrl = Environment.GetEnvironmentVariable("BACKEND_URL") ?? "http://localhost:40114";
+Console.WriteLine($"Starting Backend on: {backendUrl}");
+
+app.Run(backendUrl);

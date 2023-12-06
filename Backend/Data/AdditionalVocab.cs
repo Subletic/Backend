@@ -1,3 +1,5 @@
+#pragma warning disable IDE1006
+#pragma warning disable SA1300
 namespace Backend.Data;
 
 using System;
@@ -24,7 +26,7 @@ public class AdditionalVocab
     /// Constructor for AdditionalVocab.
     /// </summary>
     /// <param name="content">The content of the additional vocabulary.</param>
-    /// <param name="soundsLike">List of similar sounds (optional).</param>
+    /// <param name="sounds_like">List of similar sounds (optional).</param>
     public AdditionalVocab(string content, List<string>? sounds_like = null)
     {
         this.content = content;

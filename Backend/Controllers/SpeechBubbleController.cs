@@ -44,7 +44,7 @@ public class SpeechBubbleController : ControllerBase
     {
         if (receivedList.SpeechbubbleChain == null) return BadRequest(); // Return the updated _speechBubbleList
 
-        var receivedSpeechBubbles = ParseFrontendResponseToSpeechBubbleList(receivedList);
+        var receivedSpeechBubbles = receivedList.ToSpeechBubbleList();
 
         // Replace all received SpeechBubbles
         foreach (var receivedSpeechBubble in receivedSpeechBubbles)
@@ -66,38 +66,5 @@ public class SpeechBubbleController : ControllerBase
     {
         applicationLifetime.StopApplication();
         return Ok();
-    }
-
-    /// <summary>
-    /// Parses incoming JSON from the frontend to a list of backend-compatible SpeechBubbles.
-    /// </summary>
-    /// <param name="receivedList">The non-empty json received</param>
-    /// <returns>List of parsed SpeechBubbles</returns>
-    public static List<SpeechBubble> ParseFrontendResponseToSpeechBubbleList(SpeechBubbleChainJson receivedList)
-    {
-        var receivedSpeechBubbles = new List<SpeechBubble>();
-
-        foreach (var currentSpeechBubble in receivedList.SpeechbubbleChain!)
-        {
-            var receivedWordTokens = new List<WordToken>();
-            foreach (var currentWordToken in currentSpeechBubble.SpeechBubbleContent)
-            {
-                receivedWordTokens.Add(new WordToken(
-                    currentWordToken.Word,
-                    currentWordToken.Confidence,
-                    currentWordToken.StartTime,
-                    currentWordToken.EndTime,
-                    currentWordToken.Speaker));
-            }
-
-            receivedSpeechBubbles.Add(new SpeechBubble(
-                currentSpeechBubble.Id,
-                currentSpeechBubble.Speaker,
-                currentSpeechBubble.StartTime,
-                currentSpeechBubble.EndTime,
-                receivedWordTokens));
-        }
-
-        return receivedSpeechBubbles;
     }
 }

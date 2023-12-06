@@ -1,4 +1,4 @@
-﻿namespace Backend.Services;
+namespace Backend.Services;
 
 using System.Net.WebSockets;
 using System.Threading;

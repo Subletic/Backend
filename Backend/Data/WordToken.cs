@@ -1,4 +1,4 @@
-﻿namespace Backend.Data;
+namespace Backend.Data;
 
 /// <summary>
 /// Represents a single word in a transcript, including its associated metadata such as confidence, start and end times, and speaker.

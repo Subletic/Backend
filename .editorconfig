@@ -67,3 +67,26 @@ dotnet_naming_symbols.private_symbols.applicable_kinds = method, field, event, p
 dotnet_naming_symbols.private_symbols.applicable_accessibilities = private
 dotnet_naming_style.camel_case_style.capitalization = camel_case
 
+###############################
+# Other conventions apply     #
+###############################
+[*.yml]
+indent_size = 2
+
+[*.sln]
+indent_style = tab
+
+###############################
+# No conventions apply        #
+###############################
+[.vscode/**]
+indent_style = unset
+indent_size = unset
+end_of_line = unset
+insert_final_newline = unset
+
+[.idea/**]
+indent_style = unset
+indent_size = unset
+end_of_line = unset
+insert_final_newline = unset

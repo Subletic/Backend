@@ -1,4 +1,4 @@
-﻿namespace Backend.Services;
+namespace Backend.Services;
 
 using System;
 using System.Collections.Generic;
@@ -18,20 +18,19 @@ public class BufferTimeMonitor : BackgroundService
 {
     private readonly IHubContext<CommunicationHub> hubContext;
 
-    /// <summary>
-    /// List containing all SpeechBubbles that have timed out.
-    /// </summary>
     private readonly List<SpeechBubble> timedOutSpeechBubbles;
 
     private readonly ISpeechBubbleListService speechBubbleListService;
+
+    private readonly IConfigurationService configurationService;
 
     private readonly ISubtitleExporterService subtitleExporterService;
 
     private readonly IConfiguration configuration;
 
-    private readonly int timeLimitInMinutes;
-
     private readonly int delayMilliseconds;
+
+    private float timeLimitInMinutes;
 
     /// <summary>
     /// Initializes the Dependency Injection and the List of timed out SpeechBubbles.
@@ -41,14 +40,16 @@ public class BufferTimeMonitor : BackgroundService
     /// <param name="speechBubbleListService">Service that provides access to the active SpeechBubbles</param>
     /// <param name="subtitleExporterService">Service that Exports the Subtitles</param>
     public BufferTimeMonitor(
+        IConfigurationService configurationService,
         IConfiguration configuration,
         IHubContext<CommunicationHub> hubContext,
         ISpeechBubbleListService speechBubbleListService,
         ISubtitleExporterService subtitleExporterService)
     {
+        this.configurationService = configurationService;
         this.configuration = configuration;
-        this.timeLimitInMinutes = configuration.GetValue<int>("BufferTimeMonitorSettings:TimeLimitInMinutes");
-        this.delayMilliseconds = configuration.GetValue<int>("BufferTimeMonitorSettings:DelayMilliseconds");
+        this.timeLimitInMinutes = configuration.GetValue<float>("BufferTimeMonitorSettings:DEFAULT_TIME_LIMIT_IN_MINUTES");
+        this.delayMilliseconds = configuration.GetValue<int>("BufferTimeMonitorSettings:DEFAULT_DEALY_MILLISECONDS");
         this.speechBubbleListService = speechBubbleListService;
         this.hubContext = hubContext;
         this.timedOutSpeechBubbles = new List<SpeechBubble>();
@@ -66,6 +67,7 @@ public class BufferTimeMonitor : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
+            timeLimitInMinutes = configurationService.GetDelay();
             await Task.Delay(delayMilliseconds, stoppingToken);
 
             var oldestSpeechBubble = speechBubbleListService.GetSpeechBubbles().First;
