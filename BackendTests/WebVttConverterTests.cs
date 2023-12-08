@@ -29,7 +29,7 @@ public class WebVttConverterTests
                     {
                         new SpeechBubble(1, 1, 0.0, 1.0, new List<WordToken> { }),
                     },
-                    string.Join("\n", new string[]
+                    string.Join(Environment.NewLine, new string[]
                     {
                         "WEBVTT",
                         "",
@@ -47,7 +47,7 @@ public class WebVttConverterTests
                             new WordToken("Test", 0.5f, 0.2, 0.8, 1),
                         }),
                     },
-                    string.Join("\n", new string[]
+                    string.Join(Environment.NewLine, new string[]
                     {
                         "WEBVTT",
                         "",
@@ -67,7 +67,7 @@ public class WebVttConverterTests
                             new WordToken("world!", 0.9f, 1.3, 1.5, 1),
                         }),
                     },
-                    string.Join("\n", new string[]
+                    string.Join(Environment.NewLine, new string[]
                     {
                         "WEBVTT",
                         "",
@@ -93,7 +93,7 @@ public class WebVttConverterTests
                             new WordToken("you?", 1.0f, 12.0, 12.5, 1),
                         }),
                     },
-                    string.Join("\n", new string[]
+                    string.Join(Environment.NewLine, new string[]
                     {
                         "WEBVTT",
                         "",
