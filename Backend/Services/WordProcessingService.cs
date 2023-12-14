@@ -15,7 +15,7 @@ public class WordProcessingService : IWordProcessingService
     /// </summary>
     private readonly ISpeechBubbleListService speechBubbleListService;
 
-    private readonly IHubContext<CommunicationHub> hubContext;
+    private readonly IHubContext<FrontendProviderHub> hubContext;
     private readonly List<WordToken> wordTokenBuffer;
 
     private long nextSpeechBubbleId;
@@ -26,7 +26,7 @@ public class WordProcessingService : IWordProcessingService
     /// </summary>
     /// <param name="hubContext">The hub context.</param>
     /// <param name="speechBubbleListService">The speech bubble list service.</param>
-    public WordProcessingService(IHubContext<CommunicationHub> hubContext, ISpeechBubbleListService speechBubbleListService)
+    public WordProcessingService(IHubContext<FrontendProviderHub> hubContext, ISpeechBubbleListService speechBubbleListService)
     {
         this.wordTokenBuffer = new List<WordToken>();
         this.hubContext = hubContext;
@@ -132,7 +132,7 @@ public class WordProcessingService : IWordProcessingService
         speechBubbleListService.AddNewSpeechBubble(nextSpeechBubble);
         wordTokenBuffer.Clear();
 
-        await sendNewSpeechBubbleMessageToFrontend(nextSpeechBubble);
+        await publishSpeechBubbleInFrontend(nextSpeechBubble);
     }
 
     /// <summary>
@@ -150,7 +150,7 @@ public class WordProcessingService : IWordProcessingService
     /// The frontend can then subscribe to incoming Objects and handle them accordingly.
     /// </summary>
     /// <param name="speechBubble">The speech bubble to send to the frontend.</param>
-    private async Task sendNewSpeechBubbleMessageToFrontend(SpeechBubble speechBubble)
+    private async Task publishSpeechBubbleInFrontend(SpeechBubble speechBubble)
     {
         var listToSend = new List<SpeechBubble>() { speechBubble };
 

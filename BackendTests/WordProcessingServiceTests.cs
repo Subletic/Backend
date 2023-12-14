@@ -9,12 +9,12 @@ using Moq;
 
 public class WordProcessingServiceTests
 {
-    private readonly Mock<IHubContext<CommunicationHub>> hubContextMock;
+    private readonly Mock<IHubContext<FrontendProviderHub>> hubContextMock;
     private readonly Mock<ISpeechBubbleListService> speechBubbleListService;
 
     public WordProcessingServiceTests()
     {
-        hubContextMock = new Mock<IHubContext<CommunicationHub>>();
+        hubContextMock = new Mock<IHubContext<FrontendProviderHub>>();
         speechBubbleListService = new Mock<ISpeechBubbleListService>();
         speechBubbleListService.Setup(sl => sl.AddNewSpeechBubble(It.IsAny<SpeechBubble>()));
     }
