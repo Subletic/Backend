@@ -93,7 +93,7 @@ public partial class AvProcessingService : IAvProcessingService
     /// will send audio buffers to the frontend.
     /// <see cref="CommunicationHub" />
     /// </summary>
-    private readonly FrontendAudioQueueService frontendAudioQueueService;
+    private readonly IFrontendCommunicationService frontendCommunicationService;
 
     /// <summary>
     /// The Speechmatics RT API key this instance shall use for the RT transcription.
@@ -131,11 +131,11 @@ public partial class AvProcessingService : IAvProcessingService
     /// Initializes a new instance of the <see cref="AvProcessingService"/> class.
     /// </summary>
     /// <param name="wordProcessingService">The <c>SpeechBubbleController</c> to push new words into</param>
-    /// <param name="sendingAudioService">The <c>FrontendAudioQueueService</c> to push new audio into for the Frontend</param>
-    public AvProcessingService(IWordProcessingService wordProcessingService, FrontendAudioQueueService sendingAudioService)
+    /// <param name="frontendCommunicationService">The Audio to push new audio into for the Frontend</param>
+    public AvProcessingService(IWordProcessingService wordProcessingService, IFrontendCommunicationService frontendCommunicationService)
     {
         this.wordProcessingService = wordProcessingService;
-        frontendAudioQueueService = sendingAudioService;
+        this.frontendCommunicationService = frontendCommunicationService;
         Console.WriteLine("AvProcessingService is started!");
     }
 
@@ -361,7 +361,7 @@ public partial class AvProcessingService : IAvProcessingService
 
                 short[] sendShortBuffer = new short[audioFormat.GetCheckedSampleRate()];
                 Buffer.BlockCopy(sendBuffer, 0, sendShortBuffer, 0, sendBuffer.Length);
-                frontendAudioQueueService.Enqueue(sendShortBuffer);
+                frontendCommunicationService.Enqueue(sendShortBuffer);
 
                 sentNum += 1;
                 offset = 0;

@@ -16,6 +16,8 @@ using Microsoft.Extensions.Hosting;
 /// </summary>
 public class BufferTimeMonitor : BackgroundService
 {
+    private readonly IFrontendCommunicationService frontendCommunicationService;
+
     private readonly List<SpeechBubble> timedOutSpeechBubbles;
 
     private readonly ISpeechBubbleListService speechBubbleListService;
@@ -24,7 +26,7 @@ public class BufferTimeMonitor : BackgroundService
 
     private readonly ISubtitleExporterService subtitleExporterService;
 
-    private readonly IHubContext<FrontendProviderHub> hubContext;
+    private readonly IHubContext<FrontendCommunicationHub> hubContext;
 
     private readonly IConfiguration configuration;
 
@@ -35,18 +37,21 @@ public class BufferTimeMonitor : BackgroundService
     /// <summary>
     /// Initializes the Dependency Injection and the List of timed out SpeechBubbles.
     /// </summary>
+    /// <param name="frontendProviderService">frontend Provider Service</param>
     /// <param name="configurationService">Configuration service</param>
     /// <param name="configuration">Configuration given by the DI</param>
     /// <param name="hubContext">HubContext given by the DI</param>
     /// <param name="speechBubbleListService">Service that provides access to the active SpeechBubbles</param>
     /// <param name="subtitleExporterService">Service that Exports the Subtitles</param>
     public BufferTimeMonitor(
-        IHubContext<FrontendProviderHub> hubContext,
+        IFrontendCommunicationService frontendCommunicationService,
+        IHubContext<FrontendCommunicationHub> hubContext,
         IConfigurationService configurationService,
         IConfiguration configuration,
         ISpeechBubbleListService speechBubbleListService,
         ISubtitleExporterService subtitleExporterService)
     {
+        this.frontendCommunicationService = frontendCommunicationService;
         this.hubContext = hubContext;
         this.configurationService = configurationService;
         this.configuration = configuration;
@@ -83,30 +88,13 @@ public class BufferTimeMonitor : BackgroundService
 
             if (timeDifference.TotalMinutes > timeLimitInMinutes)
             {
-                await deleteSpeechBubbleInFrontend(oldestSpeechBubble.Value.Id);
+                await frontendCommunicationService.DeleteSpeechBubble(oldestSpeechBubble.Value.Id);
 
                 timedOutSpeechBubbles.Add(oldestSpeechBubble.Value);
                 speechBubbleListService.DeleteOldestSpeechBubble();
 
                 await subtitleExporterService.ExportSubtitle(oldestSpeechBubble.Value);
             }
-        }
-    }
-
-    /// <summary>
-    /// Sends an asynchronous request to the frontend via SignalR, to inform the frontend that a Speechbubble, identified by id, has to be deleted.
-    /// The frontend can then subscribe to incoming Objects and handle them accordingly.
-    /// </summary>
-    /// <param name="id">The id of the Speechbubble to be deleted</param>
-    private async Task deleteSpeechBubbleInFrontend(long id)
-    {
-        try
-        {
-            await hubContext.Clients.All.SendAsync("deleteBubble", id);
-        }
-        catch (Exception)
-        {
-            await Console.Error.WriteAsync("Failed to transmit id of deleted Speechbubble to Frontend.");
         }
     }
 }

@@ -14,20 +14,21 @@ public class WordProcessingService : IWordProcessingService
     /// All actions on the SpeechBubbleList are delegated to the SpeechBubbleListService.
     /// </summary>
     private readonly ISpeechBubbleListService speechBubbleListService;
-
-    private readonly IHubContext<FrontendProviderHub> hubContext;
+    private readonly IFrontendCommunicationService frontendCommunicationService;
+    private readonly IHubContext<FrontendCommunicationHub> hubContext;
     private readonly List<WordToken> wordTokenBuffer;
-
     private long nextSpeechBubbleId;
     private int? currentSpeaker;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WordProcessingService"/> class.
     /// </summary>
+    /// <param name="frontendCommunicationService">The frontend Provider Service</param>
     /// <param name="hubContext">The hub context.</param>
     /// <param name="speechBubbleListService">The speech bubble list service.</param>
-    public WordProcessingService(IHubContext<FrontendProviderHub> hubContext, ISpeechBubbleListService speechBubbleListService)
+    public WordProcessingService(IFrontendCommunicationService frontendCommunicationService, IHubContext<FrontendCommunicationHub> hubContext, ISpeechBubbleListService speechBubbleListService)
     {
+        this.frontendCommunicationService = frontendCommunicationService;
         this.wordTokenBuffer = new List<WordToken>();
         this.hubContext = hubContext;
         this.speechBubbleListService = speechBubbleListService;
@@ -132,7 +133,7 @@ public class WordProcessingService : IWordProcessingService
         speechBubbleListService.AddNewSpeechBubble(nextSpeechBubble);
         wordTokenBuffer.Clear();
 
-        await publishSpeechBubbleInFrontend(nextSpeechBubble);
+        await frontendCommunicationService.PublishSpeechBubble(nextSpeechBubble);
     }
 
     /// <summary>
@@ -143,24 +144,5 @@ public class WordProcessingService : IWordProcessingService
     private void setSpeakerIfSpeakerIsNull(WordToken wordToken)
     {
         currentSpeaker ??= wordToken.Speaker;
-    }
-
-    /// <summary>
-    /// Sends an asynchronous request to the frontend via SignalR, to publish a new Speechbubble.
-    /// The frontend can then subscribe to incoming Objects and handle them accordingly.
-    /// </summary>
-    /// <param name="speechBubble">The speech bubble to send to the frontend.</param>
-    private async Task publishSpeechBubbleInFrontend(SpeechBubble speechBubble)
-    {
-        var listToSend = new List<SpeechBubble>() { speechBubble };
-
-        try
-        {
-            await hubContext.Clients.All.SendAsync("newBubble", listToSend);
-        }
-        catch (Exception)
-        {
-            await Console.Error.WriteAsync("Failed to transmit to Frontend.");
-        }
     }
 }

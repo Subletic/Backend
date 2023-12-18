@@ -1,5 +1,3 @@
-namespace BackendTests;
-
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -10,19 +8,19 @@ using NUnit.Framework;
 public class AvProcessingServiceTests
 {
     private readonly Mock<IWordProcessingService> wordProcessingServiceMock;
-    private readonly Mock<FrontendAudioQueueService> frontendAudioQueueServiceMock;
+    private readonly Mock<IFrontendCommunicationService> frontendCommunicationServiceMock;
 
     public AvProcessingServiceTests()
     {
         wordProcessingServiceMock = new Mock<IWordProcessingService>();
-        frontendAudioQueueServiceMock = new Mock<FrontendAudioQueueService>();
+        frontendCommunicationServiceMock = new Mock<IFrontendCommunicationService>();
     }
 
     [Test]
     public void Init_WithValidApiKey_ReturnsTrue()
     {
         // Arrange
-        var avProcessingService = new AvProcessingService(wordProcessingServiceMock.Object, frontendAudioQueueServiceMock.Object);
+        var avProcessingService = new AvProcessingService(wordProcessingServiceMock.Object, frontendCommunicationServiceMock.Object);
         const string apiKeyVar = "API_KEY";
         Environment.SetEnvironmentVariable(apiKeyVar, "eHbFYSRbfbTyORS3cs3HmguSCL9XMbbv");
 
@@ -37,7 +35,7 @@ public class AvProcessingServiceTests
     public void Init_WithNoApiKey_ReturnsFalse()
     {
         // Arrange
-        var avProcessingService = new AvProcessingService(wordProcessingServiceMock.Object, frontendAudioQueueServiceMock.Object);
+        var avProcessingService = new AvProcessingService(wordProcessingServiceMock.Object, frontendCommunicationServiceMock.Object);
         const string apiKeyVar = "API_KEY";
         Environment.SetEnvironmentVariable(apiKeyVar, null);
 
@@ -52,8 +50,8 @@ public class AvProcessingServiceTests
     public async Task TranscribeAudio_WithInvalidApiKey_ReturnsFalse()
     {
         // Arrange
-        var avProcessingService = new AvProcessingService(wordProcessingServiceMock.Object, frontendAudioQueueServiceMock.Object);
-        Stream audioStream = new MemoryStream(); // Erstellen Sie hier einen geeigneten Stream
+        var avProcessingService = new AvProcessingService(wordProcessingServiceMock.Object, frontendCommunicationServiceMock.Object);
+        Stream audioStream = new MemoryStream(); // Create a suitable stream
 
         // Act
         var result = await avProcessingService.TranscribeAudio(audioStream);

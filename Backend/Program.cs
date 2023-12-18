@@ -44,6 +44,8 @@ builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
 
 builder.Services.AddSingleton<FrontendAudioQueueService, FrontendAudioQueueService>();
 
+builder.Services.AddSingleton<IFrontendCommunicationService, FrontendCommunicationService>();
+
 builder.Services.AddHostedService<StartupService>();
 
 builder.Services.AddHostedService<BufferTimeMonitor>();
@@ -77,7 +79,7 @@ app.UseRouting();
 
 app.UseCors("AllowAngularFrontend");
 
-app.MapHub<FrontendProviderHub>("/communicationHub");
+app.MapHub<FrontendCommunicationHub>("/communicationHub");
 
 app.UseHttpsRedirection();
 

@@ -9,12 +9,14 @@ using Moq;
 
 public class WordProcessingServiceTests
 {
-    private readonly Mock<IHubContext<FrontendProviderHub>> hubContextMock;
+    private readonly Mock<IFrontendCommunicationService> frontendCommunicationServiceMock;
+    private readonly Mock<IHubContext<FrontendCommunicationHub>> hubContextMock;
     private readonly Mock<ISpeechBubbleListService> speechBubbleListService;
 
     public WordProcessingServiceTests()
     {
-        hubContextMock = new Mock<IHubContext<FrontendProviderHub>>();
+        frontendCommunicationServiceMock = new Mock<IFrontendCommunicationService>();
+        hubContextMock = new Mock<IHubContext<FrontendCommunicationHub>>();
         speechBubbleListService = new Mock<ISpeechBubbleListService>();
         speechBubbleListService.Setup(sl => sl.AddNewSpeechBubble(It.IsAny<SpeechBubble>()));
     }
@@ -29,7 +31,7 @@ public class WordProcessingServiceTests
     public void Insert19NewWords_SpeechBubbleListEmpty()
     {
         // Arrange
-        var controller = new WordProcessingService(hubContextMock.Object, speechBubbleListService.Object);
+        var controller = new WordProcessingService(frontendCommunicationServiceMock.Object, hubContextMock.Object, speechBubbleListService.Object);
 
         var testWord = new WordToken(word: "Test", confidence: 0.9f, startTime: 1.0, endTime: 2.0, speaker: 1);
 
@@ -47,7 +49,7 @@ public class WordProcessingServiceTests
     public void Insert20NewWords_FirstSpeechBubbleAvailable()
     {
         // Arrange
-        var controller = new WordProcessingService(hubContextMock.Object, speechBubbleListService.Object);
+        var controller = new WordProcessingService(frontendCommunicationServiceMock.Object, hubContextMock.Object, speechBubbleListService.Object);
 
         var testWord = new WordToken(word: "Test", confidence: 0.9f, startTime: 1.0, endTime: 2.0, speaker: 1);
 
@@ -65,7 +67,7 @@ public class WordProcessingServiceTests
     public void Insert40NewWords_SpeechBubbleListContains2Bubbles()
     {
         // Arrange
-        var controller = new WordProcessingService(hubContextMock.Object, speechBubbleListService.Object);
+        var controller = new WordProcessingService(frontendCommunicationServiceMock.Object, hubContextMock.Object, speechBubbleListService.Object);
 
         var testWord = new WordToken(word: "Test", confidence: 0.9f, startTime: 1.0, endTime: 2.0, speaker: 1);
 
@@ -83,7 +85,7 @@ public class WordProcessingServiceTests
     public void Insert120NewWords_SpeechBubbleListContains6Bubbles()
     {
         // Arrange
-        var controller = new WordProcessingService(hubContextMock.Object, speechBubbleListService.Object);
+        var controller = new WordProcessingService(frontendCommunicationServiceMock.Object, hubContextMock.Object, speechBubbleListService.Object);
 
         var testWord = new WordToken(word: "Test", confidence: 0.9f, startTime: 1.0, endTime: 2.0, speaker: 1);
 
@@ -101,7 +103,7 @@ public class WordProcessingServiceTests
     public void Insert3WordsSeperated6Seconds_SpeechBubbleListContains2Bubbles()
     {
         // Arrange
-        var controller = new WordProcessingService(hubContextMock.Object, speechBubbleListService.Object);
+        var controller = new WordProcessingService(frontendCommunicationServiceMock.Object, hubContextMock.Object, speechBubbleListService.Object);
 
         var firstWord = new WordToken(word: "Test", confidence: 0.9f, startTime: 0, endTime: 1, speaker: 1);
         var secondWord = new WordToken(word: "Test2", confidence: 0.7f, startTime: 7, endTime: 8, speaker: 1);
@@ -120,7 +122,7 @@ public class WordProcessingServiceTests
     public void Insert3WordsDifferentSpeakers_SpeechBubbleListContains2Bubbles()
     {
         // Arrange
-        var controller = new WordProcessingService(hubContextMock.Object, speechBubbleListService.Object);
+        var controller = new WordProcessingService(frontendCommunicationServiceMock.Object, hubContextMock.Object, speechBubbleListService.Object);
 
         var firstWord = new WordToken(word: "Test", confidence: 0.9f, startTime: 1, endTime: 3, speaker: 1);
         var secondWord = new WordToken(word: "Test2", confidence: 0.7f, startTime: 4, endTime: 5, speaker: 2);
@@ -139,7 +141,7 @@ public class WordProcessingServiceTests
     public void Insert4WordsDifferentTimeStampsDifferentSpeakers_SpeechBubbleListContains2Bubbles()
     {
         // Arrange
-        var controller = new WordProcessingService(hubContextMock.Object, speechBubbleListService.Object);
+        var controller = new WordProcessingService(frontendCommunicationServiceMock.Object, hubContextMock.Object, speechBubbleListService.Object);
 
         var firstWord = new WordToken(word: "Test", confidence: 0.9f, startTime: 1, endTime: 2, speaker: 1);
         var secondWord = new WordToken(word: "Test2", confidence: 0.7f, startTime: 3, endTime: 4, speaker: 2);
@@ -160,7 +162,7 @@ public class WordProcessingServiceTests
     public void InsertCommaAfterWord_OneSpeechBubbleGenerated()
     {
         // Arrange
-        var controller = new WordProcessingService(hubContextMock.Object, speechBubbleListService.Object);
+        var controller = new WordProcessingService(frontendCommunicationServiceMock.Object, hubContextMock.Object, speechBubbleListService.Object);
 
         var firstWord = new WordToken(word: "Test", confidence: 0.9f, startTime: 1, endTime: 2, speaker: 1);
         var secondWord = new WordToken(word: ",", confidence: 0.7f, startTime: 7, endTime: 9, speaker: 1);
