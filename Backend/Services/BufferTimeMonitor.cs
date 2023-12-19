@@ -37,7 +37,7 @@ public class BufferTimeMonitor : BackgroundService
     /// <summary>
     /// Initializes the Dependency Injection and the List of timed out SpeechBubbles.
     /// </summary>
-    /// <param name="frontendProviderService">frontend Provider Service</param>
+    /// <param name="frontendCommunicationService">frontend Provider Service</param>
     /// <param name="configurationService">Configuration service</param>
     /// <param name="configuration">Configuration given by the DI</param>
     /// <param name="hubContext">HubContext given by the DI</param>

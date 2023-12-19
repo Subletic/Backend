@@ -42,8 +42,6 @@ builder.Services.AddSingleton<ISubtitleExporterService, SubtitleExporterService>
 
 builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
 
-builder.Services.AddSingleton<FrontendAudioQueueService, FrontendAudioQueueService>();
-
 builder.Services.AddSingleton<IFrontendCommunicationService, FrontendCommunicationService>();
 
 builder.Services.AddHostedService<StartupService>();
