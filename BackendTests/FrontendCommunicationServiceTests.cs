@@ -14,7 +14,7 @@ using Serilog;
 [TestFixture]
 public class FrontendCommunicationServiceTests
 {
-    private IFrontendCommunicationService? service;
+    private IFrontendCommunicationService service;
     private Mock<ILogger> loggerMock;
     private Mock<IHubContext<FrontendCommunicationHub>> hubContextMock;
 
