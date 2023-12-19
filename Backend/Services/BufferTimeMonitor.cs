@@ -26,8 +26,6 @@ public class BufferTimeMonitor : BackgroundService
 
     private readonly ISubtitleExporterService subtitleExporterService;
 
-    private readonly IHubContext<FrontendCommunicationHub> hubContext;
-
     private readonly IConfiguration configuration;
 
     private readonly int delayMilliseconds;
@@ -37,22 +35,19 @@ public class BufferTimeMonitor : BackgroundService
     /// <summary>
     /// Initializes the Dependency Injection and the List of timed out SpeechBubbles.
     /// </summary>
-    /// <param name="frontendCommunicationService">frontend Provider Service</param>
-    /// <param name="configurationService">Configuration service</param>
-    /// <param name="configuration">Configuration given by the DI</param>
-    /// <param name="hubContext">HubContext given by the DI</param>
-    /// <param name="speechBubbleListService">Service that provides access to the active SpeechBubbles</param>
-    /// <param name="subtitleExporterService">Service that Exports the Subtitles</param>
+    /// <param name="frontendCommunicationService">Service for managing frontend communication, including deletion of speech bubbles.</param>
+    /// <param name="configurationService">Service for accessing configuration settings.</param>
+    /// <param name="configuration">Application configuration, provided by dependency injection.</param>
+    /// <param name="speechBubbleListService">Service for accessing and managing the list of active speech bubbles.</param>
+    /// <param name="subtitleExporterService">Service for exporting subtitles.</param>
     public BufferTimeMonitor(
         IFrontendCommunicationService frontendCommunicationService,
-        IHubContext<FrontendCommunicationHub> hubContext,
         IConfigurationService configurationService,
         IConfiguration configuration,
         ISpeechBubbleListService speechBubbleListService,
         ISubtitleExporterService subtitleExporterService)
     {
         this.frontendCommunicationService = frontendCommunicationService;
-        this.hubContext = hubContext;
         this.configurationService = configurationService;
         this.configuration = configuration;
         this.timeLimitInMinutes = configuration.GetValue<float>("BufferTimeMonitorSettings:DEFAULT_TIME_LIMIT_IN_MINUTES");

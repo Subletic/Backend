@@ -15,8 +15,25 @@ using Serilog;
 /// </summary>
 public class FrontendCommunicationService : IFrontendCommunicationService
 {
+    /// <summary>
+    /// The length of the audio buffer used in audio streaming.
+    /// This defines the expected size of each audio buffer element in the queue.
+    /// </summary>
+    private const int DEFAULT_LENGTH_AUDIO = 48000;
+
+    /// <summary>
+    /// Logger instance for logging events and errors.
+    /// </summary>
     private readonly Serilog.ILogger logger;
+
+    /// <summary>
+    /// Context for interacting with SignalR hubs, used to communicate with the frontend.
+    /// </summary>
     private readonly IHubContext<FrontendCommunicationHub> hubContext;
+
+    /// <summary>
+    /// A thread-safe queue for storing audio buffers to be processed.
+    /// </summary>
     private ConcurrentQueue<short[]> audioQueue = new ConcurrentQueue<short[]>();
 
     /// <summary>
@@ -37,8 +54,7 @@ public class FrontendCommunicationService : IFrontendCommunicationService
     /// <param name="item">Buffer to enqueue</param>
     public void Enqueue(short[] item)
     {
-        if (item.Length != 48000) throw new ArgumentException($"Enqueued buffer ({item.Length} samples) doesn't have correct element count (48000 samples)");
-
+        if (item.Length != DEFAULT_LENGTH_AUDIO) throw new ArgumentException($"Enqueued buffer ({item.Length} samples) doesn't have correct element count ({DEFAULT_LENGTH_AUDIO} samples)");
         audioQueue.Enqueue(item);
     }
 
@@ -78,10 +94,9 @@ public class FrontendCommunicationService : IFrontendCommunicationService
     /// <returns>PublishSpeechBubble.</returns>
     public async Task PublishSpeechBubble(SpeechBubble speechBubble)
     {
-        var listToSend = new List<SpeechBubble>() { speechBubble };
-
         try
         {
+            var listToSend = new List<SpeechBubble>() { speechBubble };
             await hubContext.Clients.All.SendAsync("newBubble", listToSend);
         }
         catch (Exception ex)

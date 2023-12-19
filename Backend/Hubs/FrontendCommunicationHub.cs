@@ -48,12 +48,9 @@ public class FrontendCommunicationHub : Hub
         while (!cancellationToken.IsCancellationRequested)
         {
             short[]? audioData;
-            if (frontendCommunicationService.TryDequeue(out audioData))
+            if (frontendCommunicationService.TryDequeue(out audioData) && audioData != null)
             {
-                if (audioData != null)
-                {
-                    yield return audioData;
-                }
+              yield return audioData;
             }
 
             await Task.Delay(200, cancellationToken);
