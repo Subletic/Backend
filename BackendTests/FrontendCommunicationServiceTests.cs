@@ -14,7 +14,7 @@ using Serilog;
 [TestFixture]
 public class FrontendCommunicationServiceTests
 {
-    private IFrontendCommunicationService service;
+    private IFrontendCommunicationService service = null!;
     private Mock<ILogger> loggerMock;
     private Mock<IHubContext<FrontendCommunicationHub>> hubContextMock;
 
@@ -65,7 +65,7 @@ public class FrontendCommunicationServiceTests
     {
         // Arrange
         short[] expectedItem = new short[48000];
-        service?.Enqueue(expectedItem);
+        service.Enqueue(expectedItem);
 
         // Act
         Assert.IsNotNull(service, "Service ist null.");
