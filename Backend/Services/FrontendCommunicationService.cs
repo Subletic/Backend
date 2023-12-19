@@ -19,7 +19,7 @@ public class FrontendCommunicationService : IFrontendCommunicationService
     /// The length of the audio buffer used in audio streaming.
     /// This defines the expected size of each audio buffer element in the queue.
     /// </summary>
-    private const int DEFAULT_LENGTH_AUDIO = 48000;
+    private const int AUDIO_FRQUENCY = 48000;
 
     /// <summary>
     /// Logger instance for logging events and errors.
@@ -54,7 +54,7 @@ public class FrontendCommunicationService : IFrontendCommunicationService
     /// <param name="item">Buffer to enqueue</param>
     public void Enqueue(short[] item)
     {
-        if (item.Length != DEFAULT_LENGTH_AUDIO) throw new ArgumentException($"Enqueued buffer ({item.Length} samples) doesn't have correct element count ({DEFAULT_LENGTH_AUDIO} samples)");
+        if (item.Length != AUDIO_FRQUENCY) throw new ArgumentException($"Enqueued buffer ({item.Length} samples) doesn't have correct element count ({AUDIO_FRQUENCY} samples)");
         audioQueue.Enqueue(item);
     }
 
