@@ -33,7 +33,8 @@ public class FrontendCommunicationServiceTests
         short[] validItem = new short[48000]; // valid length
 
         // Assert
-        Assert.DoesNotThrow(() => service?.Enqueue(validItem));
+        Assert.IsNotNull(service, "Service ist null.");
+        Assert.DoesNotThrow(() => service.Enqueue(validItem));
     }
 
     [Test]
@@ -43,7 +44,8 @@ public class FrontendCommunicationServiceTests
         short[] invalidItem = new short[100]; // Invalid length
 
         // Assert
-        Assert.Throws<ArgumentException>(() => service?.Enqueue(invalidItem));
+        Assert.IsNotNull(service, "Service ist null.");
+        Assert.Throws<ArgumentException>(() => service.Enqueue(invalidItem));
     }
 
     [Test]
