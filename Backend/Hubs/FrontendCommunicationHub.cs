@@ -56,7 +56,7 @@ public class FrontendCommunicationHub : Hub
                 }
             }
 
-            await Task.Delay(200);
+            await Task.Delay(200, cancellationToken);
         }
     }
 }

@@ -14,7 +14,7 @@ using Serilog;
 [TestFixture]
 public class FrontendCommunicationServiceTests
 {
-    private IFrontendCommunicationService service;
+    private IFrontendCommunicationService? service;
     private Mock<ILogger> loggerMock;
     private Mock<IHubContext<FrontendCommunicationHub>> hubContextMock;
 
@@ -33,7 +33,7 @@ public class FrontendCommunicationServiceTests
         short[] validItem = new short[48000]; // valid length
 
         // Assert
-        Assert.DoesNotThrow(() => service.Enqueue(validItem));
+        Assert.DoesNotThrow(() => service?.Enqueue(validItem));
     }
 
     [Test]
@@ -43,13 +43,14 @@ public class FrontendCommunicationServiceTests
         short[] invalidItem = new short[100]; // Invalid length
 
         // Assert
-        Assert.Throws<ArgumentException>(() => service.Enqueue(invalidItem));
+        Assert.Throws<ArgumentException>(() => service?.Enqueue(invalidItem));
     }
 
     [Test]
     public void TryDequeue_EmptyQueue_ShouldReturnFalse()
     {
         // Act
+        Assert.IsNotNull(service, "Service ist null.");
         bool result = service.TryDequeue(out short[]? dequeuedItem);
 
         // Assert
@@ -62,9 +63,10 @@ public class FrontendCommunicationServiceTests
     {
         // Arrange
         short[] expectedItem = new short[48000];
-        service.Enqueue(expectedItem);
+        service?.Enqueue(expectedItem);
 
         // Act
+        Assert.IsNotNull(service, "Service ist null.");
         bool result = service.TryDequeue(out short[]? dequeuedItem);
 
         // Assert

@@ -1,3 +1,5 @@
+namespace BackendTests;
+
 using System;
 using System.IO;
 using System.Threading.Tasks;
