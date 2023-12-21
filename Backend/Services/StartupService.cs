@@ -7,9 +7,9 @@ public class StartupService : IHostedService
 {
     private const string SPEECHMATICS_API_KEY_ENVVAR = "SPEECHMATICS_API_KEY";
 
-    private readonly IAvProcessingService avProcessingService;
+    private readonly ISpeechmaticsConnectionService speechmaticsConnectionService;
 
-    private readonly ISpeechmaticsExchangeService speechmaticsExchangeService;
+    private readonly ISpeechmaticsReceiveService speechmaticsReceiveService;
 
     private readonly Serilog.ILogger log;
 
@@ -18,12 +18,12 @@ public class StartupService : IHostedService
     /// </summary>
     /// <param name="avProcessingService">The AV processing service.</param>
     public StartupService(
-        IAvProcessingService avProcessingService,
-        ISpeechmaticsExchangeService speechmaticsExchangeService,
+        ISpeechmaticsConnectionService speechmaticsConnectionService,
+        ISpeechmaticsReceiveService speechmaticsReceiveService,
         Serilog.ILogger log)
     {
-        this.avProcessingService = avProcessingService;
-        this.speechmaticsExchangeService = speechmaticsExchangeService;
+        this.speechmaticsConnectionService = speechmaticsConnectionService;
+        this.speechmaticsReceiveService = speechmaticsReceiveService;
         this.log = log;
     }
 
@@ -36,8 +36,19 @@ public class StartupService : IHostedService
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         log.Information($"Taking Speechmatics API key from environment variable {SPEECHMATICS_API_KEY_ENVVAR}");
-        if (!await speechmaticsExchangeService.RegisterApiKey(SPEECHMATICS_API_KEY_ENVVAR))
+        if (!await speechmaticsConnectionService.RegisterApiKey(SPEECHMATICS_API_KEY_ENVVAR))
             throw new InvalidOperationException("Speechmatics API not available");
+
+        log.Information("Check if Reflection can find deserialisers");
+        try
+        {
+            speechmaticsReceiveService.TestDeserialisation();
+        }
+        catch (Exception e)
+        {
+            throw new InvalidOperationException("Cannot find a deserialiser", e);
+        }
+
         log.Information("Ready for communication");
     }
 

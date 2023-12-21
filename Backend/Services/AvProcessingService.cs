@@ -47,15 +47,8 @@ using FFMpegCore.Pipes;
 /// through the RT API.
 /// </example>
 /// </summary>
-public partial class AvProcessingService : IAvProcessingService
+public class AvProcessingService : IAvProcessingService
 {
-    /// <summary>
-    /// A description of the audio format we'll send to the RT API.
-    /// <see cref="StartRecognitionMessage_AudioFormat" />
-    /// </summary>
-    private static readonly StartRecognitionMessage_AudioFormat audioFormat =
-        new StartRecognitionMessage_AudioFormat("raw", "pcm_s16le", 48000);
-
     /// <summary>
     /// Dependency Injection to get the queue via which <c>CommunicationHub.ReceiveAudioStream</c>
     /// will send audio buffers to the frontend.
@@ -63,7 +56,9 @@ public partial class AvProcessingService : IAvProcessingService
     /// </summary>
     private readonly IFrontendCommunicationService frontendCommunicationService;
 
-    private readonly ISpeechmaticsExchangeService speechmaticsExchangeService;
+    private readonly ISpeechmaticsConnectionService speechmaticsConnectionService;
+
+    private readonly ISpeechmaticsSendService speechmaticsSendService;
 
     private readonly Serilog.ILogger log;
 
@@ -74,11 +69,13 @@ public partial class AvProcessingService : IAvProcessingService
     /// <param name="frontendCommunicationService">The Audio to push new audio into for the Frontend</param>
     public AvProcessingService(
         IFrontendCommunicationService frontendCommunicationService,
-        ISpeechmaticsExchangeService speechmaticsExchangeService,
+        ISpeechmaticsConnectionService speechmaticsConnectionService,
+        ISpeechmaticsSendService speechmaticsSendService,
         Serilog.ILogger log)
     {
         this.frontendCommunicationService = frontendCommunicationService;
-        this.speechmaticsExchangeService = speechmaticsExchangeService;
+        this.speechmaticsConnectionService = speechmaticsConnectionService;
+        this.speechmaticsSendService = speechmaticsSendService;
         this.log = log;
     }
 
@@ -108,11 +105,11 @@ public partial class AvProcessingService : IAvProcessingService
                 .WithCustomArgument("-ac 1") // downmix stereo audio to mono
                 .WithCustomArgument("-vn") // throw away video streams
                 .WithCustomArgument("-sn"); // throw away subtitle streams
-            if (audioFormat.type == "raw")
+            if (speechmaticsConnectionService.AudioFormat.type == "raw")
             {
                 outputOptions += options => options
-                    .ForceFormat(audioFormat.GetEncodingInFFMpegFormat())
-                    .WithAudioSamplingRate(audioFormat.GetCheckedSampleRate());
+                    .ForceFormat(speechmaticsConnectionService.AudioFormat.GetEncodingInFFMpegFormat())
+                    .WithAudioSamplingRate(speechmaticsConnectionService.AudioFormat.GetCheckedSampleRate());
             }
 
             await FFMpegArguments
@@ -154,18 +151,34 @@ public partial class AvProcessingService : IAvProcessingService
         Pipe audioPipe = new Pipe();
         Stream audioPipeReader = audioPipe.Reader.AsStream(false);
         Task<bool> audioProcessor = processAudioToStream(avStream, audioPipe.Writer);
+        List<Task> parallelTasks = new List<Task>
+        {
+            audioProcessor,
+        };
 
         int offset = 0;
         int readCount;
+        int firstFinishedTask;
 
         try
         {
-            byte[] buffer = new byte[audioFormat.GetCheckedSampleRate() * audioFormat.GetBytesPerSample()]; // 1s
+            byte[] buffer = new byte[speechmaticsConnectionService.AudioFormat.GetCheckedSampleRate() * speechmaticsConnectionService.AudioFormat.GetBytesPerSample()]; // 1s
             log.Information("Started audio pushing");
             do
             {
                 // wide range of possible exceptions
-                readCount = await audioPipeReader.ReadAsync(buffer.AsMemory(offset, buffer.Length - offset));
+                Task<int> fetchProcessedAudioTask = audioPipeReader.ReadAsync(buffer.AsMemory(offset, buffer.Length - offset)).AsTask();
+                parallelTasks.Add(fetchProcessedAudioTask);
+
+                int fetchTaskIndex;
+                do
+                {
+                    firstFinishedTask = Task.WaitAny(parallelTasks.ToArray());
+                    fetchTaskIndex = parallelTasks.FindIndex(x => x == fetchProcessedAudioTask);
+                }
+                while (firstFinishedTask != fetchTaskIndex);
+
+                readCount = await fetchProcessedAudioTask;
                 offset += readCount;
 
                 if (readCount != 0)
@@ -184,6 +197,7 @@ public partial class AvProcessingService : IAvProcessingService
                 }
 
                 // push to speechmatics
+                await speechmaticsSendService.SendAudio(sendBuffer);
 
                 // store only decoded audio
                 short[] storeShortBuffer = new short[buffer.Length / 2];
@@ -196,7 +210,7 @@ public partial class AvProcessingService : IAvProcessingService
                     Array.Copy(buffer, 0, sendBuffer, 0, buffer.Length);
                 }
 
-                short[] sendShortBuffer = new short[audioFormat.GetCheckedSampleRate()];
+                short[] sendShortBuffer = new short[speechmaticsConnectionService.AudioFormat.GetCheckedSampleRate()];
                 Buffer.BlockCopy(sendBuffer, 0, sendShortBuffer, 0, sendBuffer.Length);
                 frontendCommunicationService.Enqueue(sendShortBuffer);
 

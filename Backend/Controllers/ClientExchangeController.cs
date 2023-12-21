@@ -3,8 +3,12 @@ namespace Backend.Controllers;
 using System.Net;
 using System.Net.WebSockets;
 using System.Threading;
+
 using Backend.Data;
+using Backend.Data.SpeechmaticsMessages.EndOfStreamMessage;
+using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage;
 using Backend.Services;
+
 using Microsoft.AspNetCore.Mvc;
 
 /// <summary>
@@ -18,7 +22,9 @@ public class ClientExchangeController : ControllerBase
     /// Dependency Injection for accessing needed Services.
     /// </summary>
     private readonly IAvReceiverService avReceiverService;
-    private readonly ISpeechmaticsExchangeService speechmaticsExchangeService;
+    private readonly ISpeechmaticsConnectionService speechmaticsConnectionService;
+    private readonly ISpeechmaticsReceiveService speechmaticsReceiveService;
+    private readonly ISpeechmaticsSendService speechmaticsSendService;
     private readonly ISubtitleExporterService subtitleExporterService;
     private readonly Serilog.ILogger log;
 
@@ -30,12 +36,16 @@ public class ClientExchangeController : ControllerBase
     /// <param name="avReceiverService">The av receiver service.</param>
     public ClientExchangeController(
         IAvReceiverService avReceiverService,
-        ISpeechmaticsExchangeService speechmaticsExchangeService,
+        ISpeechmaticsConnectionService speechmaticsConnectionService,
+        ISpeechmaticsReceiveService speechmaticsReceiveService,
+        ISpeechmaticsSendService speechmaticsSendService,
         ISubtitleExporterService subtitleExporterService,
         Serilog.ILogger log)
     {
         this.avReceiverService = avReceiverService;
-        this.speechmaticsExchangeService = speechmaticsExchangeService;
+        this.speechmaticsConnectionService = speechmaticsConnectionService;
+        this.speechmaticsReceiveService = speechmaticsReceiveService;
+        this.speechmaticsSendService = speechmaticsSendService;
         this.subtitleExporterService = subtitleExporterService;
         this.log = log;
     }
@@ -60,21 +70,45 @@ public class ClientExchangeController : ControllerBase
         CancellationTokenSource ctSource = new CancellationTokenSource();
 
         // connect to Speechmatics
-        bool speechmaticsConnected = await speechmaticsExchangeService.Connect(ctSource);
+        bool speechmaticsConnected = await speechmaticsConnectionService.Connect(ctSource.Token);
         if (!speechmaticsConnected)
         {
             log.Error("Failed to connect to Speechmatics");
-            await speechmaticsExchangeService.Disconnect(ctSource); // cleanup & reset
+            await speechmaticsConnectionService.Disconnect(false, ctSource.Token); // cleanup & reset
             await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, "Failed to connect to Speechmatics", ctSource.Token);
             HttpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
             return;
         }
 
         Task subtitleExportTask = subtitleExporterService.Start(webSocket, ctSource); // write at end of pipeline
+
+        // setup speechmatics state
+        Task subtitleReceiveTask = speechmaticsReceiveService.ReceiveLoop();
+        await speechmaticsSendService.SendJsonMessage<StartRecognitionMessage>(
+            new StartRecognitionMessage(speechmaticsConnectionService.AudioFormat));
+
         Task avReceiveTask = avReceiverService.Start(webSocket, ctSource); // read at start of pipeline
 
-        await avReceiveTask; // receiving new audio finishes first
-        await speechmaticsExchangeService.Disconnect(ctSource); // then sending the audio through speechmatics for the transcription
+        List<Task> parallelTasks = new List<Task>
+        {
+            avReceiveTask,
+            subtitleReceiveTask,
+            subtitleExportTask,
+        };
+
+        do
+        {
+            int firstFinishedTask = Task.WaitAny(parallelTasks.ToArray());
+            await parallelTasks[firstFinishedTask];
+            parallelTasks.RemoveAt(firstFinishedTask);
+        }
+        while (parallelTasks.Count > 0);
+
+        // TODO await sent audio == confirmed audio
+
+        await speechmaticsSendService.SendJsonMessage<EndOfStreamMessage>(
+            new EndOfStreamMessage(1)); // TODO use confirmed audio number
+        await speechmaticsConnectionService.Disconnect(true, ctSource.Token); // then sending the audio through speechmatics for the transcription
         try
         {
             await subtitleExportTask; // lastly running transcription through the user & exporting them

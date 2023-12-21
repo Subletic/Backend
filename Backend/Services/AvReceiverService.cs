@@ -45,15 +45,29 @@ public class AvReceiverService : IAvReceiverService
         Pipe avPipe = new Pipe();
         Stream avWriter = avPipe.Writer.AsStream(leaveOpen: true);
         WebSocketReceiveResult avResult;
+        int firstFinishedTask;
         byte[] readBuffer = new byte[MAXIMUM_READ_SIZE];
 
         Console.WriteLine("Start reading AV data from WebSocket");
 
         Task<bool> transcriptionTask = avProcessingService.PushProcessedAudio(avPipe.Reader.AsStream(leaveOpen: true));
+        List<Task> parallelTasks = new List<Task>
+        {
+            transcriptionTask,
+        };
 
         do
         {
-            avResult = await webSocket.ReceiveAsync(readBuffer, ctSource.Token);
+            Task<WebSocketReceiveResult> readDataTask = webSocket.ReceiveAsync(readBuffer, ctSource.Token);
+            parallelTasks.Add(readDataTask);
+
+            Console.WriteLine("Waiting for Client AV data to arrive");
+            firstFinishedTask = Task.WaitAny(parallelTasks.ToArray());
+            if (firstFinishedTask != parallelTasks.FindIndex(task => task == readDataTask))
+                throw new Exception("This shouldn't happen");
+
+            parallelTasks.RemoveAt(firstFinishedTask);
+            avResult = await readDataTask;
 
             if (avResult.MessageType == WebSocketMessageType.Close)
             {
@@ -61,15 +75,24 @@ public class AvReceiverService : IAvReceiverService
                 break;
             }
 
-            Console.WriteLine("Received data");
+            // Console.WriteLine("Received data");
+            // Console.WriteLine($"Pushing {avResult.Count} bytes into AV pipe");
+            var pushAudioDataTask = avWriter.WriteAsync(new ReadOnlyMemory<byte>(readBuffer, 0, avResult.Count), ctSource.Token).AsTask();
+            parallelTasks.Add(pushAudioDataTask);
 
-            Console.WriteLine($"Pushing {avResult.Count} bytes into AV pipe");
-            await avWriter.WriteAsync(new ReadOnlyMemory<byte>(readBuffer, 0, avResult.Count), ctSource.Token);
+            Console.WriteLine("Waiting for AV data to be pushed for processing");
+            firstFinishedTask = Task.WaitAny(parallelTasks.ToArray());
+            if (firstFinishedTask != parallelTasks.FindIndex(task => task == pushAudioDataTask))
+                throw new Exception("This shouldn't happen");
+
+            parallelTasks.RemoveAt(firstFinishedTask);
+            await pushAudioDataTask;
         }
         while (avResult.MessageType != WebSocketMessageType.Close);
 
         Console.WriteLine("Done reading AV data");
 
+        Console.WriteLine("Waiting for transcription to finish");
         await avPipe.Writer.CompleteAsync();
         bool transcriptionSuccess = await transcriptionTask;
         Console.WriteLine("Transcription " + (transcriptionSuccess ? "success" : "failure"));

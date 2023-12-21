@@ -44,7 +44,11 @@ builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
 
 builder.Services.AddSingleton<IFrontendCommunicationService, FrontendCommunicationService>();
 
-builder.Services.AddSingleton<ISpeechmaticsExchangeService, SpeechmaticsExchangeService>();
+builder.Services.AddSingleton<ISpeechmaticsConnectionService, SpeechmaticsConnectionService>();
+
+builder.Services.AddSingleton<ISpeechmaticsSendService, SpeechmaticsSendService>();
+
+builder.Services.AddSingleton<ISpeechmaticsReceiveService, SpeechmaticsReceiveService>();
 
 builder.Services.AddHostedService<StartupService>();
 
