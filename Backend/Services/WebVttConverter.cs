@@ -12,7 +12,7 @@ using Backend.Data;
 /// <summary>
 /// Class responsible for exporting speech bubbles to WebVTT format.
 /// </summary>
-public class WebVttConverter : ISubtitleConverter
+public class WebVttConverter : IWebVttConverter
 {
     private readonly Stream outputStream;
 
@@ -32,7 +32,7 @@ public class WebVttConverter : ISubtitleConverter
     /// Exports the speech bubbles to WebVTT format and writes the content to the output stream.
     /// </summary>
     /// <param name="speechBubble">The list of speech bubbles to export.</param>
-    public void ConvertSpeechBubble(SpeechBubble speechBubble)
+    public void ConvertSpeechBubbleToWebVtt(SpeechBubble speechBubble)
     {
         WriteToStream(convertToWebVttFormat(speechBubble));
     }

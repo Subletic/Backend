@@ -44,6 +44,8 @@ builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
 
 builder.Services.AddSingleton<IFrontendCommunicationService, FrontendCommunicationService>();
 
+builder.Services.AddSingleton<ISrtConverter, SrtConverter>();
+
 builder.Services.AddHostedService<StartupService>();
 
 builder.Services.AddHostedService<BufferTimeMonitor>();

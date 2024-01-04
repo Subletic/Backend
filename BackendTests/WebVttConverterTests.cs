@@ -116,11 +116,11 @@ public class WebVttConverterTests
     {
         // Init converter
         Stream outputStream = new MemoryStream();
-        ISubtitleConverter converter = new WebVttConverter(outputStream);
+        IWebVttConverter converter = new WebVttConverter(outputStream);
 
         // Push SpeechBubbles through the converter
         foreach (SpeechBubble speechBubble in speechBubbles)
-            converter.ConvertSpeechBubble(speechBubble);
+            converter.ConvertSpeechBubbleToWebVtt(speechBubble);
 
         // Read converter result
         outputStream.Position = 0;
