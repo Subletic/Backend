@@ -12,6 +12,7 @@ using Backend.Data.SpeechmaticsMessages.EndOfStreamMessage;
 using Backend.Data.SpeechmaticsMessages.EndOfTranscriptMessage;
 using Backend.Data.SpeechmaticsMessages.ErrorMessage;
 using Backend.Data.SpeechmaticsMessages.InfoMessage;
+using Backend.Data.SpeechmaticsMessages.RecognitionStartedMessage;
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage;
 
 using Serilog;
@@ -33,10 +34,23 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
 
     private Serilog.ILogger log;
 
+    public ulong SequenceNumber
+    {
+        get;
+        private set;
+    }
+
     public SpeechmaticsReceiveService(ISpeechmaticsConnectionService speechmaticsConnectionService, Serilog.ILogger log)
     {
         this.speechmaticsConnectionService = speechmaticsConnectionService;
         this.log = log;
+
+        resetSequenceNumber();
+    }
+
+    private void resetSequenceNumber()
+    {
+        SequenceNumber = 0;
     }
 
     /// <summary>
@@ -56,13 +70,24 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
         byte[] chunkBuffer = new byte[RECEIVE_BUFFER_SIZE];
         List<byte> messageChunks = new List<byte>(RECEIVE_BUFFER_SIZE);
         bool completed = false;
+
         do
         {
+            log.Debug("Listening from data from Speechmatics");
             WebSocketReceiveResult response = await speechmaticsConnectionService.Socket.ReceiveAsync(
                 buffer: chunkBuffer,
                 cancellationToken: speechmaticsConnectionService.CancellationToken);
+            log.Debug("Received data from Speechmatics");
 
-            messageChunks.AddRange(chunkBuffer);
+            // FIXME AddRange'ing a Span directly for better performance is a .NET 8 feature
+            byte[] bufferToAdd = chunkBuffer;
+            if (response.Count != chunkBuffer.Length)
+            {
+                bufferToAdd = new byte[response.Count];
+                Array.Copy(chunkBuffer, bufferToAdd, response.Count);
+            }
+
+            messageChunks.AddRange(bufferToAdd);
             completed = response.EndOfMessage;
         }
         while (!completed);
@@ -75,15 +100,20 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
     private Type identifyMessage(byte[] messageBuffer)
     {
         MatchCollection messageMatches = MESSAGE_TYPE_REGEX().Matches(Encoding.UTF8.GetString(messageBuffer));
+        log.Debug($"messageMatches.Count: {messageMatches.Count}");
         if (messageMatches.Count != 1)
             throw new ArgumentException($"Found unexpected amount of message type matches: {messageMatches.Count}");
 
         string messageName = messageMatches[0].Groups[1].ToString() + "Message";
-        Type? messageType = Type.GetType($"Backend.Data.SpeechmaticsMessages.{messageName}, {messageName}");
+        Type? messageType = Type.GetType($"Backend.Data.SpeechmaticsMessages.{messageName}.{messageName}");
         if (messageType is null)
-            throw new ArgumentException($"Found unknown message type: {messageName}");
+        {
+            string errorMsg = $"Found unknown message type: {messageName}";
+            log.Error(errorMsg);
+            throw new ArgumentException(errorMsg);
+        }
 
-        log.Information($"Received {messageName} message from Speechmatics");
+        log.Information($"Received {messageName} object from Speechmatics");
         return messageType!;
     }
 
@@ -102,7 +132,7 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
                 callConvention: CallingConventions.Standard,
                 types: new Type[]
                 {
-                    typeof(ReadOnlySpan<byte>),
+                    typeof(string),
                     typeof(JsonSerializerOptions),
                 },
                 modifiers: null)!
@@ -117,14 +147,21 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
             obj: null, // static method call, no instance
             parameters: new object[]
             {
-                completeMessage,
+                Encoding.UTF8.GetString(completeMessage),
                 speechmaticsConnectionService.JsonOptions,
             })!;
     }
 
     private void handleAudioAdded(AudioAddedMessage message)
     {
-        log.Error("FIXME: Check returned seq_no");
+        if (message.seq_no != (SequenceNumber + 1))
+        {
+            string errorMsg = $"Sequence number mismatch: Expected next-in-line {SequenceNumber + 1}, received {message.seq_no}";
+            log.Error(errorMsg);
+            throw new ArgumentException(errorMsg);
+        }
+
+        SequenceNumber += 1;
     }
 
     private void handleAddTranscript(AddTranscriptMessage message)
@@ -166,12 +203,23 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
     public async Task<bool> ReceiveLoop()
     {
         bool done = false;
+
+        resetSequenceNumber();
+
         do
         {
             byte[] messageBuffer = await receiveJsonResponse();
             Type messageType = identifyMessage(messageBuffer);
-            dynamic message = deserialiseMessage(messageBuffer, messageType);
-            done = processMessage(message, messageType);
+            try
+            {
+                dynamic message = deserialiseMessage(messageBuffer, messageType);
+                done = processMessage(message, messageType);
+            }
+            catch (Exception e)
+            {
+                log.Error(e.ToString());
+                done = true;
+            }
         }
         while (!done);
 

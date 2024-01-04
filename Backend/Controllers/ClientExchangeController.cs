@@ -87,37 +87,43 @@ public class ClientExchangeController : ControllerBase
         await speechmaticsSendService.SendJsonMessage<StartRecognitionMessage>(
             new StartRecognitionMessage(speechmaticsConnectionService.AudioFormat));
 
-        Task avReceiveTask = avReceiverService.Start(webSocket, ctSource); // read at start of pipeline
+        Task<bool> avReceiveTask = avReceiverService.Start(webSocket, ctSource); // read at start of pipeline
 
-        List<Task> parallelTasks = new List<Task>
-        {
-            avReceiveTask,
-            subtitleReceiveTask,
-            subtitleExportTask,
-        };
+        bool connectionAlive = await avReceiveTask; // no more audio to send
 
-        do
+        if (connectionAlive)
         {
-            int firstFinishedTask = Task.WaitAny(parallelTasks.ToArray());
-            await parallelTasks[firstFinishedTask];
-            parallelTasks.RemoveAt(firstFinishedTask);
+            // TODO await sent audio packets == confirmed audio packets
+            await speechmaticsSendService.SendJsonMessage<EndOfStreamMessage>(
+                new EndOfStreamMessage(1)); // TODO use confirmed audio number
+            await subtitleReceiveTask; // no more subtitles to receive
+            await speechmaticsConnectionService.Disconnect(connectionAlive, ctSource.Token);
+            await subtitleExportTask; // no more subtitles to export
+
+            await webSocket.CloseAsync(WebSocketCloseStatus.Empty, "", CancellationToken.None);
         }
-        while (parallelTasks.Count > 0);
-
-        // TODO await sent audio == confirmed audio
-
-        await speechmaticsSendService.SendJsonMessage<EndOfStreamMessage>(
-            new EndOfStreamMessage(1)); // TODO use confirmed audio number
-        await speechmaticsConnectionService.Disconnect(true, ctSource.Token); // then sending the audio through speechmatics for the transcription
-        try
+        else
         {
-            await subtitleExportTask; // lastly running transcription through the user & exporting them
-        }
-        catch (OperationCanceledException)
-        {
-            log.Information("Cancellation handled");
-        }
+            // don't bother with more messages to Speechmatics, just end it
+            await speechmaticsConnectionService.Disconnect(connectionAlive, ctSource.Token);
 
-        await webSocket.CloseAsync(WebSocketCloseStatus.Empty, "", CancellationToken.None);
+            try
+            {
+                await subtitleReceiveTask; // likely to throw due to broken connection, but need to reap the task
+            }
+            catch (Exception)
+            {
+                // ignore
+            }
+
+            try
+            {
+                await subtitleExportTask; // likely long-failed if connection is broken, but need to reap the task
+            }
+            catch (Exception)
+            {
+                // ignore
+            }
+        }
     }
 }

@@ -151,38 +151,23 @@ public class AvProcessingService : IAvProcessingService
         Pipe audioPipe = new Pipe();
         Stream audioPipeReader = audioPipe.Reader.AsStream(false);
         Task<bool> audioProcessor = processAudioToStream(avStream, audioPipe.Writer);
-        List<Task> parallelTasks = new List<Task>
-        {
-            audioProcessor,
-        };
 
         int offset = 0;
         int readCount;
-        int firstFinishedTask;
 
         try
         {
             byte[] buffer = new byte[speechmaticsConnectionService.AudioFormat.GetCheckedSampleRate() * speechmaticsConnectionService.AudioFormat.GetBytesPerSample()]; // 1s
-            log.Information("Started audio pushing");
+            log.Debug("Started audio processing");
+
             do
             {
                 // wide range of possible exceptions
-                Task<int> fetchProcessedAudioTask = audioPipeReader.ReadAsync(buffer.AsMemory(offset, buffer.Length - offset)).AsTask();
-                parallelTasks.Add(fetchProcessedAudioTask);
-
-                int fetchTaskIndex;
-                do
-                {
-                    firstFinishedTask = Task.WaitAny(parallelTasks.ToArray());
-                    fetchTaskIndex = parallelTasks.FindIndex(x => x == fetchProcessedAudioTask);
-                }
-                while (firstFinishedTask != fetchTaskIndex);
-
-                readCount = await fetchProcessedAudioTask;
+                readCount = await audioPipeReader.ReadAsync(buffer.AsMemory(offset, buffer.Length - offset));
                 offset += readCount;
 
                 if (readCount != 0)
-                    log.Debug($"read {readCount} audio bytes from pipe");
+                    log.Debug($"Read {readCount} audio bytes from pipe");
 
                 bool lastWithLeftovers = readCount == 0 && offset > 0;
                 bool shouldSend = (offset == buffer.Length) || lastWithLeftovers;
@@ -214,6 +199,8 @@ public class AvProcessingService : IAvProcessingService
                 Buffer.BlockCopy(sendBuffer, 0, sendShortBuffer, 0, sendBuffer.Length);
                 frontendCommunicationService.Enqueue(sendShortBuffer);
 
+                offset = 0;
+
                 // TODO remove when we handle an actual livestream
                 // processing a local file is much faster than receiving networked A/V in realtime, simulate the delay
                 await Task.Delay(TimeSpan.FromSeconds(1));
@@ -226,11 +213,10 @@ public class AvProcessingService : IAvProcessingService
             success = false;
         }
 
-        log.Debug("Completed audio pushing");
-
+        log.Debug("Awaiting FFmpeg to finish");
         success = success && await audioProcessor;
-        log.Information("Done pushing audio");
 
+        log.Information("Done processing audio");
         return success;
     }
 }
