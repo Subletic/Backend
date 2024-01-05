@@ -74,7 +74,7 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
 
     private async Task<byte[]> receiveJsonResponse()
     {
-        speechmaticsConnectionService.CheckConnected();
+        speechmaticsConnectionService.ThrowIfNotConnected();
 
         byte[] chunkBuffer = new byte[RECEIVE_BUFFER_SIZE];
         List<byte> messageChunks = new List<byte>();

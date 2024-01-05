@@ -17,9 +17,7 @@ public interface ISpeechmaticsConnectionService
 
     bool Connected { get; }
 
-    void CheckConnected();
-
-    void CheckDisconnected();
+    void ThrowIfNotConnected();
 
     /// <summary>
     /// Registers the API key to use with the Speechmatics RT API.

@@ -131,6 +131,45 @@ public class AvProcessingService : IAvProcessingService
         return success;
     }
 
+    private async Task<int> readProcessedChunk(Stream processedAudioPipe, byte[] bufferToFill)
+    {
+        int offset = 0;
+        int readCount = 0;
+        do
+        {
+            readCount = await processedAudioPipe.ReadAsync(
+                bufferToFill.AsMemory(offset, bufferToFill.Length - offset));
+            offset += readCount;
+
+            if (readCount != 0)
+                log.Debug($"Read {readCount} bytes of processed audio");
+        }
+        while ((offset != bufferToFill.Length) && (readCount != 0));
+
+        return offset;
+    }
+
+    private async Task sendAudioToSpeechmatics(byte[] buffer, int filledAmount)
+    {
+        // don't send any zero-padding, waste of data
+        byte[] sendBuffer = buffer;
+        if (filledAmount != buffer.Length)
+        {
+            sendBuffer = new byte[filledAmount];
+            Array.Copy(buffer, 0, sendBuffer, 0, sendBuffer.Length);
+        }
+
+        // push to speechmatics
+        await speechmaticsSendService.SendAudio(sendBuffer);
+    }
+
+    private void sendAudioToFrontend(byte[] buffer)
+    {
+        short[] frontendBuffer = new short[speechmaticsConnectionService.AudioFormat.GetCheckedSampleRate()];
+        Buffer.BlockCopy(buffer, 0, frontendBuffer, 0, buffer.Length);
+        frontendCommunicationService.Enqueue(frontendBuffer);
+    }
+
     /// <summary>
     /// Accumulates the data from <c>processAudioToStream</c> and sends buffers of a suitable size
     /// to the Speechmatics RT API for recognition and transcription.
@@ -152,60 +191,22 @@ public class AvProcessingService : IAvProcessingService
         Stream audioPipeReader = audioPipe.Reader.AsStream(false);
         Task<bool> audioProcessor = processAudioToStream(avStream, audioPipe.Writer);
 
-        int offset = 0;
-        int readCount;
-
         try
         {
             byte[] buffer = new byte[speechmaticsConnectionService.AudioFormat.GetCheckedSampleRate() * speechmaticsConnectionService.AudioFormat.GetBytesPerSample()]; // 1s
+            int filledAmount = 0;
             log.Debug("Started audio processing");
 
-            do
+            while ((filledAmount = await readProcessedChunk(audioPipeReader, buffer)) != 0)
             {
-                // wide range of possible exceptions
-                readCount = await audioPipeReader.ReadAsync(buffer.AsMemory(offset, buffer.Length - offset));
-                offset += readCount;
-
-                if (readCount != 0)
-                    log.Debug($"Read {readCount} audio bytes from pipe");
-
-                bool lastWithLeftovers = readCount == 0 && offset > 0;
-                bool shouldSend = (offset == buffer.Length) || lastWithLeftovers;
-
-                if (!shouldSend) continue;
-
-                byte[] sendBuffer = buffer;
-                if (lastWithLeftovers)
-                {
-                    sendBuffer = new byte[offset];
-                    Array.Copy(buffer, 0, sendBuffer, 0, sendBuffer.Length);
-                }
-
-                // push to speechmatics
-                await speechmaticsSendService.SendAudio(sendBuffer);
-
-                // store only decoded audio
-                short[] storeShortBuffer = new short[buffer.Length / 2];
-                Buffer.BlockCopy(sendBuffer, 0, storeShortBuffer, 0, (sendBuffer.Length / 2) * 2);
-
-                // play back with zero padding
-                if (lastWithLeftovers)
-                {
-                    sendBuffer = new byte[buffer.Length];
-                    Array.Copy(buffer, 0, sendBuffer, 0, buffer.Length);
-                }
-
-                short[] sendShortBuffer = new short[speechmaticsConnectionService.AudioFormat.GetCheckedSampleRate()];
-                Buffer.BlockCopy(sendBuffer, 0, sendShortBuffer, 0, sendBuffer.Length);
-                frontendCommunicationService.Enqueue(sendShortBuffer);
-
-                offset = 0;
+                Task sendToSpeechmatics = sendAudioToSpeechmatics(buffer, filledAmount);
+                sendAudioToFrontend(buffer);
+                await sendToSpeechmatics;
 
                 // TODO remove when we handle an actual livestream
                 // processing a local file is much faster than receiving networked A/V in realtime, simulate the delay
                 await Task.Delay(TimeSpan.FromSeconds(1));
             }
-            while (readCount != 0);
         }
         catch (Exception e)
         {

@@ -43,7 +43,7 @@ public partial class SpeechmaticsSendService : ISpeechmaticsSendService
 
     public async Task<bool> SendJsonMessage<T>(T message)
     {
-        speechmaticsConnectionService.CheckConnected();
+        speechmaticsConnectionService.ThrowIfNotConnected();
 
         byte[] messageSerialised = JsonSerializer.SerializeToUtf8Bytes<T>(message, speechmaticsConnectionService.JsonOptions);
         log.Information($"Sending {typeof(T).Name} message to Speechmatics");
@@ -61,7 +61,7 @@ public partial class SpeechmaticsSendService : ISpeechmaticsSendService
 
     public async Task<bool> SendAudio(byte[] audioBuffer)
     {
-        speechmaticsConnectionService.CheckConnected();
+        speechmaticsConnectionService.ThrowIfNotConnected();
 
         log.Information("Sending SendAudio message to Speechmatics");
 

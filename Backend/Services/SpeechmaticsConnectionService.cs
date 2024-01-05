@@ -12,12 +12,16 @@ using Serilog;
 
 public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
 {
-    private const int RECEIVE_BUFFER_SIZE = 1 * 1024;
+    private const int RECEIVE_BUFFER_SIZE = 4 * 1024;
 
     /// <summary>
-    /// The URL of the Speechmatics RT API.
+    /// A format template for the URL through which we'll connect to the Speechmatics RT API.
+    /// Note that this cannot be fully user-controlled due to various assumptions about
+    /// what API version we're talking against, and what type of data we're expected to be sending.
+    /// Currently, only the authority part of the URL makes sense to be exchangable.
+    /// See the configuration option <c>SpeechmaticsConnectionService:SPEECHMATICS_API_URL_AUTHORITY</c>.
     /// </summary>
-    private static readonly Uri SPEECHMATICS_API_URL = new Uri("wss://neu.rt.speechmatics.com/v2/de");
+    private const string SPEECHMATICS_API_URL_TEMPLATE = "wss://{0}/v2/de";
 
     /// <summary>
     /// Options to use for all *Message <-> JSON (de)serialisations
@@ -35,22 +39,29 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
     public static readonly StartRecognitionMessage_AudioFormat AUDIO_FORMAT =
         new StartRecognitionMessage_AudioFormat("raw", "pcm_s16le", 48000);
 
+    private readonly IConfiguration configuration;
+
+    private readonly Serilog.ILogger log;
+
     /// <summary>
     /// The Speechmatics RT API key this instance shall use for the RT transcription.
     /// </summary>
     /// <see cref="Init" />
     private string? apiKey = null;
 
+    private Uri speechmaticsApiUrl;
+
     private ClientWebSocket? wsClient;
 
     private CancellationTokenSource cts = new CancellationTokenSource();
 
-    private Serilog.ILogger log;
-
-    public SpeechmaticsConnectionService(Serilog.ILogger log)
+    public SpeechmaticsConnectionService(IConfiguration configuration, Serilog.ILogger log)
     {
+        this.configuration = configuration;
         this.log = log;
-
+        speechmaticsApiUrl = new Uri(string.Format(
+            SPEECHMATICS_API_URL_TEMPLATE,
+            configuration.GetValue<string>("SpeechmaticsConnectionService:SPEECHMATICS_API_URL_AUTHORITY")));
         reset();
     }
 
@@ -66,18 +77,14 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
 
     private async Task<bool> checkForResponse()
     {
-        try
-        {
-            CheckConnected();
-        }
-        catch (InvalidOperationException)
+        if (Connected != true)
         {
             log.Error("Cannot listen to Speechmatics without a connection");
             return false;
         }
 
         CancellationTokenSource receiveCts = new CancellationTokenSource();
-        byte[] responseBuffer = new byte[4 * 1024]; // only needs to be large enough to hold an Error message
+        byte[] responseBuffer = new byte[RECEIVE_BUFFER_SIZE]; // only needs to be large enough to hold an Error message
 
         // The idea here is to listen if Speechmatics sends us a message in response to our connection attempt
         // If it does, it's very likely that it's due to an error
@@ -120,23 +127,17 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
         }
     }
 
-    public void CheckConnected()
+    public void ThrowIfNotConnected()
     {
-        if (!this.Connected)
+        if (Connected != true)
             throw new InvalidOperationException("Not connected to Speechmatics");
-    }
-
-    public void CheckDisconnected()
-    {
-        if (this.Connected)
-            throw new InvalidOperationException("Still connected to Speechmatics");
     }
 
     public ClientWebSocket Socket
     {
         get
         {
-            CheckConnected();
+            ThrowIfNotConnected();
             return wsClient!;
         }
     }
@@ -225,21 +226,17 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
             return false;
         }
 
-        try
-        {
-            CheckDisconnected();
-        }
-        catch (InvalidOperationException)
+        if (Connected != false)
         {
             log.Error("Still connected to Speechmatics, cannot start a new connection");
             return false;
         }
 
-        log.Information($"Connecting to Speechmatics: {SPEECHMATICS_API_URL}");
+        log.Information($"Connecting to Speechmatics: {speechmaticsApiUrl}");
         ClientWebSocket wsClient = new ClientWebSocket();
         wsClient.Options.SetRequestHeader("Authorization", $"Bearer {apiKey!}");
         await wsClient.ConnectAsync(
-            SPEECHMATICS_API_URL,
+            speechmaticsApiUrl,
             ct);
 
         this.wsClient = wsClient;
@@ -249,11 +246,7 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
 
     public async Task<bool> Disconnect(bool signalSuccess, CancellationToken ct)
     {
-        try
-        {
-            CheckConnected();
-        }
-        catch (InvalidOperationException)
+        if (Connected != true)
         {
             log.Error("Not yet connected to Speechmatics, cannot close a current connection");
             return false;
@@ -287,69 +280,4 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
 
         return signalSuccess;
     }
-
-    /*
-    private async Task<bool> sendMessages(Stream audioStream, CancellationTokenSource cts)
-    {
-        // TODO should take transcription_config from ConfigurationService
-        bool success = await sendJsonMessage<StartRecognitionMessage>(
-            new StartRecognitionMessage(AUDIO_FORMAT),
-            cts);
-        if (success)
-            success = await sendAudio(audioStream, cts);
-        if (success)
-            success = await sendJsonMessage<EndOfStreamMessage>(new EndOfStreamMessage(1), cts); // FIXME actually confirm seq_no
-        return success;
-    }
-
-    private async Task<(bool Done, bool Success)> checkForCompletion(Task<bool> taskToCheck)
-    {
-        TimeSpan checkInterval = TimeSpan.FromSeconds(1);
-
-        bool done = false;
-        bool success = true;
-
-        Task<bool> taskSuccess = await Task.WhenAny(
-            taskToCheck,
-            timeoutTask<bool>(checkInterval, success));
-        if (taskSuccess == taskToCheck)
-        {
-            done = true;
-            success = taskSuccess.Result;
-        }
-
-        return (done, success);
-    }
-
-    public async Task<bool> ManageExchange(Stream audioStream, CancellationTokenSource cts)
-    {
-        receivingTask = receiveLoop(cts);
-        sendingTask = sendMessages(audioStream, cts);
-
-        bool receivingDone = false;
-        bool receivingSuccess = true;
-        bool sendingDone = false;
-        bool sendingSuccess = true;
-
-        do
-        {
-            if (!receivingDone)
-            {
-                (bool Done, bool Success) checkResults = await checkForCompletion(receivingTask);
-                receivingDone = checkResults.Done;
-                receivingSuccess = checkResults.Success;
-            }
-
-            if (!sendingDone)
-            {
-                (bool Done, bool Success) checkResults = await checkForCompletion(sendingTask);
-                sendingDone = checkResults.Done;
-                sendingSuccess = checkResults.Success;
-            }
-        }
-        while (!receivingDone && !sendingDone);
-
-        return sendingSuccess && receivingSuccess;
-    }
-    */
 }
