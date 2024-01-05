@@ -191,7 +191,7 @@ public class ClientExchangeController : ControllerBase
     /// </summary>
     /// <param name="format">Subtitle format string to validate.</param>
     /// <returns>True if the format is valid; otherwise, false.</returns>
-    private bool isValidFormat(string format)
+    private static bool isValidFormat(string format)
     {
         return format.Equals("webvtt", StringComparison.OrdinalIgnoreCase) ||
                format.Equals("srt", StringComparison.OrdinalIgnoreCase);
