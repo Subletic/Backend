@@ -136,7 +136,7 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
             .GetMethod(
                 name: nameof(JsonSerializer.Deserialize),
                 genericParameterCount: 1,
-                bindingAttr: BindingFlags.Public | BindingFlags.Static /*| BindingFlags.InvokeMethod*/,
+                bindingAttr: BindingFlags.Public | BindingFlags.Static,
                 binder: null,
                 callConvention: CallingConventions.Standard,
                 types: new Type[]

@@ -32,8 +32,12 @@ public class ClientExchangeController : ControllerBase
     /// Constructor for ClientExchangeController.
     /// Gets instances of services via Dependency Injection.
     /// </summary>
-    /// <param name="subtitleExporterService">The subtitle exporter service.</param>
     /// <param name="avReceiverService">The av receiver service.</param>
+    /// <param name="speechmaticsConnectionService">The speechmatics connection management service.</param>
+    /// <param name="speechmaticsReceiveService">The speechmatics message receive service.</param>
+    /// <param name="speechmaticsSendService">The speechmatics message send service.</param>
+    /// <param name="subtitleExporterService">The subtitle exporter service.</param>
+    /// <param name="log">The logger.</param>
     public ClientExchangeController(
         IAvReceiverService avReceiverService,
         ISpeechmaticsConnectionService speechmaticsConnectionService,

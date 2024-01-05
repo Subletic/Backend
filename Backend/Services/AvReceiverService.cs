@@ -25,12 +25,16 @@ public class AvReceiverService : IAvReceiverService
     /// </summary>
     private readonly IAvProcessingService avProcessingService;
 
+    /// <summary>
+    /// Dependency Injection for a logger
+    /// </summary>
     private readonly Serilog.ILogger log;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AvReceiverService"/> class.
     /// </summary>
     /// <param name="avProcessingService">The AvProcessingService to push fetched data into</param>
+    /// <param name="log">The logger</param>
     public AvReceiverService(IAvProcessingService avProcessingService, Serilog.ILogger log)
     {
         this.avProcessingService = avProcessingService;
@@ -38,7 +42,7 @@ public class AvReceiverService : IAvReceiverService
     }
 
     /// <summary>
-    /// Starts the front part of the transcription pipeline (read A/V overWebSocket, push into AvProcessingService)
+    /// Starts the front part of the transcription pipeline (read A/V over WebSocket, push into AvProcessingService)
     /// </summary>
     /// <param name="webSocket">The WebSocket to read A/V data from</param>
     /// <param name="ctSource">The CancellationTokenSource to cancel the operation</param>

@@ -65,8 +65,10 @@ public class AvProcessingService : IAvProcessingService
     /// <summary>
     /// Initializes a new instance of the <see cref="AvProcessingService"/> class.
     /// </summary>
-    /// <param name="wordProcessingService">The <c>SpeechBubbleController</c> to push new words into</param>
-    /// <param name="frontendCommunicationService">The Audio to push new audio into for the Frontend</param>
+    /// <param name="frontendCommunicationService">The service to push new audio into the Frontend</param>
+    /// <param name="speechmaticsConnectionService">The service to get audio format details for the communication with Speechmatics</param>
+    /// <param name="speechmaticsSendService">The service to push new audio into Speechmatics</param>
+    /// <param name="speechmaticsSendService">The logger</param>
     public AvProcessingService(
         IFrontendCommunicationService frontendCommunicationService,
         ISpeechmaticsConnectionService speechmaticsConnectionService,
@@ -82,18 +84,16 @@ public class AvProcessingService : IAvProcessingService
     /// <summary>
     /// Uses FFMpeg to process a file into the required audio format and push the data
     /// into the input side of a <c>Pipe</c>.
-    /// Internally launched and <c>await</c>ed by <c>SendAudio</c>.
+    /// Internally launched and <c>await</c>ed by <c>PushProcessedAudio</c>.
     /// At the end of the processing, no matter whether or not an error occurred,
     /// the <paramref name="audioPipe" /> is always flushed and closed.
-    /// To not exhaust our API keys during development, we only push up to 1 minute of audio into the pipe.
-    /// <param name="mediaUri">A URI to some media to run through FFMpeg.</param>
+    /// </summary>
+    /// <param name="avStream">A Stream to read media data from.</param>
     /// <param name="audioPipe">A <c>PipeWriter</c> to push the data into.</param>
     /// <returns>
     /// An <c>await</c>able <c>Task{bool}</c> indicating if the processing went well.
     /// </returns>
-    /// <seealso cref="sendAudio" />
-    /// <seealso cref="TranscribeAudio" />
-    /// </summary>
+    /// <seealso cref="PushProcessedAudio" />
     private async Task<bool> processAudioToStream(Stream avStream, PipeWriter audioPipe)
     {
         log.Debug("Started audio processing with FFmpeg");
@@ -172,15 +172,13 @@ public class AvProcessingService : IAvProcessingService
 
     /// <summary>
     /// Accumulates the data from <c>processAudioToStream</c> and sends buffers of a suitable size
-    /// to the Speechmatics RT API for recognition and transcription.
+    /// to the Speechmatics RT API for recognition and transcription, and the frontend for local playback.
     /// Internally launches and <c>await</c>s <c>ProcessAudioToStream</c>.
-    /// <param name="wsClient">A <c>ClientWebSocket</c> to send the <c>AddAudio</c> messages (the buffers) over.</param>
-    /// <param name="mediaUri">A URI of some media to run through FFMpeg.</param>
+    /// <param name="avStream">A Stream to read media data from.</param>
     /// <returns>
     /// An <c>await</c>able <c>Task{bool}</c> indicating if the processing and sending went well.
     /// </returns>
     /// <seealso cref="processAudioToStream" />
-    /// <seealso cref="TranscribeAudio" />
     /// </summary>
     public async Task<bool> PushProcessedAudio(Stream avStream)
     {
