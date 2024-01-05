@@ -7,30 +7,27 @@ using System.Threading;
 using Backend.Data;
 using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
+using Serilog;
 
 /// <summary>
 /// The ClientExchangeController receives a transcription request from a client via a WebSocket
-/// and returns the transcribed, corrected and converted substitles.
+/// and returns the transcribed, corrected, and converted subtitles.
 /// </summary>
 [ApiController]
 public class ClientExchangeController : ControllerBase
 {
-    /// <summary>
-    /// Dependency Injection for accessing needed Services.
-    /// </summary>
     private const int RECEIVE_BUFFER_SIZE = 8;
     private readonly IAvReceiverService avReceiverService;
     private readonly ISubtitleExporterService subtitleExporterService;
-    private readonly Serilog.ILogger log;
+    private readonly ILogger log;
 
     /// <summary>
-    /// Constructor for ClientExchangeController.
-    /// Gets instances of services via Dependency Injection.
+    /// Initializes the controller with necessary services via Dependency Injection.
     /// </summary>
-    /// <param name="log">The logger</param>
-    /// <param name="subtitleExporterService">The subtitle exporter service.</param>
-    /// <param name="avReceiverService">The av receiver service.</param>
-    public ClientExchangeController(Serilog.ILogger log, ISubtitleExporterService subtitleExporterService, IAvReceiverService avReceiverService)
+    /// <param name="log">Logger for logging events and errors.</param>
+    /// <param name="subtitleExporterService">Service for exporting subtitles.</param>
+    /// <param name="avReceiverService">Service for receiving audio/video data.</param>
+    public ClientExchangeController(ILogger log, ISubtitleExporterService subtitleExporterService, IAvReceiverService avReceiverService)
     {
         this.log = log;
         this.avReceiverService = avReceiverService;
@@ -38,9 +35,9 @@ public class ClientExchangeController : ControllerBase
     }
 
     /// <summary>
-    /// Represents an asynchronous operation that can return a value.
+    /// Asynchronous method to handle WebSocket transcription requests.
     /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <returns>Task representing the asynchronous operation.</returns>
     [Route("/transcribe")]
     public async Task Get()
     {
@@ -53,59 +50,76 @@ public class ClientExchangeController : ControllerBase
 
         log.Information("Accepting transcription request");
         using WebSocket webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-        string formats = await receiveJsonResponse(webSocket);
-        subtitleExporterService.SelectFormat(formats);
-        CancellationTokenSource ctSource = new CancellationTokenSource();
-        Task subtitleExportTask = subtitleExporterService.Start(webSocket, ctSource); // write at end of pipeline
-        Task avReceiveTask = avReceiverService.Start(webSocket, ctSource); // read at start of pipeline
 
-        await avReceiveTask;
         try
         {
+            // Receiving format information from the client.
+            string formats = await receiveFormatSpecification(webSocket);
+
+            // Validating and selecting the subtitle format.
+            if (!isValidFormat(formats))
+            {
+                throw new ArgumentException("Unsupported subtitle format");
+            }
+
+            subtitleExporterService.SelectFormat(formats);
+            CancellationTokenSource ctSource = new CancellationTokenSource();
+            Task subtitleExportTask = subtitleExporterService.Start(webSocket, ctSource);
+            Task avReceiveTask = avReceiverService.Start(webSocket, ctSource);
+
+            await avReceiveTask;
             await subtitleExportTask;
+        }
+        catch (ArgumentException ex)
+        {
+            log.Error($"Error: {ex.Message}");
         }
         catch (OperationCanceledException)
         {
             log.Information("Cancellation handled");
         }
-
-        await webSocket.CloseAsync(WebSocketCloseStatus.Empty, "", CancellationToken.None);
+        finally
+        {
+            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+        }
     }
 
     /// <summary>
-    /// Receives a JSON formatted string response from a WebSocket.
+    /// Receives a JSON-formatted string response via WebSocket.
     /// </summary>
-    /// <param name="webSocket">The WebSocket from which to receive the response.</param>
-    /// <returns>A string of the JSON response.</returns>
-    private async Task<string> receiveJsonResponse(WebSocket webSocket)
+    /// <param name="webSocket">WebSocket connection to receive the data from.</param>
+    /// <returns>Complete JSON string received from the WebSocket.</returns>
+    private async Task<string> receiveFormatSpecification(WebSocket webSocket)
     {
         byte[] chunkBuffer = new byte[RECEIVE_BUFFER_SIZE];
-        List<byte> messageChunks = new List<byte>(RECEIVE_BUFFER_SIZE);
+        var messageChunks = new List<byte>(RECEIVE_BUFFER_SIZE);
         bool completed = false;
 
         do
         {
-            log.Debug("Listening from data from Speechmatics");
-            WebSocketReceiveResult response = await webSocket.ReceiveAsync(
-                buffer: chunkBuffer,
-                cancellationToken: CancellationToken.None);
-            log.Debug("Received data from Speechmatics");
+            log.Debug("Listening for data from client");
+            WebSocketReceiveResult response = await webSocket.ReceiveAsync(chunkBuffer, CancellationToken.None);
+            log.Debug("Received data from client");
 
-            // FIXME AddRange'ing a Span directly for better performance is a .NET 8 feature
-            byte[] bufferToAdd = chunkBuffer;
-            if (response.Count != chunkBuffer.Length)
-            {
-                bufferToAdd = new byte[response.Count];
-                Array.Copy(chunkBuffer, bufferToAdd, response.Count);
-            }
-
+            byte[] bufferToAdd = response.Count != chunkBuffer.Length ? chunkBuffer[..response.Count] : chunkBuffer;
             messageChunks.AddRange(bufferToAdd);
             completed = response.EndOfMessage;
         }
         while (!completed);
-        string completeMessage = Encoding.UTF8.GetString(messageChunks.ToArray());
 
+        string completeMessage = Encoding.UTF8.GetString(messageChunks.ToArray());
         log.Debug($"Received message: {completeMessage}");
         return completeMessage;
+    }
+
+    /// <summary>
+    /// Checks if the provided format string is a valid subtitle format.
+    /// </summary>
+    /// <param name="format">Subtitle format string to validate.</param>
+    /// <returns>True if the format is valid; otherwise, false.</returns>
+    private bool isValidFormat(string format)
+    {
+        return format.Equals("webvtt", StringComparison.OrdinalIgnoreCase) ||
+               format.Equals("srt", StringComparison.OrdinalIgnoreCase);
     }
 }
