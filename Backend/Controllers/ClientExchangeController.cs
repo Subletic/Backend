@@ -79,7 +79,8 @@ public class ClientExchangeController : ControllerBase
         if (!isValidFormat(formats))
         {
             await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, formats, CancellationToken.None);
-            throw new ArgumentException("Unsupported subtitle format");
+            log.Warning($"Rejecting transcription request with invalid subtitle format {formats}");
+            return;
         }
 
         CancellationTokenSource ctSource = new CancellationTokenSource();
