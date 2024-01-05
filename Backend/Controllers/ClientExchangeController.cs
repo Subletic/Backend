@@ -93,13 +93,20 @@ public class ClientExchangeController : ControllerBase
 
         if (connectionAlive)
         {
-            // TODO await sent audio packets == confirmed audio packets
+            // wait for all sent audio chunks to be received & confirmed by Speechmatics
+            while (speechmaticsSendService.SequenceNumber > speechmaticsReceiveService.SequenceNumber)
+            {
+                log.Debug($"Waiting for receiving side's sequence number ({speechmaticsReceiveService.SequenceNumber}) to match sending side's sequence number ({speechmaticsSendService.SequenceNumber})");
+                await Task.Delay(TimeSpan.FromSeconds(1));
+            }
+
             await speechmaticsSendService.SendJsonMessage<EndOfStreamMessage>(
-                new EndOfStreamMessage(1)); // TODO use confirmed audio number
+                new EndOfStreamMessage(speechmaticsSendService.SequenceNumber));
+
             await subtitleReceiveTask; // no more subtitles to receive
             await speechmaticsConnectionService.Disconnect(connectionAlive, ctSource.Token);
-            await subtitleExportTask; // no more subtitles to export
 
+            await subtitleExportTask; // no more subtitles to export
             await webSocket.CloseAsync(WebSocketCloseStatus.Empty, "", CancellationToken.None);
         }
         else

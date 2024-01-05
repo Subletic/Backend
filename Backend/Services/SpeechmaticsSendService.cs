@@ -22,10 +22,23 @@ public partial class SpeechmaticsSendService : ISpeechmaticsSendService
 
     private Serilog.ILogger log;
 
+    public ulong SequenceNumber
+    {
+        get;
+        private set;
+    }
+
     public SpeechmaticsSendService(ISpeechmaticsConnectionService speechmaticsConnectionService, Serilog.ILogger log)
     {
         this.speechmaticsConnectionService = speechmaticsConnectionService;
         this.log = log;
+
+        resetSequenceNumber();
+    }
+
+    private void resetSequenceNumber()
+    {
+        SequenceNumber = 0;
     }
 
     public async Task<bool> SendJsonMessage<T>(T message)
@@ -48,6 +61,8 @@ public partial class SpeechmaticsSendService : ISpeechmaticsSendService
 
     public async Task<bool> SendAudio(byte[] audioBuffer)
     {
+        speechmaticsConnectionService.CheckConnected();
+
         log.Information("Sending SendAudio message to Speechmatics");
 
         await speechmaticsConnectionService.Socket.SendAsync(
@@ -55,6 +70,8 @@ public partial class SpeechmaticsSendService : ISpeechmaticsSendService
             messageType: WebSocketMessageType.Binary,
             endOfMessage: true,
             cancellationToken: speechmaticsConnectionService.CancellationToken);
+
+        SequenceNumber += 1;
 
         // FIXME return some failure/success indicator
         return true;

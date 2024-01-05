@@ -6,7 +6,9 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
+using Backend.Data;
 using Backend.Data.SpeechmaticsMessages.AddTranscriptMessage;
+using Backend.Data.SpeechmaticsMessages.AddTranscriptMessage.result;
 using Backend.Data.SpeechmaticsMessages.AudioAddedMessage;
 using Backend.Data.SpeechmaticsMessages.EndOfStreamMessage;
 using Backend.Data.SpeechmaticsMessages.EndOfTranscriptMessage;
@@ -14,12 +16,13 @@ using Backend.Data.SpeechmaticsMessages.ErrorMessage;
 using Backend.Data.SpeechmaticsMessages.InfoMessage;
 using Backend.Data.SpeechmaticsMessages.RecognitionStartedMessage;
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage;
+using Backend.Data.SpeechmaticsMessages.WarningMessage;
 
 using Serilog;
 
 public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
 {
-    private const int RECEIVE_BUFFER_SIZE = 1 * 1024;
+    private const int RECEIVE_BUFFER_SIZE = 1024;
 
     /// <summary>
     /// A regular expression to extract the type of message Speechmatics sent us.
@@ -32,6 +35,8 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
 
     private ISpeechmaticsConnectionService speechmaticsConnectionService;
 
+    private IWordProcessingService wordProcessingService;
+
     private Serilog.ILogger log;
 
     public ulong SequenceNumber
@@ -40,9 +45,13 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
         private set;
     }
 
-    public SpeechmaticsReceiveService(ISpeechmaticsConnectionService speechmaticsConnectionService, Serilog.ILogger log)
+    public SpeechmaticsReceiveService(
+        ISpeechmaticsConnectionService speechmaticsConnectionService,
+        IWordProcessingService wordProcessingService,
+        Serilog.ILogger log)
     {
         this.speechmaticsConnectionService = speechmaticsConnectionService;
+        this.wordProcessingService = wordProcessingService;
         this.log = log;
 
         resetSequenceNumber();
@@ -68,12 +77,12 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
         speechmaticsConnectionService.CheckConnected();
 
         byte[] chunkBuffer = new byte[RECEIVE_BUFFER_SIZE];
-        List<byte> messageChunks = new List<byte>(RECEIVE_BUFFER_SIZE);
+        List<byte> messageChunks = new List<byte>();
         bool completed = false;
 
         do
         {
-            log.Debug("Listening from data from Speechmatics");
+            log.Debug("Listening for data from Speechmatics");
             WebSocketReceiveResult response = await speechmaticsConnectionService.Socket.ReceiveAsync(
                 buffer: chunkBuffer,
                 cancellationToken: speechmaticsConnectionService.CancellationToken);
@@ -100,7 +109,7 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
     private Type identifyMessage(byte[] messageBuffer)
     {
         MatchCollection messageMatches = MESSAGE_TYPE_REGEX().Matches(Encoding.UTF8.GetString(messageBuffer));
-        log.Debug($"messageMatches.Count: {messageMatches.Count}");
+        log.Debug($"Found {messageMatches.Count} matches of message type pattern in data");
         if (messageMatches.Count != 1)
             throw new ArgumentException($"Found unexpected amount of message type matches: {messageMatches.Count}");
 
@@ -152,7 +161,34 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
             })!;
     }
 
-    private void handleAudioAdded(AudioAddedMessage message)
+    private void handleAddTranscriptMessage(AddTranscriptMessage message)
+    {
+        foreach (AddTranscriptMessage_Result transcript in message.results!)
+        {
+            // the specs say an AddTranscript.results may come without an alternatives list.
+            // TODO what is its purpose?
+            if (transcript.alternatives is null)
+            {
+                throw new InvalidOperationException(
+                    "Received a transcript result without an alternatives list. "
+                    + "Specifications say this is a possibility, but don't know what to do with it?");
+            }
+
+            wordProcessingService.HandleNewWord(new WordToken(
+                transcript.alternatives![0].content, // docs say this sends a list, I've only ever seen it send 1 result
+                (float)transcript.alternatives![0].confidence,
+                transcript.start_time,
+                transcript.end_time,
+                1));
+
+            // TODO api can send a string if this feature is requested, extract a number from it
+            // https://docs.speechmatics.com/features/diarization#speaker-diarization
+            // speaker identified: "S<speaker-id>"
+            // not identified: "UU"
+        }
+    }
+
+    private void handleAudioAddedMessage(AudioAddedMessage message)
     {
         if (message.seq_no != (SequenceNumber + 1))
         {
@@ -164,9 +200,21 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
         SequenceNumber += 1;
     }
 
-    private void handleAddTranscript(AddTranscriptMessage message)
+    private void handleErrorMessage(ErrorMessage message)
     {
-        log.Error("FIXME: Digest returned transcript");
+        string errorString = $"Speechmatics reports a fatal error: {message.type}: {message.reason}";
+        log.Error(errorString);
+        throw new Exception(errorString);
+    }
+
+    private void handleInfoMessage(InfoMessage message)
+    {
+        log.Information($"Speechmatics reports some information: {message.type}: {message.reason}");
+    }
+
+    private void handleWarningMessage(WarningMessage message)
+    {
+        log.Warning($"Speechmatics reports a non-critical warning: {message.type}: {message.reason}");
     }
 
     private bool processMessage(dynamic messageObject, Type messageType)
@@ -175,11 +223,11 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
         switch (messageType.Name)
         {
             case "AudioAddedMessage":
-                handleAudioAdded((AudioAddedMessage)messageObject);
+                handleAudioAddedMessage((AudioAddedMessage)messageObject);
                 return false;
 
             case "AddTranscriptMessage":
-                handleAddTranscript((AddTranscriptMessage)messageObject);
+                handleAddTranscriptMessage((AddTranscriptMessage)messageObject);
                 return false;
 
             case "EndOfTranscriptMessage":
@@ -187,15 +235,19 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
                 return true;
 
             case "ErrorMessage":
-                ErrorMessage errorMessage = (ErrorMessage)messageObject;
-                {
-                    string errorString = $"Speechmatics reports a fatal error: {errorMessage.type}: {errorMessage.reason}";
-                    log.Error(errorString);
-                    throw new Exception(errorString);
-                }
+                handleErrorMessage((ErrorMessage)messageObject);
+                return true; // should have thrown, but all branches are required to break or return
+
+            case "InfoMessage":
+                handleInfoMessage((InfoMessage)messageObject);
+                return false;
+
+            case "WarningMessage":
+                handleWarningMessage((WarningMessage)messageObject);
+                return false;
 
             default:
-                log.Information("Nothing we need to / know how to handle.");
+                log.Information("Nothing we need to do / know how to handle about that message.");
                 return false;
         }
     }
@@ -203,7 +255,7 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
     public async Task<bool> ReceiveLoop()
     {
         bool done = false;
-
+        bool success = true;
         resetSequenceNumber();
 
         do
@@ -219,12 +271,12 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
             {
                 log.Error(e.ToString());
                 done = true;
+                success = false;
             }
         }
         while (!done);
 
-        // FIXME return failure/success indication (try-catch to handle comm errors & ErrorMessage)
-        return true;
+        return success;
     }
 
     public void TestDeserialisation()
