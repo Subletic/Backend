@@ -23,4 +23,10 @@ public interface ISubtitleExporterService
     /// <param name="speechBubble">The SpeechBubble to export.</param>
     /// <returns>A Task representing the asynchronous operation.</returns>
     public Task ExportSubtitle(SpeechBubble speechBubble);
+
+    /// <summary>
+    /// Selects the format for subtitle export.
+    /// </summary>
+    /// <param name="format">The format to use for exporting subtitles.</param>
+    public void SelectFormat(string format);
 }

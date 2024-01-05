@@ -10,9 +10,10 @@ namespace Backend.Services
     /// <summary>
     /// Class responsible for exporting speech bubbles to SRT format.
     /// </summary>
-    public class SrtConverter : ISrtConverter
+    public class SrtConverter : ISubtitleConverter
     {
         private readonly Stream outputStream;
+        private int counter = 1;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SrtConverter"/> class.
@@ -27,7 +28,7 @@ namespace Backend.Services
         /// Exports the speech bubbles to SRT format and writes the content to the output stream.
         /// </summary>
         /// <param name="speechBubbles">The list of speech bubbles to export.</param>
-        public void ConvertSpeechBubblesToSrt(List<SpeechBubble> speechBubbles)
+        public void ConvertSpeechBubble(SpeechBubble speechBubbles)
         {
             writeToStream(convertToSrt(speechBubbles));
         }
@@ -35,36 +36,36 @@ namespace Backend.Services
         /// <summary>
         /// Converts a list of speech bubbles to the SRT format.
         /// </summary>
-        /// <param name="speechBubbles">The list of speech bubbles to be converted.</param>
+        /// <param name="speechBubble">The list of speech bubbles to be converted.</param>
         /// <returns>A string representing the list of speech bubbles in SRT format.</returns>
-        private string convertToSrt(List<SpeechBubble> speechBubbles)
+        private string convertToSrt(SpeechBubble speechBubble)
         {
             var srtBuilder = new StringBuilder();
-            int counter = 1; // Counter for the subtitle sequence numbers
 
-            foreach (var bubble in speechBubbles)
+            // Adding the sequence number
+            srtBuilder.AppendLine(counter.ToString());
+
+            // Formatting and adding the time range
+            srtBuilder.AppendLine($"{formatTimeSrt(speechBubble.StartTime)} --> {formatTimeSrt(speechBubble.EndTime)}");
+
+            // Adding the speech bubble content
+            for (int i = 0; i < speechBubble.SpeechBubbleContent.Count; ++i)
             {
-                // Adding the sequence number
-                srtBuilder.AppendLine(counter.ToString());
-
-                // Formatting and adding the time range
-                srtBuilder.AppendLine($"{formatTimeSrt(bubble.StartTime)} --> {formatTimeSrt(bubble.EndTime)}");
-
-                // Adding the text content
-                var words = bubble.SpeechBubbleContent.Select(token => token.Word);
-                srtBuilder.AppendLine(string.Join(" ", words));
-
-                // Check if it's not the last bubble to add an extra newline
-                if (counter < speechBubbles.Count)
-                {
-                    srtBuilder.AppendLine();
-                }
-
-                counter++;
+                if (i > 0) srtBuilder.Append(' ');
+                srtBuilder.Append(speechBubble.SpeechBubbleContent[i].Word);
             }
 
+            // Add a newline for the text of the speech bubble
+            srtBuilder.AppendLine();
+            if (counter < speechBubble.SpeechBubbleContent.Count)
+            {
+                srtBuilder.AppendLine();
+            }
+
+            counter++;
+
             return srtBuilder.ToString();
-    }
+        }
 
         /// <summary>
         /// Formats the time in SRT format (hh:mm:ss,mmm).

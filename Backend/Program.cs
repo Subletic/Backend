@@ -44,7 +44,7 @@ builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
 
 builder.Services.AddSingleton<IFrontendCommunicationService, FrontendCommunicationService>();
 
-builder.Services.AddSingleton<ISrtConverter, SrtConverter>();
+builder.Services.AddSingleton<ISubtitleConverter, SrtConverter>();
 
 builder.Services.AddHostedService<StartupService>();
 

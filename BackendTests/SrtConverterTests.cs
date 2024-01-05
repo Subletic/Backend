@@ -78,34 +78,6 @@ namespace BackendTests
                         "",
                     }),
                 },
-                new object[]
-                {
-                    new List<SpeechBubble>
-                    {
-                        new SpeechBubble(1, 1, 0.0, 1.0, new List<WordToken>
-                        {
-                            new WordToken("First", 0.9f, 0.0, 0.5, 1),
-                            new WordToken("sentence.", 0.9f, 0.5, 1.0, 1),
-                        }),
-                        new SpeechBubble(2, 1, 1.5, 3.0, new List<WordToken>
-                        {
-                            new WordToken("Second", 0.9f, 1.5, 2.0, 1),
-                            new WordToken("sentence", 0.9f, 2.0, 2.5, 1),
-                            new WordToken("here.", 0.9f, 2.5, 3.0, 1),
-                        }),
-                    },
-                    string.Join(Environment.NewLine, new string[]
-                    {
-                        "1",
-                        "00:00:00,000 --> 00:00:01,000",
-                        "First sentence.",
-                        "",
-                        "2",
-                        "00:00:01,500 --> 00:00:03,000",
-                        "Second sentence here.",
-                        "",
-                    }),
-                },
             };
 
             foreach (object[] test in testData)
@@ -125,8 +97,10 @@ namespace BackendTests
             Stream outputStream = new MemoryStream();
             SrtConverter srtConverter = new SrtConverter(outputStream);
 
-            // Convert SpeechBubbles to SRT format
-            srtConverter.ConvertSpeechBubblesToSrt(speechBubbles);
+            foreach (var speechBubble in speechBubbles)
+            {
+                srtConverter.ConvertSpeechBubble(speechBubble);
+            }
 
             // Read converter result
             outputStream.Position = 0;

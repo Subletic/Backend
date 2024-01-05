@@ -28,12 +28,7 @@ public class SubtitleExporterService : ISubtitleExporterService
     /// <summary>
     /// The converter for translating SpeechBubbles into a preferred subtitle format
     /// </summary>
-    private IWebVttConverter webVttConverter;
-
-    /// <summary>
-    /// The converter for translating SpeechBubbles into a preferred subtitle format
-    /// </summary>
-    private ISrtConverter srtConverter;
+    private ISubtitleConverter? subtitleConverter;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SubtitleExporterService"/> class.
@@ -44,31 +39,25 @@ public class SubtitleExporterService : ISubtitleExporterService
     public SubtitleExporterService()
     {
         subtitlePipe = new Pipe();
-        webVttConverter = new WebVttConverter(subtitlePipe.Writer.AsStream(leaveOpen: true));
-        srtConverter = new SrtConverter(subtitlePipe.Writer.AsStream(leaveOpen: true));
     }
 
     /// <summary>
     /// Exports a speech bubble in the specified subtitle format.
     /// </summary>
-    /// <param name="speechBubble">The speech bubble to export.</param>
     /// <param name="format">The subtitle format ("webvtt" or "srt").</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    public Task SelectFormat(SpeechBubble speechBubble, string format)
+    public void SelectFormat(string format)
     {
         switch (format.ToLower())
         {
             case "webvtt":
-                webVttConverter.ConvertSpeechBubbleToWebVtt(speechBubble);
+                subtitleConverter = new WebVttConverter(subtitlePipe.Writer.AsStream(leaveOpen: true));
                 break;
             case "srt":
-                srtConverter.ConvertSpeechBubblesToSrt(new List<SpeechBubble> { speechBubble });
+                subtitleConverter = new SrtConverter(subtitlePipe.Writer.AsStream(leaveOpen: true));
                 break;
             default:
                 throw new ArgumentException("Unsupported subtitle format");
         }
-
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -128,14 +117,9 @@ public class SubtitleExporterService : ISubtitleExporterService
     /// <returns>A task that represents the asynchronous operation.</returns>
     public Task ExportSubtitle(SpeechBubble speechBubble)
     {
-        string format = determineFormat(speechBubble);
-        SelectFormat(speechBubble, format);
-        return Task.CompletedTask;
-    }
+        if (subtitleConverter is null) throw new InvalidOperationException("Not Valid subtitle");
 
-    private string determineFormat(SpeechBubble speechBubble)
-    {
-        // Implementieren Sie hier Ihre Logik zur Bestimmung des Formats
-        return "webvtt";
+        subtitleConverter.ConvertSpeechBubble(speechBubble);
+        return Task.CompletedTask;
     }
 }
