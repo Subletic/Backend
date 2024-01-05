@@ -44,15 +44,13 @@ builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
 
 builder.Services.AddSingleton<IFrontendCommunicationService, FrontendCommunicationService>();
 
-<<<<<<< Backend/Program.cs
 builder.Services.AddSingleton<ISubtitleConverter, SrtConverter>();
-=======
+
 builder.Services.AddSingleton<ISpeechmaticsConnectionService, SpeechmaticsConnectionService>();
 
 builder.Services.AddSingleton<ISpeechmaticsSendService, SpeechmaticsSendService>();
 
 builder.Services.AddSingleton<ISpeechmaticsReceiveService, SpeechmaticsReceiveService>();
->>>>>>> Backend/Program.cs
 
 builder.Services.AddHostedService<StartupService>();
 
