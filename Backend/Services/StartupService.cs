@@ -7,15 +7,24 @@ public class StartupService : IHostedService
 {
     private const string SPEECHMATICS_API_KEY_ENVVAR = "SPEECHMATICS_API_KEY";
 
-    private readonly IAvProcessingService avProcessingService;
+    private readonly ISpeechmaticsConnectionService speechmaticsConnectionService;
+
+    private readonly ISpeechmaticsReceiveService speechmaticsReceiveService;
+
+    private readonly Serilog.ILogger log;
 
     /// <summary>
     /// Represents a service that handles startup operations.
     /// </summary>
     /// <param name="avProcessingService">The AV processing service.</param>
-    public StartupService(IAvProcessingService avProcessingService)
+    public StartupService(
+        ISpeechmaticsConnectionService speechmaticsConnectionService,
+        ISpeechmaticsReceiveService speechmaticsReceiveService,
+        Serilog.ILogger log)
     {
-        this.avProcessingService = avProcessingService;
+        this.speechmaticsConnectionService = speechmaticsConnectionService;
+        this.speechmaticsReceiveService = speechmaticsReceiveService;
+        this.log = log;
     }
 
     /// <summary>
@@ -24,13 +33,23 @@ public class StartupService : IHostedService
     /// <param name="cancellationToken">Cancellation Token</param>
     /// <returns>Successful Task Completion</returns>
     /// <exception cref="InvalidOperationException">Thrown if AvProcessingService is lacking an Speechmatics API key</exception>
-    public Task StartAsync(CancellationToken cancellationToken)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
-        Console.WriteLine($"Taking Speechmatics API key from environment variable {SPEECHMATICS_API_KEY_ENVVAR}");
-        if (!avProcessingService.Init(SPEECHMATICS_API_KEY_ENVVAR))
-            throw new InvalidOperationException("Speechmatics API key is not set");
+        log.Information($"Taking Speechmatics API key from environment variable {SPEECHMATICS_API_KEY_ENVVAR}");
+        if (!await speechmaticsConnectionService.RegisterApiKey(SPEECHMATICS_API_KEY_ENVVAR))
+            throw new InvalidOperationException("Speechmatics API not available");
 
-        return Task.CompletedTask;
+        log.Information("Check if Reflection can find deserialisers");
+        try
+        {
+            speechmaticsReceiveService.TestDeserialisation();
+        }
+        catch (Exception e)
+        {
+            throw new InvalidOperationException("Cannot find a deserialiser", e);
+        }
+
+        log.Information("Ready for communication");
     }
 
     /// <summary>

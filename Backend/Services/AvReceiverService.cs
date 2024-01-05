@@ -18,61 +18,80 @@ public class AvReceiverService : IAvReceiverService
     /// <summary>
     /// Maximum amount of data to read from the WebSocket at once, in bytes
     /// </summary>
-    private const int MAXIMUM_READ_SIZE = 4096;
+    private const int MAXIMUM_READ_SIZE = 4 * 1024;
 
     /// <summary>
     /// Dependency Injection for AvProcessingService to push fetched data into
     /// </summary>
-    private IAvProcessingService avProcessingService;
+    private readonly IAvProcessingService avProcessingService;
+
+    /// <summary>
+    /// Dependency Injection for a logger
+    /// </summary>
+    private readonly Serilog.ILogger log;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AvReceiverService"/> class.
     /// </summary>
     /// <param name="avProcessingService">The AvProcessingService to push fetched data into</param>
-    public AvReceiverService(IAvProcessingService avProcessingService)
+    /// <param name="log">The logger</param>
+    public AvReceiverService(IAvProcessingService avProcessingService, Serilog.ILogger log)
     {
         this.avProcessingService = avProcessingService;
+        this.log = log;
     }
 
     /// <summary>
-    /// Starts the front part of the transcription pipeline (read A/V overWebSocket, push into AvProcessingService)
+    /// Starts the front part of the transcription pipeline (read A/V over WebSocket, push into AvProcessingService)
     /// </summary>
     /// <param name="webSocket">The WebSocket to read A/V data from</param>
     /// <param name="ctSource">The CancellationTokenSource to cancel the operation</param>
     /// <returns> A Task representing the asynchronous operation. </returns>
-    public async Task Start(WebSocket webSocket, CancellationTokenSource ctSource)
+    public async Task<bool> Start(WebSocket webSocket, CancellationTokenSource ctSource)
     {
         Pipe avPipe = new Pipe();
         Stream avWriter = avPipe.Writer.AsStream(leaveOpen: true);
         WebSocketReceiveResult avResult;
         byte[] readBuffer = new byte[MAXIMUM_READ_SIZE];
 
-        Console.WriteLine("Start reading AV data from WebSocket");
+        log.Debug("Start reading AV data from client");
 
-        Task<bool> transcriptionTask = avProcessingService.TranscribeAudio(avPipe.Reader.AsStream(leaveOpen: true));
+        bool connectionAlive = true;
+        Task<bool> processingTask = avProcessingService.PushProcessedAudio(avPipe.Reader.AsStream(leaveOpen: true));
 
-        do
+        try
         {
-            avResult = await webSocket.ReceiveAsync(readBuffer, ctSource.Token);
-
-            if (avResult.MessageType == WebSocketMessageType.Close)
+            do
             {
-                Console.WriteLine("Received WebSocket close request");
-                ctSource.Cancel();
-                break;
+                // too much
+                // log.Debug("Waiting for AV data to arrive");
+                avResult = await webSocket.ReceiveAsync(readBuffer, ctSource.Token);
+
+                if (avResult.MessageType == WebSocketMessageType.Close)
+                {
+                    log.Information("Received WebSocket close request from client");
+                    break;
+                }
+
+                // too much
+                // log.Debug($"Pushing {avResult.Count} bytes into AV processing");
+                await avWriter.WriteAsync(new ReadOnlyMemory<byte>(readBuffer, 0, avResult.Count), ctSource.Token);
             }
-
-            Console.WriteLine("Received data");
-
-            Console.WriteLine($"Pushing {avResult.Count} bytes into AV pipe");
-            await avWriter.WriteAsync(new ReadOnlyMemory<byte>(readBuffer, 0, avResult.Count), ctSource.Token);
+            while (avResult.MessageType != WebSocketMessageType.Close);
+            log.Debug("Done reading AV data");
         }
-        while (avResult.MessageType != WebSocketMessageType.Close);
+        catch (WebSocketException e)
+        {
+            log.Error($"WebSocket to client has an error: {e.Message}");
+            connectionAlive = false;
+        }
 
-        Console.WriteLine("Done reading AV data");
-
+        log.Debug("Closing pipe to AV processing");
         await avPipe.Writer.CompleteAsync();
-        bool transcriptionSuccess = await transcriptionTask;
-        Console.WriteLine("Transcription " + (transcriptionSuccess ? "success" : "failure"));
+        log.Debug("Waiting for AV processing to finish");
+        bool processingSuccess = await processingTask;
+        log.Debug("Processing " + (processingSuccess ? "success" : "failure"));
+
+        return connectionAlive;
     }
 }
