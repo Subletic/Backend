@@ -85,6 +85,7 @@ public class ClientExchangeController : ControllerBase
             return;
         }
 
+        subtitleExporterService.SelectFormat(formats);
         CancellationTokenSource ctSource = new CancellationTokenSource();
 
         // connect to Speechmatics
