@@ -29,6 +29,8 @@ public class ClientExchangeController : ControllerBase
     private readonly ISubtitleExporterService subtitleExporterService;
     private readonly Serilog.ILogger log;
 
+    private static bool alreadyConnected = false;
+
     /// <summary>
     /// Constructor for ClientExchangeController.
     /// Gets instances of services via Dependency Injection.
@@ -62,6 +64,13 @@ public class ClientExchangeController : ControllerBase
     [Route("/transcribe")]
     public async Task Get()
     {
+        if (alreadyConnected)
+        {
+            log.Warning("Rejecting further transcription request");
+            HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+            return;
+        }
+
         if (!HttpContext.WebSockets.IsWebSocketRequest)
         {
             log.Warning("Rejecting invalid transcription request");
@@ -71,6 +80,7 @@ public class ClientExchangeController : ControllerBase
 
         log.Information("Accepting transcription request");
         using WebSocket webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+        alreadyConnected = true;
 
         // Receiving format information from the client.
         string formats = await receiveFormatSpecification(webSocket);
@@ -151,6 +161,8 @@ public class ClientExchangeController : ControllerBase
                 // ignore
             }
         }
+
+        alreadyConnected = false;
     }
 
     /// <summary>
