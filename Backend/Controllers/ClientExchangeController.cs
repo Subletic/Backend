@@ -78,7 +78,9 @@ public class ClientExchangeController : ControllerBase
         // Validating and selecting the subtitle format.
         if (!isValidFormat(formats))
         {
-            await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, formats, CancellationToken.None);
+            string validFormatsList = "srt, webvtt";
+            string errorMessage = $"Invalid subtitle format: {formats}. Valid formats are: {validFormatsList}";
+            await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, errorMessage, CancellationToken.None);
             log.Warning($"Rejecting transcription request with invalid subtitle format {formats}");
             return;
         }
