@@ -1,3 +1,5 @@
+using Serilog;
+
 namespace BackendTests;
 
 using System;
@@ -18,7 +20,9 @@ public class SubtitleExporterServiceTests
     public async Task Start_SendsSubtitlesOverWebSocket()
     {
         // Arrange
-        var service = new SubtitleExporterService();
+        var logger = new LoggerConfiguration().CreateLogger();
+
+        var service = new SubtitleExporterService(logger);
 
         // Select the format to initialize the subtitleConverter
         service.SelectFormat("srt"); // Or use "webvtt" as needed
@@ -54,7 +58,8 @@ public class SubtitleExporterServiceTests
         sendingTask.Wait(2000); // Wait for the sending task to complete
         mockWebSocket.Verify(
             webSocket =>
-            webSocket.SendAsync(It.IsAny<ReadOnlyMemory<byte>>(), WebSocketMessageType.Text, false, cancellationTokenSource.Token),
+                webSocket.SendAsync(It.IsAny<ReadOnlyMemory<byte>>(), WebSocketMessageType.Text, false,
+                    cancellationTokenSource.Token),
             Times.AtLeastOnce());
     }
 }
