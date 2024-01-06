@@ -166,10 +166,6 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
         }
     }
 
-    private void reset()
-    {
-    }
-
     /// <summary>
     /// Registers the API key to use with the Speechmatics RT API.
     /// </summary>
