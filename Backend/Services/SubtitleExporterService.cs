@@ -19,7 +19,7 @@ public class SubtitleExporterService : ISubtitleExporterService
     /// <summary>
     /// Pipe for reading converted subtitles from the converter
     /// </summary>
-    private readonly Pipe subtitlePipe;
+    private Pipe subtitlePipe;
 
     /// <summary>
     /// Dependency Injection for the application configuration
@@ -66,6 +66,8 @@ public class SubtitleExporterService : ISubtitleExporterService
     /// <param name="format">The subtitle format ("webvtt" or "srt").</param>
     public void SelectFormat(string format)
     {
+        this.subtitlePipe = new Pipe();
+
         switch (format.ToLower())
         {
             case "webvtt":
