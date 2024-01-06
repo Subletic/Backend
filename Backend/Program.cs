@@ -44,6 +44,8 @@ builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
 
 builder.Services.AddSingleton<IFrontendCommunicationService, FrontendCommunicationService>();
 
+builder.Services.AddSingleton<ISubtitleConverter, SrtConverter>();
+
 builder.Services.AddSingleton<ISpeechmaticsConnectionService, SpeechmaticsConnectionService>();
 
 builder.Services.AddSingleton<ISpeechmaticsSendService, SpeechmaticsSendService>();
