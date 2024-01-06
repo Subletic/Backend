@@ -51,9 +51,9 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
 
     private Uri speechmaticsApiUrl;
 
-    private ClientWebSocket? wsClient;
+    private ClientWebSocket? wsClient = null;
 
-    private CancellationTokenSource cts;
+    private CancellationTokenSource cts = new CancellationTokenSource();
 
     public SpeechmaticsConnectionService(IConfiguration configuration, Serilog.ILogger log)
     {
@@ -62,7 +62,7 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
         speechmaticsApiUrl = new Uri(string.Format(
             SPEECHMATICS_API_URL_TEMPLATE,
             configuration.GetValue<string>("SpeechmaticsConnectionService:SPEECHMATICS_API_URL_AUTHORITY")));
-        reset();
+        cts.Cancel();
     }
 
     /// <summary>
@@ -168,8 +168,6 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
 
     private void reset()
     {
-        wsClient = null;
-        cts = new CancellationTokenSource();
     }
 
     /// <summary>
@@ -239,6 +237,7 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
             ct);
 
         this.wsClient = wsClient;
+        cts = new CancellationTokenSource();
 
         return wsClient.State == WebSocketState.Open;
     }
@@ -276,7 +275,7 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
 
         log.Debug("FIXME: Listen for confirmation of polite close request");
 
-        reset();
+        wsClient = null;
 
         return signalSuccess;
     }
