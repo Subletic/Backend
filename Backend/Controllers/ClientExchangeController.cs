@@ -129,6 +129,8 @@ public class ClientExchangeController : ControllerBase
                 await Task.Delay(TimeSpan.FromSeconds(1));
             }
 
+            subtitleExporterService.RequestShutdown();
+
             await speechmaticsSendService.SendJsonMessage<EndOfStreamMessage>(
                 new EndOfStreamMessage(speechmaticsSendService.SequenceNumber));
 
@@ -136,7 +138,9 @@ public class ClientExchangeController : ControllerBase
             await speechmaticsConnectionService.Disconnect(connectionAlive, ctSource.Token);
 
             await subtitleExportTask; // no more subtitles to export
-            await webSocket.CloseAsync(WebSocketCloseStatus.Empty, "", CancellationToken.None);
+            await webSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+
+            log.Information("Connection with client closed successfully");
         }
         else
         {

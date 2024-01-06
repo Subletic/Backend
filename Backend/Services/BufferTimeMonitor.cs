@@ -26,8 +26,6 @@ public class BufferTimeMonitor : BackgroundService
 
     private readonly ISubtitleExporterService subtitleExporterService;
 
-    private readonly IConfiguration configuration;
-
     private readonly int delayMilliseconds;
 
     private float timeLimitInMinutes;
@@ -49,7 +47,6 @@ public class BufferTimeMonitor : BackgroundService
     {
         this.frontendCommunicationService = frontendCommunicationService;
         this.configurationService = configurationService;
-        this.configuration = configuration;
         this.timeLimitInMinutes = configuration.GetValue<float>("BufferTimeMonitorSettings:DEFAULT_TIME_LIMIT_IN_MINUTES");
         this.delayMilliseconds = configuration.GetValue<int>("BufferTimeMonitorSettings:DEFAULT_DEALY_MILLISECONDS");
         this.speechBubbleListService = speechBubbleListService;
@@ -68,14 +65,21 @@ public class BufferTimeMonitor : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            timeLimitInMinutes = configurationService.GetDelay();
+            if (configurationService.GetDelay() != 0)
+            {
+                timeLimitInMinutes = configurationService.GetDelay();
+            }
+
             await Task.Delay(delayMilliseconds, stoppingToken);
 
             var oldestSpeechBubble = speechBubbleListService.GetSpeechBubbles().First;
             if (oldestSpeechBubble == null)
             {
+                subtitleExporterService.SetQueueContainsItems(false);
                 continue;
             }
+
+            subtitleExporterService.SetQueueContainsItems(true);
 
             var currentTime = DateTime.Now;
             var oldestSpeechBubbleCreationTime = oldestSpeechBubble.Value.CreationTime;
@@ -89,6 +93,7 @@ public class BufferTimeMonitor : BackgroundService
                 speechBubbleListService.DeleteOldestSpeechBubble();
 
                 await subtitleExporterService.ExportSubtitle(oldestSpeechBubble.Value);
+                if (speechBubbleListService.GetSpeechBubbles().First == null) subtitleExporterService.SetQueueContainsItems(false);
             }
         }
     }

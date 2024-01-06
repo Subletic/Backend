@@ -1,14 +1,10 @@
 namespace Backend.Services;
 
-using System;
-using System.Buffers;
 using System.IO.Pipelines;
 using System.Net.WebSockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Backend.Data;
-using Backend.Services;
+using Serilog;
+using ILogger = Serilog.ILogger;
 
 /// <summary>
 /// Service responsible for exporting finished subtitles back over the WebSocket connection.
@@ -23,7 +19,9 @@ public class SubtitleExporterService : ISubtitleExporterService
     /// <summary>
     /// Pipe for reading converted subtitles from the converter
     /// </summary>
-    private Pipe subtitlePipe;
+    private readonly Pipe subtitlePipe;
+
+    private readonly ILogger log;
 
     /// <summary>
     /// The converter for translating SpeechBubbles into a preferred subtitle format
@@ -31,13 +29,25 @@ public class SubtitleExporterService : ISubtitleExporterService
     private ISubtitleConverter? subtitleConverter;
 
     /// <summary>
+    /// True if SpeechBubbleListService still contains items deemed for export
+    /// </summary>
+    private bool queueContainsItems;
+
+    /// <summary>
+    /// True if Client requested Shutdown after transcription finished
+    /// </summary>
+    private bool shutdownRequested;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="SubtitleExporterService"/> class.
     /// </summary>
     /// <remarks>
     /// This constructor is used to handle dependency injection.
     /// </remarks>
-    public SubtitleExporterService()
+    /// <param name="log"> DI Serilog reference </param>
+    public SubtitleExporterService(ILogger log)
     {
+        this.log = log;
         subtitlePipe = new Pipe();
     }
 
@@ -73,41 +83,68 @@ public class SubtitleExporterService : ISubtitleExporterService
         Stream subtitleReaderStream = subtitlePipe.Reader.AsStream(leaveOpen: false);
         byte[] buffer = new byte[MAXIMUM_READ_SIZE];
 
-        Console.WriteLine("Start sending subtitles over WebSocket");
+        log.Information("Start sending subtitles over WebSocket");
 
         try
         {
             while (true)
             {
-                Console.WriteLine("Trying to read subtitles");
+                Log.Debug("Trying to read subtitles");
+                Log.Debug("Queue contains items: {QueueContainsItems}", queueContainsItems);
                 int readCount = 0;
                 try
                 {
+                    if (shutdownRequested && !queueContainsItems)
+                    {
+                        Log.Debug("Shutting down export");
+                        subtitleReaderStream.Close();
+                        break;
+                    }
+
                     // "block" here until at least 1 byte can be read
                     readCount = await subtitleReaderStream.ReadAtLeastAsync(buffer, 1, true, ctSource.Token);
                 }
                 catch (EndOfStreamException)
                 {
-                    Console.WriteLine("End of stream reached");
+                    Log.Information("End of stream reached");
                     break;
                 }
 
-                Console.WriteLine("Have subtitles ready to send");
+                Log.Debug("Have subtitles ready to send");
 
                 await webSocket.SendAsync(
                     new ReadOnlyMemory<byte>(buffer, 0, readCount),
                     WebSocketMessageType.Text,
                     false,
                     ctSource.Token);
-                Console.WriteLine("Subtitles sent");
+                Log.Debug("Subtitles sent");
             }
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("Subtitle export has been cancelled");
+            Log.Information("Subtitle export has been cancelled");
         }
 
-        Console.WriteLine("Done sending subtitles over WebSocket");
+        Log.Information("Done sending subtitles over WebSocket");
+    }
+
+    /// <summary>
+    /// Called from BufferTimeMonitor to let the ExporterService know if there are remaining SpeechBubbles in the queue.
+    /// Used for shutting down after all SpeechBubbles have been exported.
+    /// </summary>
+    /// <param name="containsItems">true if queue contains SpeechBubbles</param>
+    public void SetQueueContainsItems(bool containsItems)
+    {
+        queueContainsItems = containsItems;
+    }
+
+    /// <summary>
+    /// Called from ClientExchangeController to tell the ExporterService that it is ready for shutdown.
+    /// </summary>
+    public void RequestShutdown()
+    {
+        Log.Debug("Shutdown requested!");
+        shutdownRequested = true;
     }
 
     /// <summary>
