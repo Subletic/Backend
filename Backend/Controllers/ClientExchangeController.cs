@@ -112,6 +112,7 @@ public class ClientExchangeController : ControllerBase
         Task subtitleExportTask = subtitleExporterService.Start(webSocket, ctSource); // write at end of pipeline
 
         // setup speechmatics state
+        speechmaticsSendService.ResetSequenceNumber();
         Task subtitleReceiveTask = speechmaticsReceiveService.ReceiveLoop();
         await speechmaticsSendService.SendJsonMessage<StartRecognitionMessage>(
             new StartRecognitionMessage(speechmaticsConnectionService.AudioFormat));

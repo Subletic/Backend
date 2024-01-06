@@ -53,7 +53,7 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
 
     private ClientWebSocket? wsClient;
 
-    private CancellationTokenSource cts = new CancellationTokenSource();
+    private CancellationTokenSource cts;
 
     public SpeechmaticsConnectionService(IConfiguration configuration, Serilog.ILogger log)
     {
@@ -169,7 +169,6 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
     private void reset()
     {
         wsClient = null;
-        cts.Cancel();
         cts = new CancellationTokenSource();
     }
 
@@ -252,6 +251,7 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
             return false;
         }
 
+        cts.Cancel();
         string closeReason = "Done";
         if (!signalSuccess)
             closeReason = "A problem occurred";

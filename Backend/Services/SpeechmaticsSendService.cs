@@ -33,10 +33,10 @@ public partial class SpeechmaticsSendService : ISpeechmaticsSendService
         this.speechmaticsConnectionService = speechmaticsConnectionService;
         this.log = log;
 
-        resetSequenceNumber();
+        ResetSequenceNumber();
     }
 
-    private void resetSequenceNumber()
+    public void ResetSequenceNumber()
     {
         SequenceNumber = 0;
     }
