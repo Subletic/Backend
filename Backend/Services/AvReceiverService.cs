@@ -72,7 +72,9 @@ public class AvReceiverService : IAvReceiverService
         {
             do
             {
-                CancellationTokenSource timeout = new CancellationTokenSource(configuration.GetValue<int>($"{this.GetType().Name}:TIMEOUT_IN_MILLISECONDS"));
+                CancellationTokenSource timeout = new CancellationTokenSource(
+                    (int)TimeSpan.FromSeconds(configuration.GetValue<double>("ClientCommunicationSettings:TIMEOUT_IN_SECONDS"))
+                        .TotalMilliseconds);
 
                 // differenciate between timeout being hit and the shared token being cancelled
                 try

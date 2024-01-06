@@ -27,9 +27,12 @@ public class ClientExchangeController : ControllerBase
     private readonly ISpeechmaticsReceiveService speechmaticsReceiveService;
     private readonly ISpeechmaticsSendService speechmaticsSendService;
     private readonly ISubtitleExporterService subtitleExporterService;
+    private readonly IConfiguration configuration;
     private readonly Serilog.ILogger log;
 
     private static bool alreadyConnected = false;
+
+    private TimeSpan clientTimeout;
 
     /// <summary>
     /// Constructor for ClientExchangeController.
@@ -47,6 +50,7 @@ public class ClientExchangeController : ControllerBase
         ISpeechmaticsReceiveService speechmaticsReceiveService,
         ISpeechmaticsSendService speechmaticsSendService,
         ISubtitleExporterService subtitleExporterService,
+        IConfiguration configuration,
         Serilog.ILogger log)
     {
         this.avReceiverService = avReceiverService;
@@ -54,7 +58,14 @@ public class ClientExchangeController : ControllerBase
         this.speechmaticsReceiveService = speechmaticsReceiveService;
         this.speechmaticsSendService = speechmaticsSendService;
         this.subtitleExporterService = subtitleExporterService;
+        this.configuration = configuration;
         this.log = log;
+        clientTimeout = TimeSpan.FromSeconds(configuration.GetValue<double>("ClientCommunicationSettings:TIMEOUT_IN_SECONDS"));
+    }
+
+    private CancellationToken makeClientTimeoutToken()
+    {
+        return new CancellationTokenSource((int)clientTimeout.TotalMilliseconds).Token;
     }
 
     /// <summary>
@@ -90,7 +101,7 @@ public class ClientExchangeController : ControllerBase
         {
             string validFormatsList = "srt, webvtt";
             string errorMessage = $"Invalid subtitle format: {formats}. Valid formats are: {validFormatsList}";
-            await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, errorMessage, CancellationToken.None);
+            await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, errorMessage, makeClientTimeoutToken());
             log.Warning($"Rejecting transcription request with invalid subtitle format {formats}");
             return;
         }
@@ -104,7 +115,7 @@ public class ClientExchangeController : ControllerBase
         {
             log.Error("Failed to connect to Speechmatics");
             await speechmaticsConnectionService.Disconnect(false, ctSource.Token); // cleanup & reset
-            await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, "Failed to connect to Speechmatics", ctSource.Token);
+            await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, "Failed to connect to Speechmatics", makeClientTimeoutToken());
             HttpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
             return;
         }
@@ -139,7 +150,7 @@ public class ClientExchangeController : ControllerBase
             await speechmaticsConnectionService.Disconnect(connectionAlive, ctSource.Token);
 
             await subtitleExportTask; // no more subtitles to export
-            await webSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+            await webSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", makeClientTimeoutToken());
 
             log.Information("Connection with client closed successfully");
         }
@@ -186,7 +197,7 @@ public class ClientExchangeController : ControllerBase
             log.Debug("Listening from data from Speechmatics");
             WebSocketReceiveResult response = await webSocket.ReceiveAsync(
                 buffer: chunkBuffer,
-                cancellationToken: CancellationToken.None);
+                cancellationToken: makeClientTimeoutToken());
             log.Debug("Received data from Speechmatics");
 
             // FIXME AddRange'ing a Span directly for better performance is a .NET 8 feature

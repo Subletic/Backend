@@ -21,6 +21,14 @@ public class SubtitleExporterService : ISubtitleExporterService
     /// </summary>
     private readonly Pipe subtitlePipe;
 
+    /// <summary>
+    /// Dependency Injection for the application configuration
+    /// </summary>
+    private readonly IConfiguration configuration;
+
+    /// <summary>
+    /// Dependency Injection for the logger
+    /// </summary>
     private readonly ILogger log;
 
     /// <summary>
@@ -45,8 +53,9 @@ public class SubtitleExporterService : ISubtitleExporterService
     /// This constructor is used to handle dependency injection.
     /// </remarks>
     /// <param name="log"> DI Serilog reference </param>
-    public SubtitleExporterService(ILogger log)
+    public SubtitleExporterService(IConfiguration configuration, ILogger log)
     {
+        this.configuration = configuration;
         this.log = log;
         subtitlePipe = new Pipe();
     }
@@ -89,14 +98,14 @@ public class SubtitleExporterService : ISubtitleExporterService
         {
             while (true)
             {
-                Log.Debug("Trying to read subtitles");
-                Log.Debug("Queue contains items: {QueueContainsItems}", queueContainsItems);
+                log.Debug("Trying to read subtitles");
+                log.Debug("Queue contains items: {QueueContainsItems}", queueContainsItems);
                 int readCount = 0;
                 try
                 {
                     if (shutdownRequested && !queueContainsItems)
                     {
-                        Log.Debug("Shutting down export");
+                        log.Debug("Shutting down export");
                         subtitleReaderStream.Close();
                         break;
                     }
@@ -106,26 +115,40 @@ public class SubtitleExporterService : ISubtitleExporterService
                 }
                 catch (EndOfStreamException)
                 {
-                    Log.Information("End of stream reached");
+                    log.Information("End of stream reached");
                     break;
                 }
 
-                Log.Debug("Have subtitles ready to send");
+                log.Debug("Have subtitles ready to send");
 
-                await webSocket.SendAsync(
-                    new ReadOnlyMemory<byte>(buffer, 0, readCount),
-                    WebSocketMessageType.Text,
-                    false,
-                    ctSource.Token);
-                Log.Debug("Subtitles sent");
+                CancellationToken timeout = new CancellationTokenSource(
+                    (int)TimeSpan.FromSeconds(configuration.GetValue<double>("ClientCommunicationSettings:TIMEOUT_IN_SECONDS"))
+                        .TotalMilliseconds).Token;
+
+                try
+                {
+                    await webSocket.SendAsync(
+                        new ReadOnlyMemory<byte>(buffer, 0, readCount),
+                        WebSocketMessageType.Text,
+                        false,
+                        timeout);
+                }
+                catch (OperationCanceledException e)
+                {
+                    log.Error("Timed out waiting for client to receive subtitles");
+                    throw e;
+                }
+
+                log.Debug("Subtitles sent");
+                ctSource.Token.ThrowIfCancellationRequested();
             }
         }
         catch (OperationCanceledException)
         {
-            Log.Information("Subtitle export has been cancelled");
+            log.Information("Subtitle export has been cancelled");
         }
 
-        Log.Information("Done sending subtitles over WebSocket");
+        log.Information("Done sending subtitles over WebSocket");
     }
 
     /// <summary>
@@ -143,7 +166,7 @@ public class SubtitleExporterService : ISubtitleExporterService
     /// </summary>
     public void RequestShutdown()
     {
-        Log.Debug("Shutdown requested!");
+        log.Debug("Shutdown requested!");
         shutdownRequested = true;
     }
 
