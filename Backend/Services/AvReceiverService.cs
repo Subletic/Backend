@@ -26,6 +26,11 @@ public class AvReceiverService : IAvReceiverService
     private readonly IAvProcessingService avProcessingService;
 
     /// <summary>
+    /// Dependency Injection for the application's configuration
+    /// </summary>
+    private readonly IConfiguration configuration;
+
+    /// <summary>
     /// Dependency Injection for a logger
     /// </summary>
     private readonly Serilog.ILogger log;
@@ -35,9 +40,13 @@ public class AvReceiverService : IAvReceiverService
     /// </summary>
     /// <param name="avProcessingService">The AvProcessingService to push fetched data into</param>
     /// <param name="log">The logger</param>
-    public AvReceiverService(IAvProcessingService avProcessingService, Serilog.ILogger log)
+    public AvReceiverService(
+        IAvProcessingService avProcessingService,
+        IConfiguration configuration,
+        Serilog.ILogger log)
     {
         this.avProcessingService = avProcessingService;
+        this.configuration = configuration;
         this.log = log;
     }
 
@@ -63,9 +72,20 @@ public class AvReceiverService : IAvReceiverService
         {
             do
             {
-                // too much
-                // log.Debug("Waiting for AV data to arrive");
-                avResult = await webSocket.ReceiveAsync(readBuffer, ctSource.Token);
+                CancellationTokenSource timeout = new CancellationTokenSource(configuration.GetValue<int>($"{this.GetType().Name}:TIMEOUT_IN_MILLISECONDS"));
+
+                // differenciate between timeout being hit and the shared token being cancelled
+                try
+                {
+                    avResult = await webSocket.ReceiveAsync(readBuffer, timeout.Token);
+                }
+                catch (OperationCanceledException e)
+                {
+                    log.Error("Timed out waiting for client to send AV data");
+                    throw e;
+                }
+
+                ctSource.Token.ThrowIfCancellationRequested();
 
                 if (avResult.MessageType == WebSocketMessageType.Close)
                 {
@@ -73,8 +93,6 @@ public class AvReceiverService : IAvReceiverService
                     break;
                 }
 
-                // too much
-                // log.Debug($"Pushing {avResult.Count} bytes into AV processing");
                 await avWriter.WriteAsync(new ReadOnlyMemory<byte>(readBuffer, 0, avResult.Count), ctSource.Token);
             }
             while (avResult.MessageType != WebSocketMessageType.Close);
@@ -85,13 +103,26 @@ public class AvReceiverService : IAvReceiverService
             log.Error($"WebSocket to client has an error: {e.Message}");
             connectionAlive = false;
         }
+        catch (OperationCanceledException)
+        {
+            log.Error("Reading AV data from client has been cancelled");
+        }
 
         log.Debug("Closing pipe to AV processing");
         await avPipe.Writer.CompleteAsync();
-        log.Debug("Waiting for AV processing to finish");
-        bool processingSuccess = await processingTask;
-        log.Debug("Processing " + (processingSuccess ? "success" : "failure"));
 
+        log.Debug("Waiting for AV processing to finish");
+        bool processingSuccess = true;
+        try
+        {
+            processingSuccess = await processingTask;
+        }
+        catch (Exception e)
+        {
+            log.Debug($"AV processing threw an exception: {e.ToString()}");
+        }
+
+        log.Debug("Processing " + (processingSuccess ? "success" : "failure"));
         return connectionAlive;
     }
 }
