@@ -17,11 +17,6 @@ public class SubtitleExporterService : ISubtitleExporterService
     private const int MAXIMUM_READ_SIZE = 4096;
 
     /// <summary>
-    /// Pipe for reading converted subtitles from the converter
-    /// </summary>
-    private Pipe subtitlePipe;
-
-    /// <summary>
     /// Dependency Injection for the application configuration
     /// </summary>
     private readonly IConfiguration configuration;
@@ -30,6 +25,11 @@ public class SubtitleExporterService : ISubtitleExporterService
     /// Dependency Injection for the logger
     /// </summary>
     private readonly ILogger log;
+
+    /// <summary>
+    /// Pipe for reading converted subtitles from the converter
+    /// </summary>
+    private Pipe subtitlePipe;
 
     /// <summary>
     /// The converter for translating SpeechBubbles into a preferred subtitle format
