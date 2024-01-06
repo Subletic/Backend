@@ -84,8 +84,8 @@ public class ClientExchangeController : ControllerBase
             log.Warning($"Rejecting transcription request with invalid subtitle format {formats}");
             return;
         }
-        subtitleExporterService.SelectFormat(formats);
 
+        subtitleExporterService.SelectFormat(formats);
         CancellationTokenSource ctSource = new CancellationTokenSource();
 
         // connect to Speechmatics
