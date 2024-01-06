@@ -97,16 +97,17 @@ public class ClientExchangeController : ControllerBase
         string formats = await receiveFormatSpecification(webSocket);
 
         // Validating and selecting the subtitle format.
-        if (!isValidFormat(formats))
+        try
         {
-            string validFormatsList = "srt, webvtt";
-            string errorMessage = $"Invalid subtitle format: {formats}. Valid formats are: {validFormatsList}";
-            await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, errorMessage, makeClientTimeoutToken());
+            subtitleExporterService.SelectFormat(formats);
+        }
+        catch (ArgumentException e)
+        {
+            await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, e.Message, makeClientTimeoutToken());
             log.Warning($"Rejecting transcription request with invalid subtitle format {formats}");
             return;
         }
 
-        subtitleExporterService.SelectFormat(formats);
         CancellationTokenSource ctSource = new CancellationTokenSource();
 
         // connect to Speechmatics
@@ -216,16 +217,5 @@ public class ClientExchangeController : ControllerBase
 
         log.Debug($"Received message: {completeMessage}");
         return completeMessage;
-    }
-
-    /// <summary>
-    /// Checks if the provided format string is a valid subtitle format.
-    /// </summary>
-    /// <param name="format">Subtitle format string to validate.</param>
-    /// <returns>True if the format is valid; otherwise, false.</returns>
-    private static bool isValidFormat(string format)
-    {
-        return format.Equals("webvtt", StringComparison.OrdinalIgnoreCase) ||
-               format.Equals("srt", StringComparison.OrdinalIgnoreCase);
     }
 }

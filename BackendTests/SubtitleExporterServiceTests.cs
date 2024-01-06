@@ -1,5 +1,3 @@
-using Serilog;
-
 namespace BackendTests;
 
 using System;
@@ -9,20 +7,34 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Backend.Data;
 using Backend.Services;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Memory;
 using Moq;
 using NUnit.Framework;
+using Serilog;
 
 public class SubtitleExporterServiceTests
 {
+    private readonly IConfiguration configuration = new ConfigurationBuilder()
+        .Add(new MemoryConfigurationSource
+        {
+            InitialData = new List<KeyValuePair<string, string?>>
+            {
+                new KeyValuePair<string, string?>("ClientCommunicationSettings:TIMEOUT_IN_SECONDS", "1"),
+            },
+        })
+        .Build();
+
     [Test]
     public async Task Start_SendsSubtitlesOverWebSocket()
     {
         // Arrange
         var logger = new LoggerConfiguration().CreateLogger();
 
-        var service = new SubtitleExporterService(logger);
+        var service = new SubtitleExporterService(configuration, logger);
 
         // Select the format to initialize the subtitleConverter
         service.SelectFormat("srt"); // Or use "webvtt" as needed
@@ -56,10 +68,9 @@ public class SubtitleExporterServiceTests
 
         // Assert
         sendingTask.Wait(2000); // Wait for the sending task to complete
-        mockWebSocket.Verify(
-            webSocket =>
-                webSocket.SendAsync(It.IsAny<ReadOnlyMemory<byte>>(), WebSocketMessageType.Text, false,
-                    cancellationTokenSource.Token),
-            Times.AtLeastOnce());
+        Assert.That(
+            mockWebSocket.Invocations.Count(
+                x => x.Method.Name.Equals(nameof(WebSocket.SendAsync))),
+            Is.EqualTo(1));
     }
 }
