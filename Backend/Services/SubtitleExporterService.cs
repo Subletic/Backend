@@ -73,10 +73,10 @@ public class SubtitleExporterService : ISubtitleExporterService
         {
             case "vtt":
                 subtitleConverter = new WebVttConverter(subtitlePipe.Writer.AsStream(leaveOpen: true));
-                break;
+                return;
             case "srt":
                 subtitleConverter = new SrtConverter(subtitlePipe.Writer.AsStream(leaveOpen: true));
-                break;
+                return;
             default:
                 throw new ArgumentException($"Unsupported subtitle format {formatLower}, must be one of: vtt, srt");
         }
