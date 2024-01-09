@@ -125,7 +125,8 @@ public class SubtitleExporterService : ISubtitleExporterService
                 log.Debug("Have subtitles ready to send");
 
                 CancellationToken timeout = new CancellationTokenSource(
-                    (int)TimeSpan.FromSeconds(configuration.GetValue<double>("ClientCommunicationSettings:TIMEOUT_IN_SECONDS"))
+                    (int)TimeSpan
+                        .FromSeconds(configuration.GetValue<double>("ClientCommunicationSettings:TIMEOUT_IN_SECONDS"))
                         .TotalMilliseconds).Token;
 
                 try
@@ -149,6 +150,11 @@ public class SubtitleExporterService : ISubtitleExporterService
         catch (OperationCanceledException)
         {
             log.Information("Subtitle export has been cancelled");
+        }
+        catch (Exception e)
+        {
+            log.Error("Exception occured while trying to export subtitles: {Exception}", e);
+            ctSource.Cancel();
         }
 
         log.Information("Done sending subtitles over WebSocket");
@@ -176,7 +182,7 @@ public class SubtitleExporterService : ISubtitleExporterService
     /// <summary>
     /// Represents an asynchronous operation that can return a value.
     /// </summary>
-    /// <param name="speechBubble">The speech bubble to export.</param
+    /// <param name="speechBubble">The speech bubble to export.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
     public Task ExportSubtitle(SpeechBubble speechBubble)
     {

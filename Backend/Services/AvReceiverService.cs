@@ -56,7 +56,7 @@ public class AvReceiverService : IAvReceiverService
     /// <param name="webSocket">The WebSocket to read A/V data from</param>
     /// <param name="ctSource">The CancellationTokenSource to cancel the operation</param>
     /// <returns> A Task representing the asynchronous operation. </returns>
-    public async Task<bool> Start(WebSocket webSocket, CancellationTokenSource ctSource)
+    public async Task Start(WebSocket webSocket, CancellationTokenSource ctSource)
     {
         Pipe avPipe = new Pipe();
         Stream avWriter = avPipe.Writer.AsStream(leaveOpen: true);
@@ -65,8 +65,7 @@ public class AvReceiverService : IAvReceiverService
 
         log.Debug("Start reading AV data from client");
 
-        bool connectionAlive = true;
-        Task<bool> processingTask = avProcessingService.PushProcessedAudio(avPipe.Reader.AsStream(leaveOpen: true));
+        Task<bool> processingTask = avProcessingService.PushProcessedAudio(avPipe.Reader.AsStream(leaveOpen: true), ctSource);
 
         try
         {
@@ -103,7 +102,7 @@ public class AvReceiverService : IAvReceiverService
         catch (WebSocketException e)
         {
             log.Error($"WebSocket to client has an error: {e.Message}");
-            connectionAlive = false;
+            ctSource.Cancel();
         }
         catch (OperationCanceledException)
         {
@@ -114,17 +113,8 @@ public class AvReceiverService : IAvReceiverService
         await avPipe.Writer.CompleteAsync();
 
         log.Debug("Waiting for AV processing to finish");
-        bool processingSuccess = true;
-        try
-        {
-            processingSuccess = await processingTask;
-        }
-        catch (Exception e)
-        {
-            log.Debug($"AV processing threw an exception: {e.ToString()}");
-        }
+        bool processingSuccess = await processingTask;
 
         log.Debug("Processing " + (processingSuccess ? "success" : "failure"));
-        return connectionAlive;
     }
 }

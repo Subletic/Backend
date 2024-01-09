@@ -92,6 +92,8 @@ public class BufferTimeMonitor : BackgroundService
                 timedOutSpeechBubbles.Add(oldestSpeechBubble.Value);
                 speechBubbleListService.DeleteOldestSpeechBubble();
 
+                // Can in theory crash if subtitle exporter is not set
+                // This should never happen, but if it does, it's better to crash as we don't know the state of the backend
                 await subtitleExporterService.ExportSubtitle(oldestSpeechBubble.Value);
                 if (speechBubbleListService.GetSpeechBubbles().First == null) subtitleExporterService.SetQueueContainsItems(false);
             }

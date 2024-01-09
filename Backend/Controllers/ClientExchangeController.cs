@@ -1,3 +1,5 @@
+using Serilog;
+
 namespace Backend.Controllers;
 
 using System.Net;
@@ -8,7 +10,6 @@ using Backend.Data;
 using Backend.Data.SpeechmaticsMessages.EndOfStreamMessage;
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage;
 using Backend.Services;
-
 using Microsoft.AspNetCore.Mvc;
 
 /// <summary>
@@ -22,6 +23,7 @@ public class ClientExchangeController : ControllerBase
     /// Dependency Injection for accessing needed Services.
     /// </summary>
     private const int RECEIVE_BUFFER_SIZE = 8;
+
     private readonly IAvReceiverService avReceiverService;
     private readonly ISpeechmaticsConnectionService speechmaticsConnectionService;
     private readonly ISpeechmaticsReceiveService speechmaticsReceiveService;
@@ -60,10 +62,11 @@ public class ClientExchangeController : ControllerBase
         this.subtitleExporterService = subtitleExporterService;
         this.configuration = configuration;
         this.log = log;
-        clientTimeout = TimeSpan.FromSeconds(configuration.GetValue<double>("ClientCommunicationSettings:TIMEOUT_IN_SECONDS"));
+        clientTimeout =
+            TimeSpan.FromSeconds(configuration.GetValue<double>("ClientCommunicationSettings:TIMEOUT_IN_SECONDS"));
     }
 
-    private CancellationToken makeClientTimeoutToken()
+    private CancellationToken makeConnectionTimeoutToken()
     {
         return new CancellationTokenSource((int)clientTimeout.TotalMilliseconds).Token;
     }
@@ -94,7 +97,16 @@ public class ClientExchangeController : ControllerBase
         alreadyConnected = true;
 
         // Receiving format information from the client.
-        string formats = await receiveFormatSpecification(webSocket);
+        string formats = "";
+        try
+        {
+            formats = await receiveFormatSpecification(webSocket);
+        }
+        catch (Exception)
+        {
+            log.Error("Failed to receive format specification from client");
+        }
+
 
         // Validating and selecting the subtitle format.
         try
@@ -103,20 +115,41 @@ public class ClientExchangeController : ControllerBase
         }
         catch (ArgumentException e)
         {
-            await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, e.Message, makeClientTimeoutToken());
-            log.Warning($"Rejecting transcription request with invalid subtitle format {formats}");
+            try
+            {
+                await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, e.Message,
+                    makeConnectionTimeoutToken());
+                log.Warning($"Rejecting transcription request with invalid subtitle format {formats}");
+            }
+            catch (Exception webSocketCloseException)
+            {
+                log.Error("Communication with Client failed");
+                log.Error(webSocketCloseException.ToString());
+            }
+
             return;
         }
 
         CancellationTokenSource ctSource = new CancellationTokenSource();
 
         // connect to Speechmatics
-        bool speechmaticsConnected = await speechmaticsConnectionService.Connect(ctSource.Token);
+        bool speechmaticsConnected = await speechmaticsConnectionService.Connect(makeConnectionTimeoutToken());
         if (!speechmaticsConnected)
         {
             log.Error("Failed to connect to Speechmatics");
             await speechmaticsConnectionService.Disconnect(false, ctSource.Token); // cleanup & reset
-            await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, "Failed to connect to Speechmatics", makeClientTimeoutToken());
+
+            try
+            {
+                await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError,
+                    "Failed to connect to Speechmatics", makeConnectionTimeoutToken());
+            }
+            catch (Exception e)
+            {
+                log.Error("Communication with Client failed");
+                log.Error(e.ToString());
+            }
+
             HttpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
             return;
         }
@@ -125,40 +158,71 @@ public class ClientExchangeController : ControllerBase
 
         // setup speechmatics state
         speechmaticsSendService.ResetSequenceNumber();
-        Task subtitleReceiveTask = speechmaticsReceiveService.ReceiveLoop();
-        await speechmaticsSendService.SendJsonMessage<StartRecognitionMessage>(
-            new StartRecognitionMessage(speechmaticsConnectionService.AudioFormat));
+        Task subtitleReceiveTask = speechmaticsReceiveService.ReceiveLoop(ctSource);
 
-        Task<bool> avReceiveTask = avReceiverService.Start(webSocket, ctSource); // read at start of pipeline
+        try
+        {
+            await speechmaticsSendService.SendJsonMessage<StartRecognitionMessage>(
+                new StartRecognitionMessage(speechmaticsConnectionService.AudioFormat));
+        }
+        catch (Exception e)
+        {
+            Log.Error("Failed to send start recognition message to Speechmatics");
+            Log.Error(e.Message);
+            ctSource.Cancel();
+        }
 
-        bool connectionAlive = await avReceiveTask; // no more audio to send
+        Task avReceiveTask = avReceiverService.Start(webSocket, ctSource); // read at start of pipeline
 
-        if (connectionAlive)
+        await avReceiveTask; // no more audio to send
+
+        if (!ctSource.IsCancellationRequested)
         {
             // wait for all sent audio chunks to be received & confirmed by Speechmatics
-            while (speechmaticsSendService.SequenceNumber > speechmaticsReceiveService.SequenceNumber)
+            while (speechmaticsSendService.SequenceNumber > speechmaticsReceiveService.SequenceNumber &&
+                   !ctSource.Token.IsCancellationRequested)
             {
-                log.Debug($"Waiting for receiving side's sequence number ({speechmaticsReceiveService.SequenceNumber}) to match sending side's sequence number ({speechmaticsSendService.SequenceNumber})");
+                log.Debug(
+                    $"Waiting for receiving side's sequence number ({speechmaticsReceiveService.SequenceNumber}) to match sending side's sequence number ({speechmaticsSendService.SequenceNumber})");
                 await Task.Delay(TimeSpan.FromSeconds(1));
             }
 
             subtitleExporterService.RequestShutdown();
 
-            await speechmaticsSendService.SendJsonMessage<EndOfStreamMessage>(
-                new EndOfStreamMessage(speechmaticsSendService.SequenceNumber));
+            if (!ctSource.IsCancellationRequested)
+                await speechmaticsSendService.SendJsonMessage<EndOfStreamMessage>(
+                    new EndOfStreamMessage(speechmaticsSendService.SequenceNumber));
 
-            await subtitleReceiveTask; // no more subtitles to receive
-            await speechmaticsConnectionService.Disconnect(connectionAlive, ctSource.Token);
+            if (!ctSource.IsCancellationRequested)
+                await subtitleReceiveTask; // no more subtitles to receive
 
-            await subtitleExportTask; // no more subtitles to export
-            await webSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", makeClientTimeoutToken());
+            if (!ctSource.IsCancellationRequested)
+                await speechmaticsConnectionService.Disconnect(!ctSource.IsCancellationRequested, ctSource.Token);
+
+            if (!ctSource.IsCancellationRequested)
+                await subtitleExportTask; // no more subtitles to export
+
+            if (!ctSource.IsCancellationRequested)
+            {
+                try
+                {
+                    await webSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", makeConnectionTimeoutToken());
+                }
+                catch (Exception e)
+                {
+                    log.Error("Failed to properly close communication with client");
+                    log.Error(e.Message);
+                    ctSource.Cancel();
+                }
+            }
+
 
             log.Information("Connection with client closed successfully");
         }
         else
         {
             // don't bother with more messages to Speechmatics, just end it
-            await speechmaticsConnectionService.Disconnect(connectionAlive, ctSource.Token);
+            await speechmaticsConnectionService.Disconnect(!ctSource.IsCancellationRequested, ctSource.Token);
 
             try
             {
@@ -198,7 +262,7 @@ public class ClientExchangeController : ControllerBase
             log.Debug("Listening from data from Speechmatics");
             WebSocketReceiveResult response = await webSocket.ReceiveAsync(
                 buffer: chunkBuffer,
-                cancellationToken: makeClientTimeoutToken());
+                cancellationToken: makeConnectionTimeoutToken());
             log.Debug("Received data from Speechmatics");
 
             // FIXME AddRange'ing a Span directly for better performance is a .NET 8 feature
@@ -211,8 +275,8 @@ public class ClientExchangeController : ControllerBase
 
             messageChunks.AddRange(bufferToAdd);
             completed = response.EndOfMessage;
-        }
-        while (!completed);
+        } while (!completed);
+
         string completeMessage = Encoding.UTF8.GetString(messageChunks.ToArray());
 
         log.Debug($"Received message: {completeMessage}");

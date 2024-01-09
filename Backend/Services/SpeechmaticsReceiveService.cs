@@ -252,7 +252,7 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
         }
     }
 
-    public async Task<bool> ReceiveLoop()
+    public async Task<bool> ReceiveLoop(CancellationTokenSource ctSource)
     {
         bool done = false;
         bool success = true;
@@ -260,16 +260,19 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
 
         do
         {
-            byte[] messageBuffer = await receiveJsonResponse();
-            Type messageType = identifyMessage(messageBuffer);
             try
             {
+                byte[] messageBuffer = await receiveJsonResponse();
+                Type messageType = identifyMessage(messageBuffer);
                 dynamic message = deserialiseMessage(messageBuffer, messageType);
                 done = processMessage(message, messageType);
             }
             catch (Exception e)
             {
-                log.Error(e.ToString());
+                log.Error("Exception occured while trying to receive data from Speechmatics");
+                log.Error(e.Message);
+                log.Debug(e.ToString());
+                ctSource.Cancel();
                 done = true;
                 success = false;
             }

@@ -10,5 +10,5 @@ public interface IAvProcessingService
     /// </summary>
     /// <param name="avStream">The audio and/or video stream to transcribe.</param>
     /// <returns>A task that represents the asynchronous transcription operation. The task result contains true if the transcription was successful, false otherwise.</returns>
-    Task<bool> PushProcessedAudio(Stream avStream);
+    Task<bool> PushProcessedAudio(Stream avStream, CancellationTokenSource ctSource);
 }
