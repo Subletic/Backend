@@ -161,7 +161,7 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
             })!;
     }
 
-    private void handleAddTranscriptMessage(AddTranscriptMessage message)
+    private async Task handleAddTranscriptMessage(AddTranscriptMessage message)
     {
         foreach (AddTranscriptMessage_Result transcript in message.results!)
         {
@@ -174,7 +174,7 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
                     + "Specifications say this is a possibility, but don't know what to do with it?");
             }
 
-            wordProcessingService.HandleNewWord(new WordToken(
+            await wordProcessingService.HandleNewWord(new WordToken(
                 transcript.alternatives![0].content, // docs say this sends a list, I've only ever seen it send 1 result
                 (float)transcript.alternatives![0].confidence,
                 transcript.start_time,
@@ -200,6 +200,13 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
         SequenceNumber += 1;
     }
 
+    private async Task handleEndOfTranscriptMessage(EndOfTranscriptMessage message)
+    {
+        Task flushBufferTask = wordProcessingService.FlushBufferToNewSpeechBubble();
+        log.Information("Transcription is over");
+        await flushBufferTask;
+    }
+
     private void handleErrorMessage(ErrorMessage message)
     {
         string errorString = $"Speechmatics reports a fatal error: {message.type}: {message.reason}";
@@ -217,7 +224,7 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
         log.Warning($"Speechmatics reports a non-critical warning: {message.type}: {message.reason}");
     }
 
-    private bool processMessage(dynamic messageObject, Type messageType)
+    private async Task<bool> processMessage(dynamic messageObject, Type messageType)
     {
         // TODO: Can we somehow use compile-time class names in cases to avoid copy-pasting them here?
         switch (messageType.Name)
@@ -227,11 +234,11 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
                 return false;
 
             case "AddTranscriptMessage":
-                handleAddTranscriptMessage((AddTranscriptMessage)messageObject);
+                await handleAddTranscriptMessage((AddTranscriptMessage)messageObject);
                 return false;
 
             case "EndOfTranscriptMessage":
-                log.Information("Transcription is over");
+                await handleEndOfTranscriptMessage((EndOfTranscriptMessage)messageObject);
                 return true;
 
             case "ErrorMessage":
@@ -265,7 +272,7 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
                 byte[] messageBuffer = await receiveJsonResponse();
                 Type messageType = identifyMessage(messageBuffer);
                 dynamic message = deserialiseMessage(messageBuffer, messageType);
-                done = processMessage(message, messageType);
+                done = await processMessage(message, messageType);
             }
             catch (Exception e)
             {
