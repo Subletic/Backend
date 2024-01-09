@@ -1,16 +1,13 @@
 namespace Backend.Services;
 
 using System.Net.WebSockets;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
-
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.audio_format;
+using ILogger = Serilog.ILogger;
 
-using Serilog;
 
-public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
+public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
 {
     private const int RECEIVE_BUFFER_SIZE = 4 * 1024;
 
@@ -41,7 +38,7 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
 
     private readonly IConfiguration configuration;
 
-    private readonly Serilog.ILogger log;
+    private readonly ILogger log;
 
     /// <summary>
     /// The Speechmatics RT API key this instance shall use for the RT transcription.
@@ -55,7 +52,7 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
 
     private CancellationTokenSource cts = new CancellationTokenSource();
 
-    public SpeechmaticsConnectionService(IConfiguration configuration, Serilog.ILogger log)
+    public SpeechmaticsConnectionService(IConfiguration configuration, ILogger log)
     {
         this.configuration = configuration;
         this.log = log;

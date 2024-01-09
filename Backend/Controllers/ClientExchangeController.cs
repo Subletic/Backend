@@ -131,6 +131,7 @@ public class ClientExchangeController : ControllerBase
                 log.Debug(webSocketCloseException.ToString());
             }
 
+            alreadyConnected = false;
             return;
         }
 
@@ -156,7 +157,7 @@ public class ClientExchangeController : ControllerBase
                 log.Debug(e.ToString());
             }
 
-            HttpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            alreadyConnected = false;
             return;
         }
 
@@ -184,39 +185,37 @@ public class ClientExchangeController : ControllerBase
 
         // wait for all sent audio chunks to be received & confirmed by Speechmatics
         while (speechmaticsSendService.SequenceNumber > speechmaticsReceiveService.SequenceNumber &&
-            !ctSource.Token.IsCancellationRequested)
+               !ctSource.Token.IsCancellationRequested)
         {
             log.Debug($"Waiting for receiving side's sequence number ({speechmaticsReceiveService.SequenceNumber}) "
-                + $"to match sending side's sequence number ({speechmaticsSendService.SequenceNumber})");
+                      + $"to match sending side's sequence number ({speechmaticsSendService.SequenceNumber})");
             await Task.Delay(TimeSpan.FromSeconds(1));
         }
 
         subtitleExporterService.RequestShutdown();
 
-        if (!ctSource.IsCancellationRequested)
-            await speechmaticsSendService.SendJsonMessage<EndOfStreamMessage>(new EndOfStreamMessage(speechmaticsSendService.SequenceNumber));
+        await speechmaticsSendService.SendJsonMessage<EndOfStreamMessage>(
+            new EndOfStreamMessage(speechmaticsSendService.SequenceNumber));
 
-        if (!ctSource.IsCancellationRequested)
-            await subtitleReceiveTask; // no more subtitles to receive
+        await subtitleReceiveTask; // no more subtitles to receive
 
-        if (!ctSource.IsCancellationRequested)
-            await speechmaticsConnectionService.Disconnect(!ctSource.IsCancellationRequested, ctSource.Token);
+        await speechmaticsConnectionService.Disconnect(!ctSource.IsCancellationRequested, ctSource.Token);
 
-        if (!ctSource.IsCancellationRequested)
-            await subtitleExportTask; // no more subtitles to export
+        await subtitleExportTask; // no more subtitles to export
 
-        if (!ctSource.IsCancellationRequested)
+        try
         {
-            try
-            {
-                await webSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", makeConnectionTimeoutToken());
-            }
-            catch (Exception e)
-            {
-                log.Error("Failed to properly close communication with client");
-                log.Error(e.Message);
-                ctSource.Cancel();
-            }
+            log.Information("Closing connection with client");
+            await webSocket.CloseAsync(
+                !ctSource.IsCancellationRequested
+                    ? WebSocketCloseStatus.NormalClosure
+                    : WebSocketCloseStatus.InternalServerError, "", makeConnectionTimeoutToken());
+        }
+        catch (Exception e)
+        {
+            log.Error("Failed to properly close communication with client");
+            log.Error(e.Message);
+            ctSource.Cancel();
         }
 
         log.Information("Connection with client closed successfully");
@@ -254,8 +253,7 @@ public class ClientExchangeController : ControllerBase
 
             messageChunks.AddRange(bufferToAdd);
             completed = response.EndOfMessage;
-        }
-        while (!completed);
+        } while (!completed);
 
         string completeMessage = Encoding.UTF8.GetString(messageChunks.ToArray());
 
