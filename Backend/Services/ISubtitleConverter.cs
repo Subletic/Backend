@@ -1,16 +1,16 @@
 namespace Backend.Services;
 
+using System.Collections.Generic;
 using Backend.Data;
-using Backend.Services;
 
 /// <summary>
-/// Interface for converting speech bubbles to subtitles.
+/// Interface for converting speech bubbles to SRT format.
 /// </summary>
 public interface ISubtitleConverter
 {
     /// <summary>
-    /// Converts a speech bubble to a subtitle.
+    /// Converts a list of speech bubbles to SRT format and writes the content to the output stream.
     /// </summary>
-    /// <param name="speechBubble">The speech bubble to convert.</param>
-    public void ConvertSpeechBubble(SpeechBubble speechBubble);
+    /// <param name="speechBubbles">The list of speech bubbles to convert.</param>
+    public void ConvertSpeechBubble(SpeechBubble speechBubbles);
 }

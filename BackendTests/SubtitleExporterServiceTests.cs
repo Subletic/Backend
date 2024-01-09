@@ -1,7 +1,6 @@
 namespace BackendTests;
 
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.IO.Pipelines;
 using System.Net.WebSockets;
@@ -21,18 +20,21 @@ public class SubtitleExporterServiceTests
         // Arrange
         var service = new SubtitleExporterService();
 
+        // Select the format to initialize the subtitleConverter
+        service.SelectFormat("srt"); // Or use "webvtt" as needed
+
         var mockWebSocket = new Mock<WebSocket>();
         var cancellationTokenSource = new CancellationTokenSource();
 
         // Generate some sample subtitle data
         var wordTokens = new List<WordToken>
-            {
-                new WordToken("Hello", 0.95f, 0.0, 1.0, 1),
-                new WordToken("world", 0.92f, 1.0, 2.0, 1),
-                new WordToken("of", 0.91f, 2.0, 3.0, 1),
-                new WordToken("unit", 0.93f, 3.0, 4.0, 1),
-                new WordToken("testing", 0.94f, 4.0, 5.0, 1),
-            };
+        {
+            new WordToken("Hello", 0.95f, 0.0, 1.0, 1),
+            new WordToken("world", 0.92f, 1.0, 2.0, 1),
+            new WordToken("of", 0.91f, 2.0, 3.0, 1),
+            new WordToken("unit", 0.93f, 3.0, 4.0, 1),
+            new WordToken("testing", 0.94f, 4.0, 5.0, 1),
+        };
 
         var speechBubble = new SpeechBubble(1, 1, 0.0, 5.0, wordTokens);
 

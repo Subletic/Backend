@@ -42,7 +42,13 @@ builder.Services.AddSingleton<ISubtitleExporterService, SubtitleExporterService>
 
 builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
 
-builder.Services.AddSingleton<FrontendAudioQueueService, FrontendAudioQueueService>();
+builder.Services.AddSingleton<IFrontendCommunicationService, FrontendCommunicationService>();
+
+builder.Services.AddSingleton<ISpeechmaticsConnectionService, SpeechmaticsConnectionService>();
+
+builder.Services.AddSingleton<ISpeechmaticsSendService, SpeechmaticsSendService>();
+
+builder.Services.AddSingleton<ISpeechmaticsReceiveService, SpeechmaticsReceiveService>();
 
 builder.Services.AddHostedService<StartupService>();
 
@@ -77,7 +83,7 @@ app.UseRouting();
 
 app.UseCors("AllowAngularFrontend");
 
-app.MapHub<CommunicationHub>("/communicationHub");
+app.MapHub<FrontendCommunicationHub>("/communicationHub");
 
 app.UseHttpsRedirection();
 
