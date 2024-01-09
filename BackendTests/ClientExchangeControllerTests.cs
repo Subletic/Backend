@@ -33,6 +33,7 @@ public class ClientExchangeControllerTests
     private readonly Mock<ISpeechmaticsConnectionService> mockSpeechmaticsConnectionService = new Mock<ISpeechmaticsConnectionService>();
     private readonly Mock<ISpeechmaticsReceiveService> mockSpeechmaticsReceiveService = new Mock<ISpeechmaticsReceiveService>();
     private readonly Mock<ISpeechmaticsSendService> mockSpeechmaticsSendService = new Mock<ISpeechmaticsSendService>();
+    private readonly Mock<ISpeechBubbleListService> mockSpeechBubbleListService = new Mock<ISpeechBubbleListService>();
     private readonly Mock<HttpContext> mockHttpContext = new Mock<HttpContext>();
     private readonly Mock<WebSocketManager> mockWebSocketManager = new Mock<WebSocketManager>();
     private readonly Mock<WebSocket> mockWebSocket = new Mock<WebSocket>();
@@ -50,6 +51,7 @@ public class ClientExchangeControllerTests
         mockWebSocketManager.Setup(m => m.AcceptWebSocketAsync()).ReturnsAsync(mockWebSocket.Object);
         var controller = new ClientExchangeController(
         mockAvReceiverService.Object,
+        mockSpeechBubbleListService.Object,
         mockSpeechmaticsConnectionService.Object,
         mockSpeechmaticsReceiveService.Object,
         mockSpeechmaticsSendService.Object,
