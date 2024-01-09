@@ -97,6 +97,9 @@ public class SubtitleExporterService : ISubtitleExporterService
 
         log.Information("Start sending subtitles over WebSocket");
 
+        queueContainsItems = false;
+        shutdownRequested = false;
+
         try
         {
             while (true)

@@ -29,4 +29,9 @@ public interface ISpeechBubbleListService
     /// </summary>
     /// <param name="speechBubble">The new speech bubble.</param>
     public void ReplaceSpeechBubble(SpeechBubble speechBubble);
+
+    /// <summary>
+    /// Clear the list.
+    /// </summary>
+    public void Clear();
 }

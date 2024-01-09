@@ -80,4 +80,12 @@ public class SpeechBubbleListService : ISpeechBubbleListService
             currentSpeechBubble = currentSpeechBubble.Next; // Move to the next node
         }
     }
+
+    /// <summary>
+    /// Clear the LinkedList.
+    /// </summary>
+    public void Clear()
+    {
+        speechBubbleList.Clear();
+    }
 }

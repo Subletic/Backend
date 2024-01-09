@@ -228,9 +228,17 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
         log.Information($"Connecting to Speechmatics: {speechmaticsApiUrl}");
         ClientWebSocket wsClient = new ClientWebSocket();
         wsClient.Options.SetRequestHeader("Authorization", $"Bearer {apiKey!}");
-        await wsClient.ConnectAsync(
-            speechmaticsApiUrl,
-            ct);
+        try
+        {
+            await wsClient.ConnectAsync(
+                speechmaticsApiUrl,
+                ct);
+        }
+        catch (Exception e)
+        {
+            log.Error($"Failed to connect to Speechmatics: {e.Message}");
+            return false;
+        }
 
         this.wsClient = wsClient;
         cts = new CancellationTokenSource();
@@ -247,6 +255,7 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
         }
 
         cts.Cancel();
+        bool noErrors = true;
         string closeReason = "Done";
         if (!signalSuccess)
             closeReason = "A problem occurred";
@@ -260,7 +269,18 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
 
             case WebSocketState.Open:
                 log.Information("Disconnecting from Speechmatics");
-                await this.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, closeReason, ct);
+                try
+                {
+                    await this.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, closeReason, ct);
+                }
+                catch (Exception e)
+                {
+                    log.Error($"Failed to disconnect from Speechmatics: {e.Message}");
+                    log.Debug(e.ToString());
+                    log.Warning("Assuming that Speechmatics connection is gone now");
+                    noErrors = false;
+                }
+
                 break;
 
             default:
@@ -269,10 +289,8 @@ public partial class SpeechmaticsConnectionService : ISpeechmaticsConnectionServ
                 break;
         }
 
-        log.Debug("FIXME: Listen for confirmation of polite close request");
-
         wsClient = null;
 
-        return signalSuccess;
+        return noErrors;
     }
 }
