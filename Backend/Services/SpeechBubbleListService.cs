@@ -1,7 +1,6 @@
 namespace Backend.Services;
 
 using Backend.Data;
-using Newtonsoft.Json;
 
 /// <summary>
 /// Service to manage the list of speech bubbles.

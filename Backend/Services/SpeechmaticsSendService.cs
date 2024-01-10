@@ -1,26 +1,15 @@
 namespace Backend.Services;
 
 using System.Net.WebSockets;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
+using ILogger = Serilog.ILogger;
 
-using Backend.Data.SpeechmaticsMessages.AddTranscriptMessage;
-using Backend.Data.SpeechmaticsMessages.AudioAddedMessage;
-using Backend.Data.SpeechmaticsMessages.EndOfStreamMessage;
-using Backend.Data.SpeechmaticsMessages.EndOfTranscriptMessage;
-using Backend.Data.SpeechmaticsMessages.ErrorMessage;
-using Backend.Data.SpeechmaticsMessages.InfoMessage;
-using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage;
-
-using Serilog;
-
-public partial class SpeechmaticsSendService : ISpeechmaticsSendService
+public class SpeechmaticsSendService : ISpeechmaticsSendService
 {
     private ISpeechmaticsConnectionService speechmaticsConnectionService;
 
-    private Serilog.ILogger log;
+    private ILogger log;
 
     public ulong SequenceNumber
     {
@@ -28,7 +17,7 @@ public partial class SpeechmaticsSendService : ISpeechmaticsSendService
         private set;
     }
 
-    public SpeechmaticsSendService(ISpeechmaticsConnectionService speechmaticsConnectionService, Serilog.ILogger log)
+    public SpeechmaticsSendService(ISpeechmaticsConnectionService speechmaticsConnectionService, ILogger log)
     {
         this.speechmaticsConnectionService = speechmaticsConnectionService;
         this.log = log;

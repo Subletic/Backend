@@ -5,20 +5,15 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-
 using Backend.Data;
 using Backend.Data.SpeechmaticsMessages.AddTranscriptMessage;
 using Backend.Data.SpeechmaticsMessages.AddTranscriptMessage.result;
 using Backend.Data.SpeechmaticsMessages.AudioAddedMessage;
-using Backend.Data.SpeechmaticsMessages.EndOfStreamMessage;
 using Backend.Data.SpeechmaticsMessages.EndOfTranscriptMessage;
 using Backend.Data.SpeechmaticsMessages.ErrorMessage;
 using Backend.Data.SpeechmaticsMessages.InfoMessage;
-using Backend.Data.SpeechmaticsMessages.RecognitionStartedMessage;
-using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage;
 using Backend.Data.SpeechmaticsMessages.WarningMessage;
-
-using Serilog;
+using ILogger = Serilog.ILogger;
 
 public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
 {
@@ -37,7 +32,7 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
 
     private IWordProcessingService wordProcessingService;
 
-    private Serilog.ILogger log;
+    private ILogger log;
 
     public ulong SequenceNumber
     {
@@ -48,7 +43,7 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
     public SpeechmaticsReceiveService(
         ISpeechmaticsConnectionService speechmaticsConnectionService,
         IWordProcessingService wordProcessingService,
-        Serilog.ILogger log)
+        ILogger log)
     {
         this.speechmaticsConnectionService = speechmaticsConnectionService;
         this.wordProcessingService = wordProcessingService;

@@ -1,14 +1,8 @@
 namespace Backend.Services;
 
-using System;
-using System.Buffers;
 using System.IO.Pipelines;
 using System.Net.WebSockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Backend.Data;
-using Backend.Services;
+using ILogger = Serilog.ILogger;
 
 /// <summary>
 /// A service that fetches new A/V data over a WebSocket and kicks off its transcription via AvProcessingService.
@@ -33,7 +27,7 @@ public class AvReceiverService : IAvReceiverService
     /// <summary>
     /// Dependency Injection for a logger
     /// </summary>
-    private readonly Serilog.ILogger log;
+    private readonly ILogger log;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AvReceiverService"/> class.
@@ -43,7 +37,7 @@ public class AvReceiverService : IAvReceiverService
     public AvReceiverService(
         IAvProcessingService avProcessingService,
         IConfiguration configuration,
-        Serilog.ILogger log)
+        ILogger log)
     {
         this.avProcessingService = avProcessingService;
         this.configuration = configuration;
@@ -80,10 +74,10 @@ public class AvReceiverService : IAvReceiverService
                 {
                     avResult = await webSocket.ReceiveAsync(readBuffer, timeout.Token);
                 }
-                catch (OperationCanceledException e)
+                catch (OperationCanceledException)
                 {
                     log.Error("Timed out waiting for client to send AV data");
-                    throw e;
+                    throw;
                 }
 
                 ctSource.Token.ThrowIfCancellationRequested();

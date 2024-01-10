@@ -3,7 +3,6 @@ namespace Backend.Services;
 using System.IO.Pipelines;
 using System.Net.WebSockets;
 using Backend.Data;
-using Serilog;
 using ILogger = Serilog.ILogger;
 
 /// <summary>
@@ -140,10 +139,10 @@ public class SubtitleExporterService : ISubtitleExporterService
                         false,
                         timeout);
                 }
-                catch (OperationCanceledException e)
+                catch (OperationCanceledException)
                 {
                     log.Error("Timed out waiting for client to receive subtitles");
-                    throw e;
+                    throw;
                 }
 
                 log.Debug("Subtitles sent");

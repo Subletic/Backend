@@ -1,11 +1,7 @@
 namespace Backend.Services;
 
-using System;
-using System.Collections.Generic;
-using Backend.Data;
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_config;
-using Serilog;
-using Serilog.Events;
+using ILogger = Serilog.ILogger;
 
 /// <summary>
 /// Dienst zur Verwaltung benutzerdefinierter Wörterbücher.
@@ -13,7 +9,7 @@ using Serilog.Events;
 public class ConfigurationService : IConfigurationService
 {
     // Das private readonly Feld logger wird verwendet, um den Logger für die Protokollierung innerhalb dieser Klasse zu halten.
-    private readonly Serilog.ILogger logger;
+    private readonly ILogger logger;
 
     // List to store custom dictionaries.
     private List<StartRecognitionMessage_TranscriptionConfig> customDictionaries;
@@ -24,7 +20,7 @@ public class ConfigurationService : IConfigurationService
     /// <summary>
     /// Konstruktor für den ConfigurationService. Initialisiert die Liste der benutzerdefinierten Wörterbücher.
     /// </summary>
-    public ConfigurationService(Serilog.ILogger logger)
+    public ConfigurationService(ILogger logger)
     {
         customDictionaries = new List<StartRecognitionMessage_TranscriptionConfig>();
         this.logger = logger;

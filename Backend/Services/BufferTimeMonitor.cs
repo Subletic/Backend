@@ -1,15 +1,6 @@
 namespace Backend.Services;
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using Backend.Data;
-using Backend.Hubs;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 
 /// <summary>
 /// Service that monitors the time of the oldest SpeechBubble in the list.
