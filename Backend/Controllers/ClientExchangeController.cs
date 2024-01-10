@@ -8,7 +8,6 @@ using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
 using ILogger = Serilog.ILogger;
 
-
 /// <summary>
 /// The ClientExchangeController receives a transcription request from a client via a WebSocket
 /// and returns the transcribed, corrected and converted substitles.
