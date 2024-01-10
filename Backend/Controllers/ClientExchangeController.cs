@@ -107,7 +107,7 @@ public class ClientExchangeController : ControllerBase
         if (!connectionSuccessful) return;
 
         Task subtitleExportTask = subtitleExporterService.Start(webSocket, ctSource); // write at end of pipeline
-        Task subtitleReceiveTask = setupSpeechmaticsState(ctSource);
+        Task subtitleReceiveTask = await setupSpeechmaticsState(ctSource);
         Task avReceiveTask = avReceiverService.Start(webSocket, ctSource); // read at start of pipeline
 
         await avReceiveTask; // no more audio to send
@@ -318,7 +318,8 @@ public class ClientExchangeController : ControllerBase
 
             messageChunks.AddRange(bufferToAdd);
             completed = response.EndOfMessage;
-        } while (!completed);
+        }
+        while (!completed);
 
         string completeMessage = Encoding.UTF8.GetString(messageChunks.ToArray());
 
