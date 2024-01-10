@@ -38,6 +38,8 @@ public class AvProcessingService : IAvProcessingService
 
     private readonly ISpeechmaticsSendService speechmaticsSendService;
 
+    private readonly IConfiguration configuration;
+
     private readonly ILogger log;
 
     /// <summary>
@@ -51,11 +53,13 @@ public class AvProcessingService : IAvProcessingService
         IFrontendCommunicationService frontendCommunicationService,
         ISpeechmaticsConnectionService speechmaticsConnectionService,
         ISpeechmaticsSendService speechmaticsSendService,
+        IConfiguration configuration,
         ILogger log)
     {
         this.frontendCommunicationService = frontendCommunicationService;
         this.speechmaticsConnectionService = speechmaticsConnectionService;
         this.speechmaticsSendService = speechmaticsSendService;
+        this.configuration = configuration;
         this.log = log;
     }
 
@@ -170,6 +174,8 @@ public class AvProcessingService : IAvProcessingService
         Stream audioPipeReader = audioPipe.Reader.AsStream(false);
         Task<bool> audioProcessor = processAudioToStream(avStream, audioPipe.Writer, ctSource);
 
+        bool simulateDelay = configuration.GetValue<bool>("ClientCommunicationSettings:SIMULATE_LIVESTREAM_RATE");
+
         try
         {
             byte[] buffer = new byte[speechmaticsConnectionService.AudioFormat.GetCheckedSampleRate() * speechmaticsConnectionService.AudioFormat.GetBytesPerSample()]; // 1s
@@ -183,9 +189,9 @@ public class AvProcessingService : IAvProcessingService
                 sendAudioToFrontend(buffer);
                 await sendToSpeechmatics;
 
-                // TODO remove when we handle an actual livestream
-                // processing a local file is much faster than receiving networked A/V in realtime, simulate the delay
-                await Task.Delay(TimeSpan.FromSeconds(1));
+                // processing a local file via the mock-server is much faster than receiving a real livestream, simulate the delay
+                if (simulateDelay)
+                    await Task.Delay(TimeSpan.FromSeconds(1));
             }
         }
         catch (Exception e)
