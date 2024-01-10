@@ -122,6 +122,8 @@ public class WordProcessingService : IWordProcessingService
     /// </summary>
     public async Task FlushBufferToNewSpeechBubble()
     {
+        if (wordTokenBuffer.Count == 0) return;
+
         var nextSpeechBubble = new SpeechBubble(
             id: nextSpeechBubbleId,
             speaker: (int)currentSpeaker!,
