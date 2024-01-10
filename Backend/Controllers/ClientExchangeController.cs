@@ -218,7 +218,9 @@ public class ClientExchangeController : ControllerBase
             await webSocket.CloseAsync(
                 !ctSource.IsCancellationRequested
                     ? WebSocketCloseStatus.NormalClosure
-                    : WebSocketCloseStatus.InternalServerError, "", makeConnectionTimeoutToken());
+                    : WebSocketCloseStatus.InternalServerError,
+                "",
+                makeConnectionTimeoutToken());
         }
         catch (Exception e)
         {
@@ -262,7 +264,8 @@ public class ClientExchangeController : ControllerBase
 
             messageChunks.AddRange(bufferToAdd);
             completed = response.EndOfMessage;
-        } while (!completed);
+        }
+        while (!completed);
 
         string completeMessage = Encoding.UTF8.GetString(messageChunks.ToArray());
 

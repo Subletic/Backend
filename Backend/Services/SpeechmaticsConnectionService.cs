@@ -6,7 +6,6 @@ using System.Text.Json;
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.audio_format;
 using ILogger = Serilog.ILogger;
 
-
 public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
 {
     private const int RECEIVE_BUFFER_SIZE = 4 * 1024;
@@ -40,6 +39,8 @@ public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
 
     private readonly ILogger log;
 
+    private readonly TimeSpan connectionTimeout;
+
     /// <summary>
     /// The Speechmatics RT API key this instance shall use for the RT transcription.
     /// </summary>
@@ -50,7 +51,7 @@ public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
 
     private ClientWebSocket? wsClient = null;
 
-    private CancellationTokenSource cts = new CancellationTokenSource();
+    private CancellationTokenSource connectionLifetimeToken = new CancellationTokenSource();
 
     public SpeechmaticsConnectionService(IConfiguration configuration, ILogger log)
     {
@@ -59,7 +60,14 @@ public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
         speechmaticsApiUrl = new Uri(string.Format(
             SPEECHMATICS_API_URL_TEMPLATE,
             configuration.GetValue<string>("SpeechmaticsConnectionService:SPEECHMATICS_API_URL_AUTHORITY")));
-        cts.Cancel();
+        connectionLifetimeToken.Cancel();
+        connectionTimeout =
+            TimeSpan.FromSeconds(configuration.GetValue<double>("ClientCommunicationSettings:TIMEOUT_IN_SECONDS"));
+    }
+
+    private CancellationToken makeConnectionTimeoutToken()
+    {
+        return new CancellationTokenSource((int)connectionTimeout.TotalMilliseconds).Token;
     }
 
     /// <summary>
@@ -159,7 +167,9 @@ public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
     {
         get
         {
-            return cts.Token;
+            return CancellationTokenSource.CreateLinkedTokenSource(
+                token1: connectionLifetimeToken.Token,
+                token2: makeConnectionTimeoutToken()).Token;
         }
     }
 
@@ -183,14 +193,14 @@ public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
         apiKey = apiKeyEnvMaybe;
 
         log.Information("Checking if new Speechmatics API key works...");
-        CancellationTokenSource cts = new CancellationTokenSource();
-        bool keyIsOkay = await Connect(cts.Token);
+        CancellationTokenSource connectionLifetimeToken = new CancellationTokenSource();
+        bool keyIsOkay = await Connect(connectionLifetimeToken.Token);
 
         // Set up the environment in a correct-looking state for disconnect to work
         if (keyIsOkay)
             keyIsOkay = keyIsOkay && await checkForResponse();
 
-        keyIsOkay = keyIsOkay && await Disconnect(keyIsOkay, cts.Token);
+        keyIsOkay = keyIsOkay && await Disconnect(keyIsOkay, connectionLifetimeToken.Token);
 
         if (keyIsOkay)
         {
@@ -238,7 +248,7 @@ public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
         }
 
         this.wsClient = wsClient;
-        cts = new CancellationTokenSource();
+        connectionLifetimeToken = new CancellationTokenSource();
 
         return wsClient.State == WebSocketState.Open;
     }
@@ -251,7 +261,7 @@ public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
             return false;
         }
 
-        cts.Cancel();
+        connectionLifetimeToken.Cancel();
         bool noErrors = true;
         string closeReason = "Done";
         if (!signalSuccess)
