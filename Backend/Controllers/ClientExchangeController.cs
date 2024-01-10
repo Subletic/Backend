@@ -142,7 +142,7 @@ public class ClientExchangeController : ControllerBase
         if (!speechmaticsConnected)
         {
             log.Error("Failed to connect to Speechmatics");
-            await speechmaticsConnectionService.Disconnect(false, ctSource.Token); // cleanup & reset
+            await speechmaticsConnectionService.Disconnect(false, makeConnectionTimeoutToken()); // cleanup & reset
 
             try
             {
@@ -194,12 +194,21 @@ public class ClientExchangeController : ControllerBase
 
         subtitleExporterService.RequestShutdown();
 
-        await speechmaticsSendService.SendJsonMessage<EndOfStreamMessage>(
-            new EndOfStreamMessage(speechmaticsSendService.SequenceNumber));
+        try
+        {
+            await speechmaticsSendService.SendJsonMessage<EndOfStreamMessage>(
+                new EndOfStreamMessage(speechmaticsSendService.SequenceNumber));
+        }
+        catch (Exception e)
+        {
+            log.Error($"Failed to send end of stream message to Speechmatics: {e.Message}");
+            log.Debug(e.ToString());
+            ctSource.Cancel();
+        }
 
         await subtitleReceiveTask; // no more subtitles to receive
 
-        await speechmaticsConnectionService.Disconnect(!ctSource.IsCancellationRequested, ctSource.Token);
+        await speechmaticsConnectionService.Disconnect(!ctSource.IsCancellationRequested, makeConnectionTimeoutToken());
 
         await subtitleExportTask; // no more subtitles to export
 

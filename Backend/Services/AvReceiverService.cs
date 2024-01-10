@@ -99,14 +99,15 @@ public class AvReceiverService : IAvReceiverService
             while (avResult.MessageType != WebSocketMessageType.Close);
             log.Debug("Done reading AV data");
         }
-        catch (WebSocketException e)
-        {
-            log.Error($"WebSocket to client has an error: {e.Message}");
-            ctSource.Cancel();
-        }
         catch (OperationCanceledException)
         {
             log.Error("Reading AV data from client has been cancelled");
+        }
+        catch (Exception e)
+        {
+            log.Error($"WebSocket to client has an error: {e.Message}");
+            log.Debug(e.ToString());
+            ctSource.Cancel();
         }
 
         log.Debug("Closing pipe to AV processing");

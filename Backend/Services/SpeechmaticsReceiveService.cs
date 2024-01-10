@@ -276,8 +276,7 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
             }
             catch (Exception e)
             {
-                log.Error("Exception occured while trying to receive data from Speechmatics");
-                log.Error(e.Message);
+                log.Error($"Exception occured while trying to receive data from Speechmatics: {e.Message}");
                 log.Debug(e.ToString());
                 ctSource.Cancel();
                 done = true;
