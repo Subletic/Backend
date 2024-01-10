@@ -293,20 +293,20 @@ public class ClientExchangeController : ControllerBase
     /// Receives a JSON formatted string response from a WebSocket.
     /// </summary>
     /// <param name="webSocket">The WebSocket from which to receive the response.</param>
-    /// <returns>A string of the JSON response.</returns>
+    /// <returns>A string of the requested format.</returns>
     private async Task<string> receiveFormatSpecification(WebSocket webSocket)
     {
         byte[] chunkBuffer = new byte[RECEIVE_BUFFER_SIZE];
-        List<byte> messageChunks = new List<byte>(RECEIVE_BUFFER_SIZE);
+        List<byte> messageChunks = new List<byte>();
         bool completed = false;
 
         do
         {
-            log.Debug("Listening from data from Speechmatics");
+            log.Debug("Listening for format data from Client");
             WebSocketReceiveResult response = await webSocket.ReceiveAsync(
                 buffer: chunkBuffer,
                 cancellationToken: makeConnectionTimeoutToken());
-            log.Debug("Received data from Speechmatics");
+            log.Debug("Received format data from Client");
 
             // FIXME AddRange'ing a Span directly for better performance is a .NET 8 feature
             byte[] bufferToAdd = chunkBuffer;
@@ -322,7 +322,7 @@ public class ClientExchangeController : ControllerBase
 
         string completeMessage = Encoding.UTF8.GetString(messageChunks.ToArray());
 
-        log.Debug($"Received message: {completeMessage}");
+        log.Debug($"Received format: {completeMessage}");
         return completeMessage;
     }
 }
