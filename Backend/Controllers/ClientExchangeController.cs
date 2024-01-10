@@ -1,15 +1,13 @@
 namespace Backend.Controllers;
 
-using System.Net;
 using System.Net.WebSockets;
 using System.Text;
-using System.Threading;
-using Backend.Data;
 using Backend.Data.SpeechmaticsMessages.EndOfStreamMessage;
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage;
 using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
-using Serilog;
+using ILogger = Serilog.ILogger;
+
 
 /// <summary>
 /// The ClientExchangeController receives a transcription request from a client via a WebSocket
@@ -30,7 +28,7 @@ public class ClientExchangeController : ControllerBase
     private readonly ISpeechmaticsSendService speechmaticsSendService;
     private readonly ISubtitleExporterService subtitleExporterService;
     private readonly IConfiguration configuration;
-    private readonly Serilog.ILogger log;
+    private readonly ILogger log;
 
     private static bool alreadyConnected = false;
 
@@ -54,7 +52,7 @@ public class ClientExchangeController : ControllerBase
         ISpeechmaticsSendService speechmaticsSendService,
         ISubtitleExporterService subtitleExporterService,
         IConfiguration configuration,
-        Serilog.ILogger log)
+        ILogger log)
     {
         this.avReceiverService = avReceiverService;
         this.speechBubbleListService = speechBubbleListService;
@@ -98,22 +96,73 @@ public class ClientExchangeController : ControllerBase
         using WebSocket webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
         alreadyConnected = true;
 
-        // Receiving format information from the client.
-        string formats = "";
+        string format = await receiveFormatInformation(webSocket);
+
+        bool validFormat = await validateAndSetFormat(format, webSocket);
+        if (!validFormat) return;
+
+        CancellationTokenSource ctSource = new CancellationTokenSource();
+
+        bool connectionSuccessful = await connectToSpeechmatics(webSocket);
+        if (!connectionSuccessful) return;
+
+        Task subtitleExportTask = subtitleExporterService.Start(webSocket, ctSource); // write at end of pipeline
+        Task subtitleReceiveTask = setupSpeechmaticsState(ctSource);
+        Task avReceiveTask = avReceiverService.Start(webSocket, ctSource); // read at start of pipeline
+
+        await avReceiveTask; // no more audio to send
+
+        // wait for all sent audio chunks to be received & confirmed by Speechmatics
+        while (speechmaticsSendService.SequenceNumber > speechmaticsReceiveService.SequenceNumber &&
+               !ctSource.Token.IsCancellationRequested)
+        {
+            log.Debug($"Waiting for receiving side's sequence number ({speechmaticsReceiveService.SequenceNumber}) "
+                      + $"to match sending side's sequence number ({speechmaticsSendService.SequenceNumber})");
+            await Task.Delay(TimeSpan.FromSeconds(1));
+        }
+
+        subtitleExporterService.RequestShutdown();
+        await sendEndOfStreamMessage(ctSource);
+        await subtitleReceiveTask; // no more subtitles to receive
+        await speechmaticsConnectionService.Disconnect(!ctSource.IsCancellationRequested, makeConnectionTimeoutToken());
+        await subtitleExportTask; // no more subtitles to export
+        await closeConnectionWithClient(webSocket, ctSource);
+
+        log.Information("Connection with client closed successfully");
+        speechBubbleListService.Clear();
+        alreadyConnected = false;
+    }
+
+    /// <summary>
+    /// Task for receiving the format specification from the client.
+    /// </summary>
+    /// <param name="webSocket">WebSocket used for the connection to the client</param>
+    /// <returns>String containing the selected format, empty String if no format could be obtained</returns>
+    private async Task<string> receiveFormatInformation(WebSocket webSocket)
+    {
         try
         {
-            formats = await receiveFormatSpecification(webSocket);
+            return await receiveFormatSpecification(webSocket);
         }
         catch (Exception e)
         {
             log.Error($"Failed to receive format specification from client: {e.Message}");
             log.Debug(e.ToString());
+            return "";
         }
+    }
 
-        // Validating and selecting the subtitle format.
+    /// <summary>
+    /// Validates the received Format and sets the Format in the SubtitleExporterService.
+    /// </summary>
+    /// <param name="format">The format requested by the client</param>
+    /// <param name="webSocket">WebSocket used for the connection to the client</param>
+    /// <returns>True if format is valid and was set successfully, otherwise False</returns>
+    private async Task<bool> validateAndSetFormat(string format, WebSocket webSocket)
+    {
         try
         {
-            subtitleExporterService.SelectFormat(formats);
+            subtitleExporterService.SelectFormat(format);
         }
         catch (ArgumentException e)
         {
@@ -123,7 +172,7 @@ public class ClientExchangeController : ControllerBase
                     WebSocketCloseStatus.InternalServerError,
                     e.Message,
                     makeConnectionTimeoutToken());
-                log.Warning($"Rejecting transcription request with invalid subtitle format {formats}");
+                log.Warning($"Rejecting transcription request with invalid subtitle format {format}");
             }
             catch (Exception webSocketCloseException)
             {
@@ -132,12 +181,19 @@ public class ClientExchangeController : ControllerBase
             }
 
             alreadyConnected = false;
-            return;
+            return false;
         }
 
-        CancellationTokenSource ctSource = new CancellationTokenSource();
+        return true;
+    }
 
-        // connect to Speechmatics
+    /// <summary>
+    /// Establishes a connection to Speechmatics.
+    /// </summary>
+    /// <param name="webSocket">WebSocket used for the connection to the client</param>
+    /// <returns>True if connection was established successfully, otherwise False</returns>
+    private async Task<bool> connectToSpeechmatics(WebSocket webSocket)
+    {
         bool speechmaticsConnected = await speechmaticsConnectionService.Connect(makeConnectionTimeoutToken());
         if (!speechmaticsConnected)
         {
@@ -158,12 +214,19 @@ public class ClientExchangeController : ControllerBase
             }
 
             alreadyConnected = false;
-            return;
+            return false;
         }
 
-        Task subtitleExportTask = subtitleExporterService.Start(webSocket, ctSource); // write at end of pipeline
+        return true;
+    }
 
-        // setup speechmatics state
+    /// <summary>
+    /// Sets up the Speechmatics state by sending a StartRecognitionMessage and starting the receive loop.
+    /// </summary>
+    /// <param name="ctSource">Cancellation Token source used for cancelling the Task</param>
+    /// <returns>The started subtitleReceiveTask</returns>
+    private async Task<Task> setupSpeechmaticsState(CancellationTokenSource ctSource)
+    {
         speechmaticsSendService.ResetSequenceNumber();
         Task subtitleReceiveTask = speechmaticsReceiveService.ReceiveLoop(ctSource);
 
@@ -179,21 +242,15 @@ public class ClientExchangeController : ControllerBase
             ctSource.Cancel();
         }
 
-        Task avReceiveTask = avReceiverService.Start(webSocket, ctSource); // read at start of pipeline
+        return subtitleReceiveTask;
+    }
 
-        await avReceiveTask; // no more audio to send
-
-        // wait for all sent audio chunks to be received & confirmed by Speechmatics
-        while (speechmaticsSendService.SequenceNumber > speechmaticsReceiveService.SequenceNumber &&
-               !ctSource.Token.IsCancellationRequested)
-        {
-            log.Debug($"Waiting for receiving side's sequence number ({speechmaticsReceiveService.SequenceNumber}) "
-                      + $"to match sending side's sequence number ({speechmaticsSendService.SequenceNumber})");
-            await Task.Delay(TimeSpan.FromSeconds(1));
-        }
-
-        subtitleExporterService.RequestShutdown();
-
+    /// <summary>
+    /// Sends a EndOfStreamMessage to Speechmatics
+    /// </summary>
+    /// <param name="ctSource">Cancellation Token source used for cancelling the Task</param>
+    private async Task sendEndOfStreamMessage(CancellationTokenSource ctSource)
+    {
         try
         {
             await speechmaticsSendService.SendJsonMessage<EndOfStreamMessage>(
@@ -205,13 +262,15 @@ public class ClientExchangeController : ControllerBase
             log.Debug(e.ToString());
             ctSource.Cancel();
         }
+    }
 
-        await subtitleReceiveTask; // no more subtitles to receive
-
-        await speechmaticsConnectionService.Disconnect(!ctSource.IsCancellationRequested, makeConnectionTimeoutToken());
-
-        await subtitleExportTask; // no more subtitles to export
-
+    /// <summary>
+    /// Sends a close request to the client and closes the connection.
+    /// </summary>
+    /// <param name="webSocket">WebSocket used for the connection to the client</param>
+    /// <param name="ctSource">Cancellation Token source used for cancelling the Task</param>
+    private async Task closeConnectionWithClient(WebSocket webSocket, CancellationTokenSource ctSource)
+    {
         try
         {
             log.Information("Closing connection with client");
@@ -228,11 +287,6 @@ public class ClientExchangeController : ControllerBase
             log.Error(e.Message);
             ctSource.Cancel();
         }
-
-        log.Information("Connection with client closed successfully");
-
-        speechBubbleListService.Clear();
-        alreadyConnected = false;
     }
 
     /// <summary>
@@ -264,8 +318,7 @@ public class ClientExchangeController : ControllerBase
 
             messageChunks.AddRange(bufferToAdd);
             completed = response.EndOfMessage;
-        }
-        while (!completed);
+        } while (!completed);
 
         string completeMessage = Encoding.UTF8.GetString(messageChunks.ToArray());
 
