@@ -15,6 +15,12 @@ public interface ISpeechmaticsSendService
     ulong SequenceNumber { get; }
 
     /// <summary>
+    /// Reset <see cref="SequenceNumber"/> to 0. To be used when a new
+    /// Speechmatics communication has been started.
+    /// </summary>
+    void ResetSequenceNumber();
+
+    /// <summary>
     /// Send an object (should be of a Speechmatics message type) to Speechmatics
     /// in text mode.
     /// </summary>

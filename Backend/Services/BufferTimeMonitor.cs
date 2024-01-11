@@ -1,15 +1,6 @@
 namespace Backend.Services;
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using Backend.Data;
-using Backend.Hubs;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 
 /// <summary>
 /// Service that monitors the time of the oldest SpeechBubble in the list.
@@ -25,8 +16,6 @@ public class BufferTimeMonitor : BackgroundService
     private readonly IConfigurationService configurationService;
 
     private readonly ISubtitleExporterService subtitleExporterService;
-
-    private readonly IConfiguration configuration;
 
     private readonly int delayMilliseconds;
 
@@ -49,7 +38,6 @@ public class BufferTimeMonitor : BackgroundService
     {
         this.frontendCommunicationService = frontendCommunicationService;
         this.configurationService = configurationService;
-        this.configuration = configuration;
         this.timeLimitInMinutes = configuration.GetValue<float>("BufferTimeMonitorSettings:DEFAULT_TIME_LIMIT_IN_MINUTES");
         this.delayMilliseconds = configuration.GetValue<int>("BufferTimeMonitorSettings:DEFAULT_DEALY_MILLISECONDS");
         this.speechBubbleListService = speechBubbleListService;
@@ -68,14 +56,21 @@ public class BufferTimeMonitor : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            timeLimitInMinutes = configurationService.GetDelay();
+            if (configurationService.GetDelay() != 0)
+            {
+                timeLimitInMinutes = configurationService.GetDelay();
+            }
+
             await Task.Delay(delayMilliseconds, stoppingToken);
 
             var oldestSpeechBubble = speechBubbleListService.GetSpeechBubbles().First;
             if (oldestSpeechBubble == null)
             {
+                subtitleExporterService.SetQueueContainsItems(false);
                 continue;
             }
+
+            subtitleExporterService.SetQueueContainsItems(true);
 
             var currentTime = DateTime.Now;
             var oldestSpeechBubbleCreationTime = oldestSpeechBubble.Value.CreationTime;
@@ -88,7 +83,10 @@ public class BufferTimeMonitor : BackgroundService
                 timedOutSpeechBubbles.Add(oldestSpeechBubble.Value);
                 speechBubbleListService.DeleteOldestSpeechBubble();
 
+                // Can in theory crash if subtitle exporter is not set
+                // This should never happen, but if it does, it's better to crash as we don't know the state of the backend
                 await subtitleExporterService.ExportSubtitle(oldestSpeechBubble.Value);
+                if (speechBubbleListService.GetSpeechBubbles().First == null) subtitleExporterService.SetQueueContainsItems(false);
             }
         }
     }

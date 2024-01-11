@@ -13,5 +13,5 @@ public interface IAvReceiverService
     /// <param name="webSocket">The WebSocket to use for communication.</param>
     /// <param name="ctSource">The CancellationTokenSource to use for cancellation.</param>
     /// <returns>A Task representing the asynchronous operation.</returns>
-    public Task<bool> Start(WebSocket webSocket, CancellationTokenSource ctSource);
+    public Task Start(WebSocket webSocket, CancellationTokenSource ctSource);
 }

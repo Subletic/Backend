@@ -2,10 +2,6 @@
 #pragma warning disable SA1300
 namespace Backend.Services;
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Pipelines;
 using System.Text;
 using Backend.Data;
 

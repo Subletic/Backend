@@ -1,14 +1,9 @@
 namespace Backend.Services;
 
-using System;
-using System.Buffers;
 using System.IO.Pipelines;
 using System.Net.WebSockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Backend.Data;
-using Backend.Services;
+using ILogger = Serilog.ILogger;
 
 /// <summary>
 /// Service responsible for exporting finished subtitles back over the WebSocket connection.
@@ -21,6 +16,16 @@ public class SubtitleExporterService : ISubtitleExporterService
     private const int MAXIMUM_READ_SIZE = 4096;
 
     /// <summary>
+    /// Dependency Injection for the application configuration
+    /// </summary>
+    private readonly IConfiguration configuration;
+
+    /// <summary>
+    /// Dependency Injection for the logger
+    /// </summary>
+    private readonly ILogger log;
+
+    /// <summary>
     /// Pipe for reading converted subtitles from the converter
     /// </summary>
     private Pipe subtitlePipe;
@@ -31,13 +36,26 @@ public class SubtitleExporterService : ISubtitleExporterService
     private ISubtitleConverter? subtitleConverter;
 
     /// <summary>
+    /// True if SpeechBubbleListService still contains items deemed for export
+    /// </summary>
+    private bool queueContainsItems;
+
+    /// <summary>
+    /// True if Client requested Shutdown after transcription finished
+    /// </summary>
+    private bool shutdownRequested;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="SubtitleExporterService"/> class.
     /// </summary>
     /// <remarks>
     /// This constructor is used to handle dependency injection.
     /// </remarks>
-    public SubtitleExporterService()
+    /// <param name="log"> DI Serilog reference </param>
+    public SubtitleExporterService(IConfiguration configuration, ILogger log)
     {
+        this.configuration = configuration;
+        this.log = log;
         subtitlePipe = new Pipe();
     }
 
@@ -47,16 +65,19 @@ public class SubtitleExporterService : ISubtitleExporterService
     /// <param name="format">The subtitle format ("webvtt" or "srt").</param>
     public void SelectFormat(string format)
     {
-        switch (format.ToLower())
+        this.subtitlePipe = new Pipe();
+
+        string formatLower = format.ToLower();
+        switch (formatLower)
         {
-            case "webvtt":
+            case "vtt":
                 subtitleConverter = new WebVttConverter(subtitlePipe.Writer.AsStream(leaveOpen: true));
-                break;
+                return;
             case "srt":
                 subtitleConverter = new SrtConverter(subtitlePipe.Writer.AsStream(leaveOpen: true));
-                break;
+                return;
             default:
-                throw new ArgumentException("Unsupported subtitle format");
+                throw new ArgumentException($"Unsupported subtitle format {formatLower}, must be one of: vtt, srt");
         }
     }
 
@@ -73,47 +94,97 @@ public class SubtitleExporterService : ISubtitleExporterService
         Stream subtitleReaderStream = subtitlePipe.Reader.AsStream(leaveOpen: false);
         byte[] buffer = new byte[MAXIMUM_READ_SIZE];
 
-        Console.WriteLine("Start sending subtitles over WebSocket");
+        log.Information("Start sending subtitles over WebSocket");
+
+        queueContainsItems = false;
+        shutdownRequested = false;
 
         try
         {
             while (true)
             {
-                Console.WriteLine("Trying to read subtitles");
+                log.Debug("Trying to read subtitles");
+                log.Debug("Queue contains items: {QueueContainsItems}", queueContainsItems);
                 int readCount = 0;
                 try
                 {
+                    if (shutdownRequested && !queueContainsItems)
+                    {
+                        log.Debug("Shutting down export");
+                        subtitleReaderStream.Close();
+                        break;
+                    }
+
                     // "block" here until at least 1 byte can be read
                     readCount = await subtitleReaderStream.ReadAtLeastAsync(buffer, 1, true, ctSource.Token);
                 }
                 catch (EndOfStreamException)
                 {
-                    Console.WriteLine("End of stream reached");
+                    log.Information("End of stream reached");
                     break;
                 }
 
-                Console.WriteLine("Have subtitles ready to send");
+                log.Debug("Have subtitles ready to send");
 
-                await webSocket.SendAsync(
-                    new ReadOnlyMemory<byte>(buffer, 0, readCount),
-                    WebSocketMessageType.Text,
-                    false,
-                    ctSource.Token);
-                Console.WriteLine("Subtitles sent");
+                CancellationToken timeout = new CancellationTokenSource(
+                    (int)TimeSpan
+                        .FromSeconds(configuration.GetValue<double>("ClientCommunicationSettings:TIMEOUT_IN_SECONDS"))
+                        .TotalMilliseconds).Token;
+
+                try
+                {
+                    await webSocket.SendAsync(
+                        new ReadOnlyMemory<byte>(buffer, 0, readCount),
+                        WebSocketMessageType.Text,
+                        false,
+                        timeout);
+                }
+                catch (OperationCanceledException)
+                {
+                    log.Error("Timed out waiting for client to receive subtitles");
+                    throw;
+                }
+
+                log.Debug("Subtitles sent");
+                ctSource.Token.ThrowIfCancellationRequested();
             }
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("Subtitle export has been cancelled");
+            log.Information("Subtitle export has been cancelled");
+        }
+        catch (Exception e)
+        {
+            log.Error("Exception occured while trying to export subtitles: {Exception}", e);
+            ctSource.Cancel();
         }
 
-        Console.WriteLine("Done sending subtitles over WebSocket");
+        log.Information("Done sending subtitles over WebSocket");
+    }
+
+    /// <summary>
+    /// Called from BufferTimeMonitor to let the ExporterService know if there are remaining SpeechBubbles in the queue.
+    /// Used for shutting down after all SpeechBubbles have been exported.
+    /// </summary>
+    /// <param name="containsItems">true if queue contains SpeechBubbles</param>
+    public void SetQueueContainsItems(bool containsItems)
+    {
+        queueContainsItems = containsItems;
+    }
+
+    /// <summary>
+    /// Called from ClientExchangeController to tell the ExporterService that it is ready for shutdown.
+    /// </summary>
+    public void RequestShutdown()
+    {
+        log.Debug("Shutdown requested!");
+        shutdownRequested = true;
     }
 
     /// <summary>
     /// Represents an asynchronous operation that can return a value.
     /// </summary>
-    /// <param name="speechBubble">The speech bubble to export.</param
+    /// <param name="speechBubble">The speech bubble to export.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
     public Task ExportSubtitle(SpeechBubble speechBubble)
     {

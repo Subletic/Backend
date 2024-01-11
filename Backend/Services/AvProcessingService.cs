@@ -1,31 +1,9 @@
 namespace Backend.Services;
 
-using System;
-using System.IO;
 using System.IO.Pipelines;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Net.WebSockets;
-using System.Text;
-using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.Threading;
-using Backend.Controllers;
-using Backend.Data;
-using Backend.Data.SpeechmaticsMessages.AddTranscriptMessage;
-using Backend.Data.SpeechmaticsMessages.AddTranscriptMessage.result;
-using Backend.Data.SpeechmaticsMessages.AudioAddedMessage;
-using Backend.Data.SpeechmaticsMessages.EndOfStreamMessage;
-using Backend.Data.SpeechmaticsMessages.EndOfTranscriptMessage;
-using Backend.Data.SpeechmaticsMessages.ErrorMessage;
-using Backend.Data.SpeechmaticsMessages.InfoMessage;
-using Backend.Data.SpeechmaticsMessages.RecognitionStartedMessage;
-using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage;
-using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.audio_format;
-using Backend.Data.SpeechmaticsMessages.WarningMessage;
 using FFMpegCore;
-using FFMpegCore.Enums;
 using FFMpegCore.Pipes;
+using ILogger = Serilog.ILogger;
 
 /// <summary>
 /// Service that takes some A(/V) stream, runs its audio against the Speechmatics realtime API
@@ -60,7 +38,9 @@ public class AvProcessingService : IAvProcessingService
 
     private readonly ISpeechmaticsSendService speechmaticsSendService;
 
-    private readonly Serilog.ILogger log;
+    private readonly IConfiguration configuration;
+
+    private readonly ILogger log;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AvProcessingService"/> class.
@@ -73,11 +53,13 @@ public class AvProcessingService : IAvProcessingService
         IFrontendCommunicationService frontendCommunicationService,
         ISpeechmaticsConnectionService speechmaticsConnectionService,
         ISpeechmaticsSendService speechmaticsSendService,
-        Serilog.ILogger log)
+        IConfiguration configuration,
+        ILogger log)
     {
         this.frontendCommunicationService = frontendCommunicationService;
         this.speechmaticsConnectionService = speechmaticsConnectionService;
         this.speechmaticsSendService = speechmaticsSendService;
+        this.configuration = configuration;
         this.log = log;
     }
 
@@ -90,11 +72,12 @@ public class AvProcessingService : IAvProcessingService
     /// </summary>
     /// <param name="avStream">A Stream to read media data from.</param>
     /// <param name="audioPipe">A <c>PipeWriter</c> to push the data into.</param>
+    /// <param name="ctSource">Reference to to CT Source to cancel all other services in case something goes wrong</param>
     /// <returns>
     /// An <c>await</c>able <c>Task{bool}</c> indicating if the processing went well.
     /// </returns>
     /// <seealso cref="PushProcessedAudio" />
-    private async Task<bool> processAudioToStream(Stream avStream, PipeWriter audioPipe)
+    private async Task<bool> processAudioToStream(Stream avStream, PipeWriter audioPipe, CancellationTokenSource ctSource)
     {
         log.Debug("Started audio processing with FFmpeg");
         bool success = true;
@@ -121,6 +104,7 @@ public class AvProcessingService : IAvProcessingService
         {
             Console.WriteLine(e.ToString());
             success = false;
+            ctSource.Cancel();
         }
 
         // always flush & mark complete, so other side of pipe can move on
@@ -175,19 +159,22 @@ public class AvProcessingService : IAvProcessingService
     /// to the Speechmatics RT API for recognition and transcription, and the frontend for local playback.
     /// Internally launches and <c>await</c>s <c>ProcessAudioToStream</c>.
     /// <param name="avStream">A Stream to read media data from.</param>
+    /// <param name="ctSource">Reference to to CT Source to cancel all other services in case something goes wrong</param>
     /// <returns>
     /// An <c>await</c>able <c>Task{bool}</c> indicating if the processing and sending went well.
     /// </returns>
     /// <seealso cref="processAudioToStream" />
     /// </summary>
-    public async Task<bool> PushProcessedAudio(Stream avStream)
+    public async Task<bool> PushProcessedAudio(Stream avStream, CancellationTokenSource ctSource)
     {
         log.Debug("Starting audio pushing");
 
         bool success = true;
         Pipe audioPipe = new Pipe();
         Stream audioPipeReader = audioPipe.Reader.AsStream(false);
-        Task<bool> audioProcessor = processAudioToStream(avStream, audioPipe.Writer);
+        Task<bool> audioProcessor = processAudioToStream(avStream, audioPipe.Writer, ctSource);
+
+        bool simulateDelay = configuration.GetValue<bool>("ClientCommunicationSettings:SIMULATE_LIVESTREAM_RATE");
 
         try
         {
@@ -197,19 +184,21 @@ public class AvProcessingService : IAvProcessingService
 
             while ((filledAmount = await readProcessedChunk(audioPipeReader, buffer)) != 0)
             {
+                ctSource.Token.ThrowIfCancellationRequested();
                 Task sendToSpeechmatics = sendAudioToSpeechmatics(buffer, filledAmount);
                 sendAudioToFrontend(buffer);
                 await sendToSpeechmatics;
 
-                // TODO remove when we handle an actual livestream
-                // processing a local file is much faster than receiving networked A/V in realtime, simulate the delay
-                await Task.Delay(TimeSpan.FromSeconds(1));
+                // processing a local file via the mock-server is much faster than receiving a real livestream, simulate the delay
+                if (simulateDelay)
+                    await Task.Delay(TimeSpan.FromSeconds(1));
             }
         }
         catch (Exception e)
         {
             log.Error(e.ToString());
             success = false;
+            ctSource.Cancel();
         }
 
         log.Debug("Awaiting FFmpeg to finish");

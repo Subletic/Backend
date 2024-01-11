@@ -20,7 +20,7 @@ public interface ISpeechmaticsReceiveService
     /// an error is encountered.
     /// </summary>
     /// <returns>Whether or not everything went well</returns>
-    Task<bool> ReceiveLoop();
+    Task<bool> ReceiveLoop(CancellationTokenSource ctSource);
 
     /// <summary>
     /// Perform a quick test of the complex (and scary-looking) Reflection call

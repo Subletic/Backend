@@ -1,14 +1,8 @@
 namespace Backend.Services;
 
-using System;
-using System.Buffers;
 using System.IO.Pipelines;
 using System.Net.WebSockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Backend.Data;
-using Backend.Services;
+using ILogger = Serilog.ILogger;
 
 /// <summary>
 /// A service that fetches new A/V data over a WebSocket and kicks off its transcription via AvProcessingService.
@@ -26,18 +20,27 @@ public class AvReceiverService : IAvReceiverService
     private readonly IAvProcessingService avProcessingService;
 
     /// <summary>
+    /// Dependency Injection for the application's configuration
+    /// </summary>
+    private readonly IConfiguration configuration;
+
+    /// <summary>
     /// Dependency Injection for a logger
     /// </summary>
-    private readonly Serilog.ILogger log;
+    private readonly ILogger log;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AvReceiverService"/> class.
     /// </summary>
     /// <param name="avProcessingService">The AvProcessingService to push fetched data into</param>
     /// <param name="log">The logger</param>
-    public AvReceiverService(IAvProcessingService avProcessingService, Serilog.ILogger log)
+    public AvReceiverService(
+        IAvProcessingService avProcessingService,
+        IConfiguration configuration,
+        ILogger log)
     {
         this.avProcessingService = avProcessingService;
+        this.configuration = configuration;
         this.log = log;
     }
 
@@ -47,7 +50,7 @@ public class AvReceiverService : IAvReceiverService
     /// <param name="webSocket">The WebSocket to read A/V data from</param>
     /// <param name="ctSource">The CancellationTokenSource to cancel the operation</param>
     /// <returns> A Task representing the asynchronous operation. </returns>
-    public async Task<bool> Start(WebSocket webSocket, CancellationTokenSource ctSource)
+    public async Task Start(WebSocket webSocket, CancellationTokenSource ctSource)
     {
         Pipe avPipe = new Pipe();
         Stream avWriter = avPipe.Writer.AsStream(leaveOpen: true);
@@ -56,16 +59,28 @@ public class AvReceiverService : IAvReceiverService
 
         log.Debug("Start reading AV data from client");
 
-        bool connectionAlive = true;
-        Task<bool> processingTask = avProcessingService.PushProcessedAudio(avPipe.Reader.AsStream(leaveOpen: true));
+        Task<bool> processingTask = avProcessingService.PushProcessedAudio(avPipe.Reader.AsStream(leaveOpen: true), ctSource);
 
         try
         {
             do
             {
-                // too much
-                // log.Debug("Waiting for AV data to arrive");
-                avResult = await webSocket.ReceiveAsync(readBuffer, ctSource.Token);
+                CancellationTokenSource timeout = new CancellationTokenSource(
+                    (int)TimeSpan.FromSeconds(configuration.GetValue<double>("ClientCommunicationSettings:TIMEOUT_IN_SECONDS"))
+                        .TotalMilliseconds);
+
+                // differenciate between timeout being hit and the shared token being cancelled
+                try
+                {
+                    avResult = await webSocket.ReceiveAsync(readBuffer, timeout.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    log.Error("Timed out waiting for client to send AV data");
+                    throw;
+                }
+
+                ctSource.Token.ThrowIfCancellationRequested();
 
                 if (avResult.MessageType == WebSocketMessageType.Close)
                 {
@@ -73,25 +88,28 @@ public class AvReceiverService : IAvReceiverService
                     break;
                 }
 
-                // too much
-                // log.Debug($"Pushing {avResult.Count} bytes into AV processing");
                 await avWriter.WriteAsync(new ReadOnlyMemory<byte>(readBuffer, 0, avResult.Count), ctSource.Token);
             }
             while (avResult.MessageType != WebSocketMessageType.Close);
             log.Debug("Done reading AV data");
         }
-        catch (WebSocketException e)
+        catch (OperationCanceledException)
+        {
+            log.Error("Reading AV data from client has been cancelled");
+        }
+        catch (Exception e)
         {
             log.Error($"WebSocket to client has an error: {e.Message}");
-            connectionAlive = false;
+            log.Debug(e.ToString());
+            ctSource.Cancel();
         }
 
         log.Debug("Closing pipe to AV processing");
         await avPipe.Writer.CompleteAsync();
+
         log.Debug("Waiting for AV processing to finish");
         bool processingSuccess = await processingTask;
-        log.Debug("Processing " + (processingSuccess ? "success" : "failure"));
 
-        return connectionAlive;
+        log.Debug("Processing " + (processingSuccess ? "success" : "failure"));
     }
 }

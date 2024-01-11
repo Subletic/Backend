@@ -1,8 +1,5 @@
 namespace Backend.Services;
 
-using System;
-using System.Collections.Generic;
-using Backend.Data;
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_config;
 
 /// <summary>

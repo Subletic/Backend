@@ -1,6 +1,5 @@
 namespace Backend.Services;
 
-using System.Collections.Generic;
 using Backend.Data;
 
 /// <summary>

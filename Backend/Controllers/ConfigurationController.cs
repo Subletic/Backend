@@ -1,12 +1,9 @@
 namespace Backend.Controllers;
 
-using System;
 using Backend.Data;
-using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_config;
 using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
-using Serilog;
-using Serilog.Events;
+using ILogger = Serilog.ILogger;
 
 /// <summary>
 /// Controller für benutzerdefinierte Wörterbücher.
@@ -18,7 +15,7 @@ public class ConfigurationController : ControllerBase
     private readonly IConfigurationService dictionaryService;
 
     // Das private readonly Feld logger wird verwendet, um den Logger für die Protokollierung innerhalb dieser Klasse zu halten.
-    private readonly Serilog.ILogger logger;
+    private readonly ILogger logger;
 
     // Array mit gültigen delayLength-Werten
     private readonly double[] validDelayLengths = { 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10 };
@@ -27,7 +24,7 @@ public class ConfigurationController : ControllerBase
     /// Konstruktor für den CustomDictionaryController. Initialisiert den Dienst für benutzerdefinierte Wörterbücher.
     /// </summary>
     /// <param name="dictionaryService">Der Dienst für benutzerdefinierte Wörterbücher.</param>
-    public ConfigurationController(IConfigurationService dictionaryService, Serilog.ILogger logger)
+    public ConfigurationController(IConfigurationService dictionaryService, ILogger logger)
     {
         this.dictionaryService = dictionaryService ?? throw new ArgumentNullException(nameof(dictionaryService));
         this.logger = logger;
