@@ -51,7 +51,8 @@ public class SubtitleExporterService : ISubtitleExporterService
     /// <remarks>
     /// This constructor is used to handle dependency injection.
     /// </remarks>
-    /// <param name="log"> DI Serilog reference </param>
+    /// <param name="log">DI Serilog reference</param>
+    /// <param name="configuration">DI appsettings reference</param>
     public SubtitleExporterService(IConfiguration configuration, ILogger log)
     {
         this.configuration = configuration;

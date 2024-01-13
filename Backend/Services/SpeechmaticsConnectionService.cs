@@ -6,6 +6,9 @@ using System.Text.Json;
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.audio_format;
 using ILogger = Serilog.ILogger;
 
+/// <summary>
+/// A service that handles a WebSocket connection to Speechmatics
+/// </summary>
 public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
 {
     private const int RECEIVE_BUFFER_SIZE = 4 * 1024;
@@ -53,6 +56,11 @@ public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
 
     private CancellationTokenSource connectionLifetimeToken = new CancellationTokenSource();
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SpeechmaticsConnectionService"/> class.
+    /// </summary>
+    /// <param name="configuration">DI appsettings reference</param>
+    /// <param name="log">The logger</param>
     public SpeechmaticsConnectionService(IConfiguration configuration, ILogger log)
     {
         this.configuration = configuration;
@@ -124,6 +132,9 @@ public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
         return true;
     }
 
+    /// <summary>
+    /// Gets a value indicating whether we're currently connected to Speechmatics.
+    /// </summary>
     public bool Connected
     {
         get
@@ -132,12 +143,19 @@ public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
         }
     }
 
+    /// <summary>
+    /// Throws an exception if we're not currently connected to Speechmatics.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">If we're not connected to Speechmatics</exception>
     public void ThrowIfNotConnected()
     {
         if (Connected != true)
             throw new InvalidOperationException("Not connected to Speechmatics");
     }
 
+    /// <summary>
+    /// Gets the WebSocket to Speechmatics.
+    /// </summary>
     public ClientWebSocket Socket
     {
         get
@@ -147,6 +165,9 @@ public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
         }
     }
 
+    /// <summary>
+    /// Gets the common (de)serialiser options to use for this connection
+    /// </summary>
     public JsonSerializerOptions JsonOptions
     {
         get
@@ -155,6 +176,9 @@ public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
         }
     }
 
+    /// <summary>
+    /// Gets what audio format will be sent over the connection.
+    /// </summary>
     public StartRecognitionMessage_AudioFormat AudioFormat
     {
         get
@@ -163,6 +187,9 @@ public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
         }
     }
 
+    /// <summary>
+    /// Gets a <c>CancellationToken</c> corresponding to the existence of this connection.
+    /// </summary>
     public CancellationToken CancellationToken
     {
         get
@@ -218,6 +245,8 @@ public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
     /// <summary>
     /// Open a WebSocket connection to the Speechmatics RT API.
     /// </summary>
+    /// <param name="ct">A CancellationToken to use for the network calls</param>
+    /// <returns>Whether or not everything went well</returns>
     public async Task<bool> Connect(CancellationToken ct)
     {
         if (apiKey is null)
@@ -253,6 +282,12 @@ public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
         return wsClient.State == WebSocketState.Open;
     }
 
+    /// <summary>
+    /// Close the WebSocket connection to the Speechmatics RT API.
+    /// </summary>
+    /// <param name="signalSuccess">Whether we should tell Speechmatics that everything went well</param>
+    /// <param name="ct">A CancellationToken to use for the network calls</param>
+    /// <returns>Whether or not everything went well</returns>
     public async Task<bool> Disconnect(bool signalSuccess, CancellationToken ct)
     {
         if (Connected != true)

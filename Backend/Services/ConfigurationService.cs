@@ -8,18 +8,25 @@ using ILogger = Serilog.ILogger;
 /// </summary>
 public class ConfigurationService : IConfigurationService
 {
-    // Das private readonly Feld logger wird verwendet, um den Logger für die Protokollierung innerhalb dieser Klasse zu halten.
+    /// <summary>
+    /// The logger.
+    /// </summary>
     private readonly ILogger logger;
 
-    // List to store custom dictionaries.
+    /// <summary>
+    /// List to store custom dictionaries.
+    /// </summary>
     private List<StartRecognitionMessage_TranscriptionConfig> customDictionaries;
 
-    // Variable, um zeitbasierte Wartezeiten für Funktionen im ConfigurationServiceController und BufferTimeMonitor zu speichern.
+    /// <summary>
+    /// The delay, that is used for time-based waiting in the ConfigurationServiceController and BufferTimeMonitor.
+    /// </summary>
     private float delay;
 
     /// <summary>
-    /// Konstruktor für den ConfigurationService. Initialisiert die Liste der benutzerdefinierten Wörterbücher.
+    /// Constructor for the ConfigurationService. Initialises the list of custom dictionaries.
     /// </summary>
+    /// <param name="logger">Der Logger.</param>
     public ConfigurationService(ILogger logger)
     {
         customDictionaries = new List<StartRecognitionMessage_TranscriptionConfig>();
@@ -27,7 +34,7 @@ public class ConfigurationService : IConfigurationService
     }
 
     /// <summary>
-    /// Verarbeitet ein benutzerdefiniertes Wörterbuch.
+    /// Process and stores a custom dictionary.
     /// </summary>
     /// <param name="customDictionary">Das zu verarbeitende benutzerdefinierte Wörterbuch.</param>
     /// <exception cref="ArgumentException">Ausgelöst, wenn die Daten des benutzerdefinierten Wörterbuchs ungültig sind.</exception>
@@ -69,7 +76,7 @@ public class ConfigurationService : IConfigurationService
     }
 
     /// <summary>
-    /// Gibt die Liste der benutzerdefinierten Wörterbücher zurück.
+    /// Gets the list of custom dictionaries.
     /// </summary>
     /// <returns>Die Liste der benutzerdefinierten Wörterbücher.</returns>
     public List<StartRecognitionMessage_TranscriptionConfig> GetCustomDictionaries()
@@ -78,16 +85,16 @@ public class ConfigurationService : IConfigurationService
     }
 
     /// <summary>
-    /// Gibt den Wert der Verzögerung zurück.
+    /// Gets the value of the delay.
     /// </summary>
     /// <returns>Die Verzögerung.</returns>
     public float GetDelay()
     {
-        return this.delay;
+        return delay;
     }
 
     /// <summary>
-    /// Setzt den Wert der Verzögerung.
+    /// Sets the value of the delay.
     /// </summary>
     /// <param name="delay">Die neue Verzögerung.</param>
     public void SetDelay(float delay)

@@ -42,6 +42,7 @@ public class WordProcessingService : IWordProcessingService
     /// Conditions for a new SpeechBubble are contained in the IsSpeechBubbleFull() method.
     /// </summary>
     /// <param name="wordToken">The Word Token that should be appended to a SpeechBubble</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task HandleNewWord(WordToken wordToken)
     {
         Console.WriteLine($"New word: {wordToken.Word}, confidence {wordToken.Confidence}");
@@ -120,6 +121,7 @@ public class WordProcessingService : IWordProcessingService
     /// Empties WordBuffer and appends new SpeechBubble to the End of the LinkedList
     /// Increments the SpeechBubbleId by 1, so each SpeechBubble has a unique Id.
     /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task FlushBufferToNewSpeechBubble()
     {
         if (wordTokenBuffer.Count == 0) return;
