@@ -1,95 +1,97 @@
 namespace Backend.Services;
 
+using System;
+using System.Collections.Generic;
+using Backend.Data;
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_config;
-using ILogger = Serilog.ILogger;
+using Serilog;
 
 /// <summary>
-/// Dienst zur Verwaltung benutzerdefinierter Wörterbücher.
+/// Service for managing custom dictionaries.
 /// </summary>
 public class ConfigurationService : IConfigurationService
 {
-    // Das private readonly Feld logger wird verwendet, um den Logger für die Protokollierung innerhalb dieser Klasse zu halten.
-    private readonly ILogger logger;
+    // Logger for logging within this class
+    private readonly ILogger log;
 
-    // List to store custom dictionaries.
-    private List<StartRecognitionMessage_TranscriptionConfig> customDictionaries;
+    // Storage for custom dictionaries
+    private StartRecognitionMessage_TranscriptionConfig? customDictionary;
 
-    // Variable, um zeitbasierte Wartezeiten für Funktionen im ConfigurationServiceController und BufferTimeMonitor zu speichern.
+    // Variable for storing time-based delays
     private float delay;
 
     /// <summary>
-    /// Konstruktor für den ConfigurationService. Initialisiert die Liste der benutzerdefinierten Wörterbücher.
+    /// Constructor for the ConfigurationService. Initializes the custom dictionaries list.
     /// </summary>
-    public ConfigurationService(ILogger logger)
+    /// <param name="log">The logger used for logging within this class.</param>
+    public ConfigurationService(ILogger log)
     {
-        customDictionaries = new List<StartRecognitionMessage_TranscriptionConfig>();
-        this.logger = logger;
+        this.log = log ?? throw new ArgumentNullException(nameof(log));
+        this.customDictionary = null;
     }
 
     /// <summary>
-    /// Verarbeitet ein benutzerdefiniertes Wörterbuch.
+    /// Processes a custom dictionary.
     /// </summary>
-    /// <param name="customDictionary">Das zu verarbeitende benutzerdefinierte Wörterbuch.</param>
-    /// <exception cref="ArgumentException">Ausgelöst, wenn die Daten des benutzerdefinierten Wörterbuchs ungültig sind.</exception>
-    public void ProcessCustomDictionary(StartRecognitionMessage_TranscriptionConfig customDictionary)
+    /// <param name="newCustomDictionary">The custom dictionary to be processed.</param>
+    /// <exception cref="ArgumentException">Thrown when the custom dictionary data is invalid.</exception>
+    public void ProcessCustomDictionary(StartRecognitionMessage_TranscriptionConfig newCustomDictionary)
     {
-        if (customDictionary == null)
+        // Check if the new custom dictionary is null
+        if (newCustomDictionary == null)
         {
             throw new ArgumentException("Invalid custom dictionary data.");
         }
 
-        // Check if the additionalVocab list exceeds the limit.
-        if (customDictionary.additional_vocab.Count > 1000)
+        // Check if the number of additional vocab exceeds the maximum count
+        if (newCustomDictionary.additional_vocab.Count > StartRecognitionMessage_TranscriptionConfig.MAX_ADDITIONAL_VOCAB_COUNT)
         {
-            throw new ArgumentException("additionalVocab list cannot exceed 1000 elements.");
+            throw new ArgumentException($"additionalVocab list cannot exceed {StartRecognitionMessage_TranscriptionConfig.MAX_ADDITIONAL_VOCAB_COUNT} elements.");
         }
 
-        // Log information about the received custom dictionary.
-        logger.Information($"Received custom dictionary for language {customDictionary.language}");
+        // Log information about the received custom dictionary
+        log.Information($"Received custom dictionary for language {customDictionary?.language}");
 
-        // Find an existing dictionary with similar content.
-        var existingDictionary = customDictionaries.FirstOrDefault(d =>
-            d.additional_vocab.Any(av => av.content == customDictionary.additional_vocab.FirstOrDefault()?.content));
-
-        // If an existing dictionary is found, update it; otherwise, add the new dictionary.
-        if (existingDictionary == null)
+        // Check if the custom dictionary is null and add or update it
+        if (customDictionary == null)
         {
-            customDictionaries.Add(customDictionary);
-            logger.Information($"Custom dictionary added to the in-memory data structure for content {customDictionary.additional_vocab.FirstOrDefault()?.content}");
+            customDictionary = newCustomDictionary;
+            log.Information($"Custom dictionary added to the in-memory data structure for content {customDictionary.additional_vocab.FirstOrDefault()?.content}");
             return;
         }
 
-        existingDictionary = customDictionary;
-        foreach (var av in existingDictionary.additional_vocab)
+        customDictionary = newCustomDictionary;
+
+        foreach (var av in customDictionary.additional_vocab)
         {
-            av.sounds_like = customDictionary.additional_vocab[0].sounds_like;
+            av.sounds_like = newCustomDictionary.additional_vocab[0].sounds_like;
         }
 
-        logger.Information($"Custom dictionary updated for content {customDictionary.additional_vocab.FirstOrDefault()?.content}");
+        log.Information($"Custom dictionary updated for content {customDictionary.additional_vocab.FirstOrDefault()?.content}");
     }
 
     /// <summary>
-    /// Gibt die Liste der benutzerdefinierten Wörterbücher zurück.
+    /// Returns the list of custom dictionaries.
     /// </summary>
-    /// <returns>Die Liste der benutzerdefinierten Wörterbücher.</returns>
-    public List<StartRecognitionMessage_TranscriptionConfig> GetCustomDictionaries()
+    /// <returns>The custom dictionary.</returns>
+    public StartRecognitionMessage_TranscriptionConfig? GetCustomDictionaries()
     {
-        return customDictionaries;
+        return customDictionary;
     }
 
     /// <summary>
-    /// Gibt den Wert der Verzögerung zurück.
+    /// Returns the value of the delay.
     /// </summary>
-    /// <returns>Die Verzögerung.</returns>
+    /// <returns>The delay.</returns>
     public float GetDelay()
     {
         return this.delay;
     }
 
     /// <summary>
-    /// Setzt den Wert der Verzögerung.
+    /// Sets the value of the delay.
     /// </summary>
-    /// <param name="delay">Die neue Verzögerung.</param>
+    /// <param name="delay">The new delay.</param>
     public void SetDelay(float delay)
     {
         this.delay = delay;
