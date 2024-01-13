@@ -14,16 +14,21 @@ public class ConfigurationController : ControllerBase
 {
     private readonly IConfigurationService dictionaryService;
 
-    // Das private readonly Feld logger wird verwendet, um den Logger für die Protokollierung innerhalb dieser Klasse zu halten.
+    /// <summary>
+    /// The logger.
+    /// </summary>
     private readonly ILogger logger;
 
-    // Array mit gültigen delayLength-Werten
+    /// <summary>
+    /// Array with valid delayLength values.
+    /// </summary>
     private readonly double[] validDelayLengths = { 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10 };
 
     /// <summary>
-    /// Konstruktor für den CustomDictionaryController. Initialisiert den Dienst für benutzerdefinierte Wörterbücher.
+    /// Constructor for the CustomDictionaryController. Initialises the custom dictionary service.
     /// </summary>
-    /// <param name="dictionaryService">Der Dienst für benutzerdefinierte Wörterbücher.</param>
+    /// <param name="dictionaryService">Service for custom dictionaries.</param>
+    /// <param name="logger">The logger.</param>
     public ConfigurationController(IConfigurationService dictionaryService, ILogger logger)
     {
         this.dictionaryService = dictionaryService ?? throw new ArgumentNullException(nameof(dictionaryService));
@@ -31,9 +36,9 @@ public class ConfigurationController : ControllerBase
     }
 
     /// <summary>
-    /// API-Endpunkt zum Hochladen eines benutzerdefinierten Wörterbuchs.
+    /// API-Endpoint for uploading a custom dictionary.
     /// </summary>
-    /// <param name="configuration">Die Transkriptionskonfiguration für das benutzerdefinierte Wörterbuch.</param>
+    /// <param name="configuration">The Transcription-Configuration for the custom dictionary.</param>
     /// <returns>ActionResult, das den Status der Anforderung widerspiegelt.</returns>
     [HttpPost("upload")]
     public IActionResult UploadCustomDictionary([FromBody] ConfigurationData? configuration)

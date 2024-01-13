@@ -13,6 +13,8 @@ Contains an ASP.NET Core project for our Subletic-Backend. It provides a WebSock
 | Load all dependency's | `dotnet restore` |
 | Start Backend | `dotnet run` |
 | Run UnitTests | `dotnet test` |
+| Run UnitTests with CoverageResult | `dotnet test --collect:"XPlat Code Coverage"` |
+| Create Report <br> [Can be found here](/BackendTests/CoverageReport/index.html) | `reportgenerator`<br>`-reports:BackendTests/TestResults/**/coverage.cobertura.xml`<br>`-targetdir:BackendTests/CoverageReport`<br>`-reporttypes:Html` |
 
 Please also ensure that the `ffmpeg.exe` lies on the PATH of your OS. In Windows you can find it in `Environment Variables` > `System variables` > `PATH` > `Edit`
 

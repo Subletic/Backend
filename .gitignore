@@ -479,6 +479,7 @@ $RECYCLE.BIN/
 # content below manually added:
 # *do not* commit this, may contain private developer credentials like API keys
 Properties/
+BackendTests/CoverageReport
 
 # webvtt output from webvtt exporter, pointless to commit
 *.vtt

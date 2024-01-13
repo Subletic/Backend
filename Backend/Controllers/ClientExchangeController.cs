@@ -38,10 +38,12 @@ public class ClientExchangeController : ControllerBase
     /// Gets instances of services via Dependency Injection.
     /// </summary>
     /// <param name="avReceiverService">The av receiver service.</param>
+    /// <param name="speechBubbleListService">The service handling SpeechBubbles.</param>
     /// <param name="speechmaticsConnectionService">The speechmatics connection management service.</param>
     /// <param name="speechmaticsReceiveService">The speechmatics message receive service.</param>
     /// <param name="speechmaticsSendService">The speechmatics message send service.</param>
     /// <param name="subtitleExporterService">The subtitle exporter service.</param>
+    /// <param name="configuration">The DI appsettings reference.</param>
     /// <param name="log">The logger.</param>
     public ClientExchangeController(
         IAvReceiverService avReceiverService,

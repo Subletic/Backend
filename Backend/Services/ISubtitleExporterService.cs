@@ -30,7 +30,7 @@ public interface ISubtitleExporterService
     /// <param name="format">The format to use for exporting subtitles.</param>
     public void SelectFormat(string format);
 
-    /// Called from BufferTimeMonitor to let the ExporterService know if there are remaining SpeechBubbles in the queue.
+    /// <summary> Called from BufferTimeMonitor to let the ExporterService know if there are remaining SpeechBubbles in the queue.
     /// Used for shutting down after all SpeechBubbles have been exported.
     /// </summary>
     /// <param name="containsItems">true if queue contains SpeechBubbles</param>
