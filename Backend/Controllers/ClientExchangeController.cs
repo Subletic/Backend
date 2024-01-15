@@ -4,6 +4,7 @@ using System.Net.WebSockets;
 using System.Text;
 using Backend.Data.SpeechmaticsMessages.EndOfStreamMessage;
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage;
+using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_config;
 using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
 using ILogger = Serilog.ILogger;
@@ -28,9 +29,8 @@ public class ClientExchangeController : ControllerBase
     private readonly ISubtitleExporterService subtitleExporterService;
     private readonly IConfiguration configuration;
     private readonly ILogger log;
-
+    private readonly IConfigurationService? configurationService;
     private static bool alreadyConnected = false;
-
     private TimeSpan clientTimeout;
 
     /// <summary>
@@ -38,10 +38,13 @@ public class ClientExchangeController : ControllerBase
     /// Gets instances of services via Dependency Injection.
     /// </summary>
     /// <param name="avReceiverService">The av receiver service.</param>
+    /// <param name="speechBubbleListService">The speech bubble list service.</param>
     /// <param name="speechmaticsConnectionService">The speechmatics connection management service.</param>
     /// <param name="speechmaticsReceiveService">The speechmatics message receive service.</param>
     /// <param name="speechmaticsSendService">The speechmatics message send service.</param>
     /// <param name="subtitleExporterService">The subtitle exporter service.</param>
+    /// <param name="configuration"> The configuration.</param>
+    /// <param name="configurationService">The configuration service.</param>
     /// <param name="log">The logger.</param>
     public ClientExchangeController(
         IAvReceiverService avReceiverService,
@@ -51,6 +54,7 @@ public class ClientExchangeController : ControllerBase
         ISpeechmaticsSendService speechmaticsSendService,
         ISubtitleExporterService subtitleExporterService,
         IConfiguration configuration,
+        IConfigurationService? configurationService,
         ILogger log)
     {
         this.avReceiverService = avReceiverService;
@@ -60,6 +64,7 @@ public class ClientExchangeController : ControllerBase
         this.speechmaticsSendService = speechmaticsSendService;
         this.subtitleExporterService = subtitleExporterService;
         this.configuration = configuration;
+        this.configurationService = configurationService;
         this.log = log;
         clientTimeout =
             TimeSpan.FromSeconds(configuration.GetValue<double>("ClientCommunicationSettings:TIMEOUT_IN_SECONDS"));
@@ -99,7 +104,7 @@ public class ClientExchangeController : ControllerBase
 
         bool validFormat = await validateAndSetFormat(format, webSocket);
         if (!validFormat) return;
-
+        StartRecognitionMessage_TranscriptionConfig transcriptionConfig = await waitForCustomDictionary();
         CancellationTokenSource ctSource = new CancellationTokenSource();
 
         bool connectionSuccessful = await connectToSpeechmatics(webSocket);
@@ -130,6 +135,25 @@ public class ClientExchangeController : ControllerBase
         log.Information("Connection with client closed successfully");
         speechBubbleListService.Clear();
         alreadyConnected = false;
+    }
+
+    /// <summary>
+    /// Waits for the custom dictionary to be sent by the frontend.
+    /// </summary>
+    /// <returns>The obtained transcription configuration.</returns>
+    private async Task<StartRecognitionMessage_TranscriptionConfig> waitForCustomDictionary()
+    {
+        log.Information("Waiting for the custom dictionary from the Frontend...");
+        StartRecognitionMessage_TranscriptionConfig? customDictionary = configurationService?.GetCustomDictionaries();
+
+        while (customDictionary is null)
+        {
+            log.Debug("Still waiting for dictionary to be sent");
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            customDictionary = configurationService?.GetCustomDictionaries();
+        }
+
+        return customDictionary!;
     }
 
     /// <summary>
@@ -228,11 +252,13 @@ public class ClientExchangeController : ControllerBase
     {
         speechmaticsSendService.ResetSequenceNumber();
         Task subtitleReceiveTask = speechmaticsReceiveService.ReceiveLoop(ctSource);
+        StartRecognitionMessage_TranscriptionConfig? transcriptionConfig = configurationService?.GetCustomDictionaries()
+            ?? new StartRecognitionMessage_TranscriptionConfig();
 
         try
         {
             await speechmaticsSendService.SendJsonMessage<StartRecognitionMessage>(
-                new StartRecognitionMessage(speechmaticsConnectionService.AudioFormat));
+                new StartRecognitionMessage(speechmaticsConnectionService.AudioFormat, transcriptionConfig));
         }
         catch (Exception e)
         {

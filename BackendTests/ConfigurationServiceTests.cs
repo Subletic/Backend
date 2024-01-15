@@ -63,7 +63,7 @@ public class ConfigurationServiceTests
         var dictionary = customDictionaryService?.GetCustomDictionaries();
         Assert.IsNotNull(dictionary);
 
-        var firstAdditionalVocab = dictionary.additional_vocab?[0];
+        var firstAdditionalVocab = dictionary?.additional_vocab?[0];
         Assert.IsNotNull(firstAdditionalVocab);
         Assert.That(firstAdditionalVocab!.content, Is.EqualTo("UpdatedContent"));
         Assert.That(firstAdditionalVocab!.sounds_like?.Count ?? 0, Is.EqualTo(1));
