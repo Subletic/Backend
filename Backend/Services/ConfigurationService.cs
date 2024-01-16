@@ -11,7 +11,6 @@ using Serilog;
 /// </summary>
 public class ConfigurationService : IConfigurationService
 {
-<<<<<<< Backend/Services/ConfigurationService.cs
     // Logger for logging within this class
     private readonly ILogger log;
 
@@ -26,39 +25,13 @@ public class ConfigurationService : IConfigurationService
     /// </summary>
     /// <param name="log">The logger used for logging within this class.</param>
     public ConfigurationService(ILogger log)
-=======
-    /// <summary>
-    /// The logger.
-    /// </summary>
-    private readonly ILogger logger;
-
-    /// <summary>
-    /// List to store custom dictionaries.
-    /// </summary>
-    private List<StartRecognitionMessage_TranscriptionConfig> customDictionaries;
-
-    /// <summary>
-    /// The delay, that is used for time-based waiting in the ConfigurationServiceController and BufferTimeMonitor.
-    /// </summary>
-    private float delay;
-
-    /// <summary>
-    /// Constructor for the ConfigurationService. Initialises the list of custom dictionaries.
-    /// </summary>
-    /// <param name="logger">Der Logger.</param>
-    public ConfigurationService(ILogger logger)
->>>>>>> Backend/Services/ConfigurationService.cs
     {
         this.log = log;
         this.customDictionary = null;
     }
 
     /// <summary>
-<<<<<<< Backend/Services/ConfigurationService.cs
     /// Processes a custom dictionary.
-=======
-    /// Process and stores a custom dictionary.
->>>>>>> Backend/Services/ConfigurationService.cs
     /// </summary>
     /// <param name="newCustomDictionary">The custom dictionary to be processed.</param>
     /// <exception cref="ArgumentException">Thrown when the custom dictionary data is invalid.</exception>
@@ -92,11 +65,7 @@ public class ConfigurationService : IConfigurationService
     }
 
     /// <summary>
-<<<<<<< Backend/Services/ConfigurationService.cs
-    /// Returns the list of custom dictionaries.
-=======
-    /// Gets the list of custom dictionaries.
->>>>>>> Backend/Services/ConfigurationService.cs
+    /// Returns the list of custom dictionary.
     /// </summary>
     /// <returns>The custom dictionary.</returns>
     public StartRecognitionMessage_TranscriptionConfig? GetCustomDictionary()
@@ -105,11 +74,7 @@ public class ConfigurationService : IConfigurationService
     }
 
     /// <summary>
-<<<<<<< Backend/Services/ConfigurationService.cs
     /// Returns the value of the delay.
-=======
-    /// Gets the value of the delay.
->>>>>>> Backend/Services/ConfigurationService.cs
     /// </summary>
     /// <returns>The delay.</returns>
     public float GetDelay()

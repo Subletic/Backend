@@ -18,7 +18,6 @@ public class ConfigurationController : ControllerBase
     // Service for managing custom dictionaries
     private readonly IConfigurationService dictionaryService;
 
-<<<<<<< Backend/Controllers/ConfigurationController.cs
     // Logger for logging within this class
     private readonly ILogger log;
 
@@ -32,42 +31,17 @@ public class ConfigurationController : ControllerBase
     /// <param name="dictionaryService">Service for managing custom dictionaries.</param>
     /// <param name="log">Logger for logging activities within the class.</param>
     public ConfigurationController(IConfigurationService dictionaryService, Serilog.ILogger log)
-=======
-    /// <summary>
-    /// The logger.
-    /// </summary>
-    private readonly ILogger logger;
-
-    /// <summary>
-    /// Array with valid delayLength values.
-    /// </summary>
-    private readonly double[] validDelayLengths = { 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10 };
-
-    /// <summary>
-    /// Constructor for the CustomDictionaryController. Initialises the custom dictionary service.
-    /// </summary>
-    /// <param name="dictionaryService">Service for custom dictionaries.</param>
-    /// <param name="logger">The logger.</param>
-    public ConfigurationController(IConfigurationService dictionaryService, ILogger logger)
->>>>>>> Backend/Controllers/ConfigurationController.cs
     {
         this.dictionaryService = dictionaryService ?? throw new ArgumentNullException(nameof(dictionaryService));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
     }
 
     /// <summary>
-<<<<<<< Backend/Controllers/ConfigurationController.cs
     /// API endpoint for uploading a custom dictionary. Validates and processes the
     /// uploaded dictionary configuration, ensuring compliance with predefined standards.
     /// </summary>
     /// <param name="configuration">The configuration data for the custom dictionary.</param>
     /// <returns>An ActionResult that reflects the status of the request, such as success or failure.</returns>
-=======
-    /// API-Endpoint for uploading a custom dictionary.
-    /// </summary>
-    /// <param name="configuration">The Transcription-Configuration for the custom dictionary.</param>
-    /// <returns>ActionResult, das den Status der Anforderung widerspiegelt.</returns>
->>>>>>> Backend/Controllers/ConfigurationController.cs
     [HttpPost("upload")]
     public IActionResult UploadCustomDictionary([FromBody] ConfigurationData? configuration)
     {
