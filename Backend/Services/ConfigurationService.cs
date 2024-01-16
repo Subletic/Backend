@@ -26,7 +26,7 @@ public class ConfigurationService : IConfigurationService
     /// <param name="log">The logger used for logging within this class.</param>
     public ConfigurationService(ILogger log)
     {
-        this.log = log ?? throw new ArgumentNullException(nameof(log));
+        this.log = log;
         this.customDictionary = null;
     }
 
@@ -61,12 +61,6 @@ public class ConfigurationService : IConfigurationService
         }
 
         customDictionary = newCustomDictionary;
-
-        foreach (var av in customDictionary.additional_vocab)
-        {
-            av.sounds_like = newCustomDictionary.additional_vocab[0].sounds_like;
-        }
-
         log.Information($"Custom dictionary updated for content {customDictionary.additional_vocab.FirstOrDefault()?.content}");
     }
 
@@ -74,7 +68,7 @@ public class ConfigurationService : IConfigurationService
     /// Returns the list of custom dictionaries.
     /// </summary>
     /// <returns>The custom dictionary.</returns>
-    public StartRecognitionMessage_TranscriptionConfig? GetCustomDictionaries()
+    public StartRecognitionMessage_TranscriptionConfig? GetCustomDictionary()
     {
         return customDictionary;
     }

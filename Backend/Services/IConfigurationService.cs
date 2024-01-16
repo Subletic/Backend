@@ -17,7 +17,7 @@ public interface IConfigurationService
     /// Gets the custom dictionaries.
     /// </summary>
     /// <returns>The custom dictionaries.</returns>
-    StartRecognitionMessage_TranscriptionConfig? GetCustomDictionaries();
+    StartRecognitionMessage_TranscriptionConfig? GetCustomDictionary();
 
     /// <summary>
     /// Sets the delay length for a specific operation.

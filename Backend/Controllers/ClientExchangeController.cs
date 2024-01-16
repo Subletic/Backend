@@ -144,13 +144,13 @@ public class ClientExchangeController : ControllerBase
     private async Task<StartRecognitionMessage_TranscriptionConfig> waitForCustomDictionary()
     {
         log.Information("Waiting for the custom dictionary from the Frontend...");
-        StartRecognitionMessage_TranscriptionConfig? customDictionary = configurationService?.GetCustomDictionaries();
+        StartRecognitionMessage_TranscriptionConfig? customDictionary = configurationService?.GetCustomDictionary();
 
         while (customDictionary is null)
         {
             log.Debug("Still waiting for dictionary to be sent");
             await Task.Delay(TimeSpan.FromSeconds(1));
-            customDictionary = configurationService?.GetCustomDictionaries();
+            customDictionary = configurationService?.GetCustomDictionary();
         }
 
         return customDictionary!;
@@ -252,7 +252,7 @@ public class ClientExchangeController : ControllerBase
     {
         speechmaticsSendService.ResetSequenceNumber();
         Task subtitleReceiveTask = speechmaticsReceiveService.ReceiveLoop(ctSource);
-        StartRecognitionMessage_TranscriptionConfig? transcriptionConfig = configurationService?.GetCustomDictionaries()
+        StartRecognitionMessage_TranscriptionConfig? transcriptionConfig = configurationService?.GetCustomDictionary()
             ?? new StartRecognitionMessage_TranscriptionConfig();
 
         try

@@ -32,7 +32,7 @@ public class ConfigurationServiceTests
         customDictionaryService?.ProcessCustomDictionary(customDictionary);
 
         // Assert
-        var dictionary = customDictionaryService?.GetCustomDictionaries();
+        var dictionary = customDictionaryService?.GetCustomDictionary();
         Assert.IsNotNull(dictionary);
         Assert.That(dictionary!.language, Is.EqualTo("de"));
 
@@ -60,7 +60,7 @@ public class ConfigurationServiceTests
         customDictionaryService?.ProcessCustomDictionary(customDictionary);
 
         // Assert
-        var dictionary = customDictionaryService?.GetCustomDictionaries();
+        var dictionary = customDictionaryService?.GetCustomDictionary();
         Assert.IsNotNull(dictionary);
 
         var firstAdditionalVocab = dictionary?.additional_vocab?[0];

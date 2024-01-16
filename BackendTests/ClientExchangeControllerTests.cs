@@ -42,7 +42,7 @@ public class ClientExchangeControllerTests
 
     public ClientExchangeControllerTests()
     {
-        configurationServiceMock.Setup(m => m.GetCustomDictionaries()).Returns(new StartRecognitionMessage_TranscriptionConfig());
+        configurationServiceMock.Setup(m => m.GetCustomDictionary()).Returns(new StartRecognitionMessage_TranscriptionConfig());
         mockHttpContext.Setup(c => c.WebSockets).Returns(mockWebSocketManager.Object);
     }
 
