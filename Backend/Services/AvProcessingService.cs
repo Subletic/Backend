@@ -48,7 +48,8 @@ public class AvProcessingService : IAvProcessingService
     /// <param name="frontendCommunicationService">The service to push new audio into the Frontend</param>
     /// <param name="speechmaticsConnectionService">The service to get audio format details for the communication with Speechmatics</param>
     /// <param name="speechmaticsSendService">The service to push new audio into Speechmatics</param>
-    /// <param name="speechmaticsSendService">The logger</param>
+    /// <param name="configuration">DI appsettings reference</param>
+    /// <param name="log">The logger</param>
     public AvProcessingService(
         IFrontendCommunicationService frontendCommunicationService,
         ISpeechmaticsConnectionService speechmaticsConnectionService,
@@ -158,13 +159,11 @@ public class AvProcessingService : IAvProcessingService
     /// Accumulates the data from <c>processAudioToStream</c> and sends buffers of a suitable size
     /// to the Speechmatics RT API for recognition and transcription, and the frontend for local playback.
     /// Internally launches and <c>await</c>s <c>ProcessAudioToStream</c>.
-    /// <param name="avStream">A Stream to read media data from.</param>
-    /// <param name="ctSource">Reference to to CT Source to cancel all other services in case something goes wrong</param>
-    /// <returns>
-    /// An <c>await</c>able <c>Task{bool}</c> indicating if the processing and sending went well.
-    /// </returns>
     /// <seealso cref="processAudioToStream" />
     /// </summary>
+    /// <param name="avStream">A Stream to read media data from.</param>
+    /// <param name="ctSource">Reference to to CT Source to cancel all other services in case something goes wrong</param>
+    /// <returns>An <c>await</c>able <c>Task{bool}</c> indicating if the processing and sending went well.</returns>
     public async Task<bool> PushProcessedAudio(Stream avStream, CancellationTokenSource ctSource)
     {
         log.Debug("Starting audio pushing");

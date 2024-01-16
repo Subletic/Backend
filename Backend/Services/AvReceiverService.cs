@@ -33,6 +33,7 @@ public class AvReceiverService : IAvReceiverService
     /// Initializes a new instance of the <see cref="AvReceiverService"/> class.
     /// </summary>
     /// <param name="avProcessingService">The AvProcessingService to push fetched data into</param>
+    /// <param name="configuration">DI appsettings reference</param>
     /// <param name="log">The logger</param>
     public AvReceiverService(
         IAvProcessingService avProcessingService,

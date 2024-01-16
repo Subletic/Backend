@@ -15,6 +15,9 @@ using Backend.Data.SpeechmaticsMessages.InfoMessage;
 using Backend.Data.SpeechmaticsMessages.WarningMessage;
 using ILogger = Serilog.ILogger;
 
+/// <summary>
+/// Service that handles the receiving of messages from Speechmatics.
+/// </summary>
 public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
 {
     private const int RECEIVE_BUFFER_SIZE = 1024;
@@ -34,12 +37,21 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
 
     private ILogger log;
 
+    /// <summary>
+    /// Gets the sequence number of the last audio chunk that was sent to Speechmatics.
+    /// </summary>
     public ulong SequenceNumber
     {
         get;
         private set;
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SpeechmaticsReceiveService"/> class.
+    /// </summary>
+    /// <param name="speechmaticsConnectionService">Service that handles the connection to Speechmatics.</param>
+    /// <param name="wordProcessingService">Service that handles the processing of words into our system.</param>
+    /// <param name="log">The logger.</param>
     public SpeechmaticsReceiveService(
         ISpeechmaticsConnectionService speechmaticsConnectionService,
         IWordProcessingService wordProcessingService,
@@ -254,6 +266,11 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
         }
     }
 
+    /// <summary>
+    /// The main loop that receives messages from Speechmatics and processes them.
+    /// </summary>
+    /// <param name="ctSource">Reference to to CT Source to cancel all other services in case something goes wrong</param>
+    /// <returns>A <c>Task</c> that can be <c>await</c>ed to wait for the loop to finish.</returns>
     public async Task<bool> ReceiveLoop(CancellationTokenSource ctSource)
     {
         bool done = false;
@@ -283,6 +300,9 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
         return success;
     }
 
+    /// <summary>
+    /// Test the deserialisation of a message.
+    /// </summary>
     public void TestDeserialisation()
     {
         findDeserialiserMethod(typeof(InfoMessage));
