@@ -1,8 +1,10 @@
-using System;
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
 using Backend.Hubs;
 using Backend.Services;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Serilog;
-using Serilog.Core;
+using ILogger = Serilog.ILogger;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +20,7 @@ var logger = new LoggerConfiguration()
     .CreateLogger();
 
 // Add services to the container.
-builder.Services.AddSingleton<Serilog.ILogger>(logger);
+builder.Services.AddSingleton<ILogger>(logger);
 
 builder.Services.AddSingleton<IConfiguration>(configuration);
 
@@ -68,6 +70,25 @@ builder.Services.AddCors(options =>
         });
 });
 
+// Set Certificate
+builder.Services.Configure<KestrelServerOptions>(
+    options =>
+    {
+        var crt = "ssl/server.pfx";
+        var cert = new X509Certificate2(crt);
+
+        // http
+        options.Listen(IPAddress.Any, 40114);
+        // https
+        options.Listen(
+            IPAddress.Any,
+            40115,
+            listenOptions =>
+            {
+                listenOptions.UseHttps(cert);
+            });
+    });
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -84,8 +105,6 @@ app.UseRouting();
 app.UseCors("AllowAngularFrontend");
 
 app.MapHub<FrontendCommunicationHub>("/communicationHub");
-
-app.UseHttpsRedirection();
 
 app.UseRouting();
 

@@ -17,14 +17,15 @@ RUN dotnet publish -c release -o /app
 FROM mcr.microsoft.com/dotnet/aspnet:7.0
 WORKDIR /app
 COPY --from=build /app ./
+COPY Backend/ssl/server.pfx ./ssl/server.pfx
 
-# Installiere FFmpeg Dependency
+# install ffmpeg
 RUN apt-get update && \
     apt-get -y upgrade && \
     apt-get install -y --fix-missing ffmpeg
 
-# Setze den Port, auf dem die API lauscht
+# expose port 40114
 EXPOSE 40114
 
-# Starte die ASP.NET API
+# start the app
 ENTRYPOINT ["dotnet", "Backend.dll"]
