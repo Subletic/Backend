@@ -29,7 +29,7 @@ public class ClientExchangeController : ControllerBase
     private readonly ISubtitleExporterService subtitleExporterService;
     private readonly IConfiguration configuration;
     private readonly ILogger log;
-    private readonly IConfigurationService? configurationService;
+    private readonly IConfigurationService configurationService;
     private static bool alreadyConnected = false;
     private TimeSpan clientTimeout;
 
@@ -54,7 +54,7 @@ public class ClientExchangeController : ControllerBase
         ISpeechmaticsSendService speechmaticsSendService,
         ISubtitleExporterService subtitleExporterService,
         IConfiguration configuration,
-        IConfigurationService? configurationService,
+        IConfigurationService configurationService,
         ILogger log)
     {
         this.avReceiverService = avReceiverService;
@@ -252,8 +252,7 @@ public class ClientExchangeController : ControllerBase
     {
         speechmaticsSendService.ResetSequenceNumber();
         Task subtitleReceiveTask = speechmaticsReceiveService.ReceiveLoop(ctSource);
-        StartRecognitionMessage_TranscriptionConfig? transcriptionConfig = configurationService?.GetCustomDictionary()
-            ?? new StartRecognitionMessage_TranscriptionConfig();
+        StartRecognitionMessage_TranscriptionConfig? transcriptionConfig = configurationService.GetCustomDictionary();
 
         try
         {

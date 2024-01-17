@@ -37,12 +37,6 @@ public class ConfigurationService : IConfigurationService
     /// <exception cref="ArgumentException">Thrown when the custom dictionary data is invalid.</exception>
     public void ProcessCustomDictionary(StartRecognitionMessage_TranscriptionConfig newCustomDictionary)
     {
-        // Check if the new custom dictionary is null
-        if (newCustomDictionary == null)
-        {
-            throw new ArgumentException("Invalid custom dictionary data.");
-        }
-
         // Check if the number of additional vocab exceeds the maximum count
         if (newCustomDictionary.additional_vocab.Count > StartRecognitionMessage_TranscriptionConfig.MAX_ADDITIONAL_VOCAB_COUNT)
         {
@@ -50,18 +44,14 @@ public class ConfigurationService : IConfigurationService
         }
 
         // Log information about the received custom dictionary
-        log.Information($"Received custom dictionary for language {customDictionary?.language}");
+        log.Information($"Received custom dictionary for language {newCustomDictionary.language}");
 
-        // Check if the custom dictionary is null and add or update it
-        if (customDictionary == null)
+        foreach (var av in newCustomDictionary.additional_vocab)
         {
-            customDictionary = newCustomDictionary;
-            log.Information($"Custom dictionary added to the in-memory data structure for content {customDictionary.additional_vocab.FirstOrDefault()?.content}");
-            return;
+            log.Information($"Entry {av.content} has sounds_likes: {string.Join(", ", av.sounds_like!)}");
         }
 
         customDictionary = newCustomDictionary;
-        log.Information($"Custom dictionary updated for content {customDictionary.additional_vocab.FirstOrDefault()?.content}");
     }
 
     /// <summary>

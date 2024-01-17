@@ -33,7 +33,7 @@ public class ConfigurationController : ControllerBase
     public ConfigurationController(IConfigurationService dictionaryService, Serilog.ILogger log)
     {
         this.dictionaryService = dictionaryService ?? throw new ArgumentNullException(nameof(dictionaryService));
-        this.log = log ?? throw new ArgumentNullException(nameof(log));
+        this.log = log;
     }
 
     /// <summary>
