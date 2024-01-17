@@ -20,7 +20,7 @@ public interface ISpeechmaticsConnectionService
     /// Gets a <c>ClientWebSocket</c> that corresponds to the established connection, if <see cref="Connected"/>.
     /// When not connected, throws an <c>InvalidOperationException</c>.
     /// </summary>
-    ClientWebSocket Socket { get; }
+    WebSocket Socket { get; }
 
     /// <summary>
     /// Gets the common (de)serialiser options to use for this connection

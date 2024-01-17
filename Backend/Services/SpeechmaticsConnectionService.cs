@@ -156,7 +156,7 @@ public class SpeechmaticsConnectionService : ISpeechmaticsConnectionService
     /// <summary>
     /// Gets the WebSocket to Speechmatics.
     /// </summary>
-    public ClientWebSocket Socket
+    public WebSocket Socket
     {
         get
         {
