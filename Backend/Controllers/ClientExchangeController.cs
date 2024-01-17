@@ -104,7 +104,7 @@ public class ClientExchangeController : ControllerBase
 
         bool validFormat = await validateAndSetFormat(format, webSocket);
         if (!validFormat) return;
-        StartRecognitionMessage_TranscriptionConfig transcriptionConfig = await waitForCustomDictionary();
+        StartRecognitionMessage_TranscriptionConfig? transcriptionConfig = configurationService.GetCustomDictionary();
         CancellationTokenSource ctSource = new CancellationTokenSource();
 
         bool connectionSuccessful = await connectToSpeechmatics(webSocket);
@@ -135,25 +135,6 @@ public class ClientExchangeController : ControllerBase
         log.Information("Connection with client closed successfully");
         speechBubbleListService.Clear();
         alreadyConnected = false;
-    }
-
-    /// <summary>
-    /// Waits for the custom dictionary to be sent by the frontend.
-    /// </summary>
-    /// <returns>The obtained transcription configuration.</returns>
-    private async Task<StartRecognitionMessage_TranscriptionConfig> waitForCustomDictionary()
-    {
-        log.Information("Waiting for the custom dictionary from the Frontend...");
-        StartRecognitionMessage_TranscriptionConfig? customDictionary = configurationService?.GetCustomDictionary();
-
-        while (customDictionary is null)
-        {
-            log.Debug("Still waiting for dictionary to be sent");
-            await Task.Delay(TimeSpan.FromSeconds(1));
-            customDictionary = configurationService?.GetCustomDictionary();
-        }
-
-        return customDictionary!;
     }
 
     /// <summary>
@@ -249,7 +230,7 @@ public class ClientExchangeController : ControllerBase
     /// <param name="ctSource">Cancellation Token source used for cancelling the Task</param>
     /// <param name="transcriptionConfig">The obtained transcription configuration</param>
     /// <returns>The started subtitleReceiveTask</returns>
-    private async Task<Task> setupSpeechmaticsState(CancellationTokenSource ctSource, StartRecognitionMessage_TranscriptionConfig transcriptionConfig)
+    private async Task<Task> setupSpeechmaticsState(CancellationTokenSource ctSource, StartRecognitionMessage_TranscriptionConfig? transcriptionConfig)
     {
         speechmaticsSendService.ResetSequenceNumber();
         Task subtitleReceiveTask = speechmaticsReceiveService.ReceiveLoop(ctSource);

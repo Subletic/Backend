@@ -15,7 +15,7 @@ public class ConfigurationService : IConfigurationService
     private readonly ILogger log;
 
     // Storage for custom dictionaries
-    private StartRecognitionMessage_TranscriptionConfig? customDictionary;
+    private StartRecognitionMessage_TranscriptionConfig customDictionary;
 
     // Variable for storing time-based delays
     private float delay;
@@ -27,7 +27,7 @@ public class ConfigurationService : IConfigurationService
     public ConfigurationService(ILogger log)
     {
         this.log = log;
-        this.customDictionary = null;
+        this.customDictionary = new StartRecognitionMessage_TranscriptionConfig();
     }
 
     /// <summary>
