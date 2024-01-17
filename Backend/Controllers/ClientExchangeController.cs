@@ -111,7 +111,7 @@ public class ClientExchangeController : ControllerBase
         if (!connectionSuccessful) return;
 
         Task subtitleExportTask = subtitleExporterService.Start(webSocket, ctSource); // write at end of pipeline
-        Task subtitleReceiveTask = await setupSpeechmaticsState(ctSource);
+        Task subtitleReceiveTask = await setupSpeechmaticsState(ctSource, transcriptionConfig);
         Task avReceiveTask = avReceiverService.Start(webSocket, ctSource); // read at start of pipeline
 
         await avReceiveTask; // no more audio to send
@@ -247,12 +247,12 @@ public class ClientExchangeController : ControllerBase
     /// Sets up the Speechmatics state by sending a StartRecognitionMessage and starting the receive loop.
     /// </summary>
     /// <param name="ctSource">Cancellation Token source used for cancelling the Task</param>
+    /// <param name="transcriptionConfig">The obtained transcription configuration</param>
     /// <returns>The started subtitleReceiveTask</returns>
-    private async Task<Task> setupSpeechmaticsState(CancellationTokenSource ctSource)
+    private async Task<Task> setupSpeechmaticsState(CancellationTokenSource ctSource, StartRecognitionMessage_TranscriptionConfig transcriptionConfig)
     {
         speechmaticsSendService.ResetSequenceNumber();
         Task subtitleReceiveTask = speechmaticsReceiveService.ReceiveLoop(ctSource);
-        StartRecognitionMessage_TranscriptionConfig? transcriptionConfig = await waitForCustomDictionary();
 
         try
         {
