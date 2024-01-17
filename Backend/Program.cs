@@ -106,8 +106,6 @@ app.UseCors("AllowAngularFrontend");
 
 app.MapHub<FrontendCommunicationHub>("/communicationHub");
 
-app.UseHttpsRedirection();
-
 app.UseRouting();
 
 app.UseAuthorization();
