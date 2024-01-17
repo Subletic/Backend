@@ -252,7 +252,7 @@ public class ClientExchangeController : ControllerBase
     {
         speechmaticsSendService.ResetSequenceNumber();
         Task subtitleReceiveTask = speechmaticsReceiveService.ReceiveLoop(ctSource);
-        StartRecognitionMessage_TranscriptionConfig? transcriptionConfig = configurationService.GetCustomDictionary();
+        StartRecognitionMessage_TranscriptionConfig? transcriptionConfig = await waitForCustomDictionary();
 
         try
         {
