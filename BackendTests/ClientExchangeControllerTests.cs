@@ -5,8 +5,8 @@ using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-
 using Backend.Controllers;
+using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_config;
 using Backend.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -38,8 +38,11 @@ public class ClientExchangeControllerTests
     private readonly Mock<WebSocketManager> mockWebSocketManager = new Mock<WebSocketManager>();
     private readonly Mock<WebSocket> mockWebSocket = new Mock<WebSocket>();
 
+    private readonly Mock<IConfigurationService> configurationServiceMock = new Mock<IConfigurationService>();
+
     public ClientExchangeControllerTests()
     {
+        configurationServiceMock.Setup(m => m.GetCustomDictionary()).Returns(new StartRecognitionMessage_TranscriptionConfig());
         mockHttpContext.Setup(c => c.WebSockets).Returns(mockWebSocketManager.Object);
     }
 
@@ -57,21 +60,14 @@ public class ClientExchangeControllerTests
         mockSpeechmaticsSendService.Object,
         mockSubtitleExporterService.Object,
         configuration,
+        configurationServiceMock.Object,
         mockLogger.Object)
         {
             ControllerContext = new ControllerContext { HttpContext = mockHttpContext.Object },
         };
 
         // Act
-        try
-        {
-            // this is guaranteed to fail due to incomplete mockling
-            await controller.Get();
-        }
-        catch (Exception)
-        {
-            // ignore
-        }
+        await controller.Get();
 
         // Assert
         mockWebSocketManager.Verify(m => m.AcceptWebSocketAsync(), Times.Once);

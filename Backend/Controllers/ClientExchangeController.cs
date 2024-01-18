@@ -4,6 +4,7 @@ using System.Net.WebSockets;
 using System.Text;
 using Backend.Data.SpeechmaticsMessages.EndOfStreamMessage;
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage;
+using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_config;
 using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
 using ILogger = Serilog.ILogger;
@@ -28,9 +29,8 @@ public class ClientExchangeController : ControllerBase
     private readonly ISubtitleExporterService subtitleExporterService;
     private readonly IConfiguration configuration;
     private readonly ILogger log;
-
+    private readonly IConfigurationService configurationService;
     private static bool alreadyConnected = false;
-
     private TimeSpan clientTimeout;
 
     /// <summary>
@@ -38,12 +38,13 @@ public class ClientExchangeController : ControllerBase
     /// Gets instances of services via Dependency Injection.
     /// </summary>
     /// <param name="avReceiverService">The av receiver service.</param>
-    /// <param name="speechBubbleListService">The service handling SpeechBubbles.</param>
+    /// <param name="speechBubbleListService">The speech bubble list service.</param>
     /// <param name="speechmaticsConnectionService">The speechmatics connection management service.</param>
     /// <param name="speechmaticsReceiveService">The speechmatics message receive service.</param>
     /// <param name="speechmaticsSendService">The speechmatics message send service.</param>
     /// <param name="subtitleExporterService">The subtitle exporter service.</param>
-    /// <param name="configuration">The DI appsettings reference.</param>
+    /// <param name="configuration"> The configuration.</param>
+    /// <param name="configurationService">The configuration service.</param>
     /// <param name="log">The logger.</param>
     public ClientExchangeController(
         IAvReceiverService avReceiverService,
@@ -53,6 +54,7 @@ public class ClientExchangeController : ControllerBase
         ISpeechmaticsSendService speechmaticsSendService,
         ISubtitleExporterService subtitleExporterService,
         IConfiguration configuration,
+        IConfigurationService configurationService,
         ILogger log)
     {
         this.avReceiverService = avReceiverService;
@@ -62,6 +64,7 @@ public class ClientExchangeController : ControllerBase
         this.speechmaticsSendService = speechmaticsSendService;
         this.subtitleExporterService = subtitleExporterService;
         this.configuration = configuration;
+        this.configurationService = configurationService;
         this.log = log;
         clientTimeout =
             TimeSpan.FromSeconds(configuration.GetValue<double>("ClientCommunicationSettings:TIMEOUT_IN_SECONDS"));
@@ -101,14 +104,14 @@ public class ClientExchangeController : ControllerBase
 
         bool validFormat = await validateAndSetFormat(format, webSocket);
         if (!validFormat) return;
-
+        StartRecognitionMessage_TranscriptionConfig? transcriptionConfig = configurationService.GetCustomDictionary();
         CancellationTokenSource ctSource = new CancellationTokenSource();
 
         bool connectionSuccessful = await connectToSpeechmatics(webSocket);
         if (!connectionSuccessful) return;
 
         Task subtitleExportTask = subtitleExporterService.Start(webSocket, ctSource); // write at end of pipeline
-        Task subtitleReceiveTask = await setupSpeechmaticsState(ctSource);
+        Task subtitleReceiveTask = await setupSpeechmaticsState(ctSource, transcriptionConfig);
         Task avReceiveTask = avReceiverService.Start(webSocket, ctSource); // read at start of pipeline
 
         await avReceiveTask; // no more audio to send
@@ -225,8 +228,9 @@ public class ClientExchangeController : ControllerBase
     /// Sets up the Speechmatics state by sending a StartRecognitionMessage and starting the receive loop.
     /// </summary>
     /// <param name="ctSource">Cancellation Token source used for cancelling the Task</param>
+    /// <param name="transcriptionConfig">The obtained transcription configuration</param>
     /// <returns>The started subtitleReceiveTask</returns>
-    private async Task<Task> setupSpeechmaticsState(CancellationTokenSource ctSource)
+    private async Task<Task> setupSpeechmaticsState(CancellationTokenSource ctSource, StartRecognitionMessage_TranscriptionConfig? transcriptionConfig)
     {
         speechmaticsSendService.ResetSequenceNumber();
         Task subtitleReceiveTask = speechmaticsReceiveService.ReceiveLoop(ctSource);
@@ -234,7 +238,7 @@ public class ClientExchangeController : ControllerBase
         try
         {
             await speechmaticsSendService.SendJsonMessage<StartRecognitionMessage>(
-                new StartRecognitionMessage(speechmaticsConnectionService.AudioFormat));
+                new StartRecognitionMessage(speechmaticsConnectionService.AudioFormat, transcriptionConfig));
         }
         catch (Exception e)
         {

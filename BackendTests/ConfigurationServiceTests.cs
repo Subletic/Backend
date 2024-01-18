@@ -32,15 +32,11 @@ public class ConfigurationServiceTests
         customDictionaryService?.ProcessCustomDictionary(customDictionary);
 
         // Assert
-        var dictionaries = customDictionaryService?.GetCustomDictionaries();
-        Assert.IsNotNull(dictionaries);
-        Assert.That(dictionaries!.Count, Is.EqualTo(1));
+        var dictionary = customDictionaryService?.GetCustomDictionary();
+        Assert.IsNotNull(dictionary);
+        Assert.That(dictionary!.language, Is.EqualTo("de"));
 
-        var firstDictionary = dictionaries[0];
-        Assert.IsNotNull(firstDictionary);
-        Assert.That(firstDictionary!.language, Is.EqualTo("de"));
-
-        var additionalVocab = firstDictionary.additional_vocab;
+        var additionalVocab = dictionary.additional_vocab;
         Assert.IsNotNull(additionalVocab);
         Assert.That(additionalVocab!.Count, Is.EqualTo(1));
 
@@ -64,11 +60,10 @@ public class ConfigurationServiceTests
         customDictionaryService?.ProcessCustomDictionary(customDictionary);
 
         // Assert
-        var dictionaries = customDictionaryService?.GetCustomDictionaries();
-        Assert.IsNotNull(dictionaries);
-        Assert.That(dictionaries!.Count, Is.EqualTo(1));
+        var dictionary = customDictionaryService?.GetCustomDictionary();
+        Assert.IsNotNull(dictionary);
 
-        var firstAdditionalVocab = dictionaries[0].additional_vocab?[0];
+        var firstAdditionalVocab = dictionary?.additional_vocab?[0];
         Assert.IsNotNull(firstAdditionalVocab);
         Assert.That(firstAdditionalVocab!.content, Is.EqualTo("UpdatedContent"));
         Assert.That(firstAdditionalVocab!.sounds_like?.Count ?? 0, Is.EqualTo(1));
