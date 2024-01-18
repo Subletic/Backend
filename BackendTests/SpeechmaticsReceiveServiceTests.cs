@@ -31,7 +31,6 @@ using Serilog.Events;
 public class SpeechmaticsReceiveServiceTests
 {
     private readonly Mock<ISpeechmaticsConnectionService> mockSpeechmaticsConnectionService = new Mock<ISpeechmaticsConnectionService>();
-    private readonly Mock<IWordProcessingService> mockWordProcessingService = new Mock<IWordProcessingService>();
     private readonly Mock<WebSocket> mockWebSocket = new Mock<WebSocket>();
 
     private readonly ILogger logger = new LoggerConfiguration()
@@ -146,6 +145,8 @@ public class SpeechmaticsReceiveServiceTests
                 {
                     eotMessage,
                 },
+                0,
+                0,
                 false,
             },
 
@@ -161,6 +162,8 @@ public class SpeechmaticsReceiveServiceTests
                         quality: "very thorough"),
                     eotMessage,
                 },
+                0,
+                0,
                 false,
             },
 
@@ -176,6 +179,8 @@ public class SpeechmaticsReceiveServiceTests
                         duration_limit: 9999),
                     eotMessage,
                 },
+                0,
+                0,
                 false,
             },
 
@@ -190,6 +195,8 @@ public class SpeechmaticsReceiveServiceTests
                         reason: "for testing 3"),
                     eotMessage,
                 },
+                0,
+                0,
                 true,
             },
 
@@ -208,6 +215,8 @@ public class SpeechmaticsReceiveServiceTests
                             writing_direction: "left-to-right")),
                     eotMessage,
                 },
+                0,
+                0,
                 false,
             },
 
@@ -220,6 +229,8 @@ public class SpeechmaticsReceiveServiceTests
                         seq_no: 1),
                     eotMessage,
                 },
+                1,
+                0,
                 false,
             },
 
@@ -231,6 +242,8 @@ public class SpeechmaticsReceiveServiceTests
                     atMessage,
                     eotMessage,
                 },
+                0,
+                5,
                 false,
             },
 
@@ -280,6 +293,8 @@ public class SpeechmaticsReceiveServiceTests
                     atMessage,
                     eotMessage,
                 },
+                10,
+                5,
                 false,
             },
         };
@@ -296,7 +311,11 @@ public class SpeechmaticsReceiveServiceTests
 
     [Test]
     [TestCaseSource(nameof(exportData))]
-    public async Task ReceiveLoop_Messages_OK(List<object> messages, bool shouldCauseCancel)
+    public async Task ReceiveLoop_Messages_OK(
+        List<object> messages,
+        int expectedSeqNo,
+        int expectedNewWordsCount,
+        bool shouldCauseCancel)
     {
         // Arrange
         object[] responseData = messages.ToArray();
@@ -341,6 +360,7 @@ public class SpeechmaticsReceiveServiceTests
                         true);
                 });
 
+        Mock<IWordProcessingService> mockWordProcessingService = new Mock<IWordProcessingService>();
         mockSpeechmaticsConnectionService.Setup(c => c.Socket)
             .Returns(mockWebSocket.Object);
         mockSpeechmaticsConnectionService.Setup(c => c.CancellationToken)
@@ -357,6 +377,11 @@ public class SpeechmaticsReceiveServiceTests
         await service.ReceiveLoop(cts);
 
         // Assert
+        Assert.That(service.SequenceNumber, Is.EqualTo(expectedSeqNo));
+        Assert.That(
+            mockWordProcessingService.Invocations.Count(
+                x => x.Method.Name.Equals(nameof(IWordProcessingService.HandleNewWord))),
+            Is.EqualTo(expectedNewWordsCount));
         Assert.That(cts.IsCancellationRequested, Is.EqualTo(shouldCauseCancel));
     }
 }
