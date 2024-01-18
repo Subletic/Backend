@@ -78,6 +78,7 @@ public class AvReceiverService : IAvReceiverService
                 catch (OperationCanceledException)
                 {
                     log.Error("Timed out waiting for client to send AV data");
+                    ctSource.Cancel();
                     throw;
                 }
 
