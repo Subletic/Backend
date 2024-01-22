@@ -35,7 +35,7 @@ public class FrontendCommunicationService : IFrontendCommunicationService
     /// <summary>
     /// Tracker to make sure abortCorrection frontend endpoint is only called once per processing pipeline.
     /// </summary>
-    private bool frontendCorrectionAborted = false;
+    private bool frontendCorrectionAborted = true;
 
     /// <summary>
     /// Initializes a new instance of the FrontendProviderService class.
@@ -55,6 +55,12 @@ public class FrontendCommunicationService : IFrontendCommunicationService
     /// <param name="item">Buffer to enqueue</param>
     public void Enqueue(short[] item)
     {
+        if (frontendCorrectionAborted)
+        {
+            logger.Debug("Frontend correction process has been aborted, refusing to enqueue new audio data");
+            return;
+        }
+
         if (item.Length != AUDIO_FRQUENCY) throw new ArgumentException($"Enqueued buffer ({item.Length} samples) doesn't have correct element count ({AUDIO_FRQUENCY} samples)");
         audioQueue.Enqueue(item);
     }
@@ -95,6 +101,12 @@ public class FrontendCommunicationService : IFrontendCommunicationService
     /// <returns>PublishSpeechBubble.</returns>
     public async Task PublishSpeechBubble(SpeechBubble speechBubble)
     {
+        if (frontendCorrectionAborted)
+        {
+            logger.Debug("Frontend correction process has been aborted, refusing to publish new speech bubble");
+            return;
+        }
+
         try
         {
             var listToSend = new List<SpeechBubble>() { speechBubble };
