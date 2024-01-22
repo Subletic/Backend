@@ -12,6 +12,8 @@ public class WebVttConverter : ISubtitleConverter
 {
     private readonly Stream outputStream;
 
+    private bool hasWrittenFirstMessage = false;
+
     /// <summary>
     /// Initializes a new instance of the WebVttConverter class with the specified output stream.
     /// </summary>
@@ -22,6 +24,7 @@ public class WebVttConverter : ISubtitleConverter
 
         // header
         WriteToStream("WEBVTT");
+        hasWrittenFirstMessage = true;
     }
 
     /// <summary>
@@ -83,9 +86,12 @@ public class WebVttConverter : ISubtitleConverter
     {
         using (StreamWriter outputStreamWriter = new StreamWriter(
             stream: outputStream, // Der Ziel-Stream, in den geschrieben wird
-            encoding: Encoding.UTF8, // Die Zeichencodierung (hier: UTF-8)
+            encoding: new UTF8Encoding(
+                encoderShouldEmitUTF8Identifier: !hasWrittenFirstMessage), // BOM nur beim ersten Schreiben
             bufferSize: 4096, // Die Puffergröße für optimale Leistung
             leaveOpen: true)) // Gibt an, ob der Stream geöffnet bleiben soll
+        {
             await outputStreamWriter.WriteAsync(content);
+        }
     }
 }

@@ -9,7 +9,7 @@ using Backend.Data;
 public class SrtConverter : ISubtitleConverter
 {
     private readonly Stream outputStream;
-    private int counter = 1;
+    private int counter = 0;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SrtConverter"/> class.
@@ -39,7 +39,7 @@ public class SrtConverter : ISubtitleConverter
         var srtBuilder = new StringBuilder();
 
         // Adding the sequence number
-        srtBuilder.AppendLine(counter.ToString());
+        srtBuilder.AppendLine((++counter).ToString());
 
         // Formatting and adding the time range
         srtBuilder.AppendLine($"{formatTimeSrt(speechBubble.StartTime)} --> {formatTimeSrt(speechBubble.EndTime)}");
@@ -57,8 +57,6 @@ public class SrtConverter : ISubtitleConverter
         {
             srtBuilder.AppendLine();
         }
-
-        counter++;
 
         return srtBuilder.ToString();
     }
@@ -81,10 +79,11 @@ public class SrtConverter : ISubtitleConverter
     private async void writeToStream(string content)
     {
         using (StreamWriter outputStreamWriter = new StreamWriter(
-                   stream: outputStream,
-                   encoding: Encoding.UTF8,
-                   bufferSize: 4096,
-                   leaveOpen: true))
+            stream: outputStream,
+            encoding: new UTF8Encoding(
+                encoderShouldEmitUTF8Identifier: counter == 1),
+            bufferSize: 4096,
+            leaveOpen: true))
         {
             await outputStreamWriter.WriteAsync(content);
         }
