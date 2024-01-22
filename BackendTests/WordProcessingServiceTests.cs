@@ -28,7 +28,7 @@ public class WordProcessingServiceTests
     }
 
     [Test]
-    public void Insert19NewWords_SpeechBubbleListEmpty()
+    public async Task Insert19NewWords_SpeechBubbleListEmpty()
     {
         // Arrange
         var controller = new WordProcessingService(frontendCommunicationServiceMock.Object, hubContextMock.Object, speechBubbleListService.Object);
@@ -38,7 +38,7 @@ public class WordProcessingServiceTests
         // Act
         for (var i = 0; i < 19; i++)
         {
-            controller.HandleNewWord(testWord);
+            await controller.HandleNewWord(testWord);
         }
 
         // Assert
@@ -46,7 +46,7 @@ public class WordProcessingServiceTests
     }
 
     [Test]
-    public void Insert20NewWords_FirstSpeechBubbleAvailable()
+    public async Task Insert20NewWords_FirstSpeechBubbleAvailable()
     {
         // Arrange
         var controller = new WordProcessingService(frontendCommunicationServiceMock.Object, hubContextMock.Object, speechBubbleListService.Object);
@@ -56,7 +56,7 @@ public class WordProcessingServiceTests
         // Act
         for (var i = 0; i < 20; i++)
         {
-            controller.HandleNewWord(testWord);
+            await controller.HandleNewWord(testWord);
         }
 
         // Assert
@@ -64,7 +64,7 @@ public class WordProcessingServiceTests
     }
 
     [Test]
-    public void Insert40NewWords_SpeechBubbleListContains2Bubbles()
+    public async Task Insert40NewWords_SpeechBubbleListContains2Bubbles()
     {
         // Arrange
         var controller = new WordProcessingService(frontendCommunicationServiceMock.Object, hubContextMock.Object, speechBubbleListService.Object);
@@ -74,7 +74,7 @@ public class WordProcessingServiceTests
         // Act
         for (var i = 0; i < 40; i++)
         {
-            controller.HandleNewWord(testWord);
+            await controller.HandleNewWord(testWord);
         }
 
         // Assert
@@ -82,7 +82,7 @@ public class WordProcessingServiceTests
     }
 
     [Test]
-    public void Insert120NewWords_SpeechBubbleListContains6Bubbles()
+    public async Task Insert120NewWords_SpeechBubbleListContains6Bubbles()
     {
         // Arrange
         var controller = new WordProcessingService(frontendCommunicationServiceMock.Object, hubContextMock.Object, speechBubbleListService.Object);
@@ -92,7 +92,7 @@ public class WordProcessingServiceTests
         // Act
         for (var i = 0; i < 120; i++)
         {
-            controller.HandleNewWord(testWord);
+            await controller.HandleNewWord(testWord);
         }
 
         // Assert
@@ -100,7 +100,7 @@ public class WordProcessingServiceTests
     }
 
     [Test]
-    public void Insert3WordsSeperated6Seconds_SpeechBubbleListContains2Bubbles()
+    public async Task Insert3WordsSeperated6Seconds_SpeechBubbleListContains2Bubbles()
     {
         // Arrange
         var controller = new WordProcessingService(frontendCommunicationServiceMock.Object, hubContextMock.Object, speechBubbleListService.Object);
@@ -110,16 +110,16 @@ public class WordProcessingServiceTests
         var thirdWord = new WordToken(word: "Test3", confidence: 0.7f, startTime: 14, endTime: 19, speaker: 1);
 
         // Act
-        controller.HandleNewWord(firstWord);
-        controller.HandleNewWord(secondWord);
-        controller.HandleNewWord(thirdWord);
+        await controller.HandleNewWord(firstWord);
+        await controller.HandleNewWord(secondWord);
+        await controller.HandleNewWord(thirdWord);
 
         // Assert
         speechBubbleListService.Verify(sl => sl.AddNewSpeechBubble(It.IsAny<SpeechBubble>()), Times.Exactly(2));
     }
 
     [Test]
-    public void Insert3WordsDifferentSpeakers_SpeechBubbleListContains2Bubbles()
+    public async Task Insert3WordsDifferentSpeakers_SpeechBubbleListContains2Bubbles()
     {
         // Arrange
         var controller = new WordProcessingService(frontendCommunicationServiceMock.Object, hubContextMock.Object, speechBubbleListService.Object);
@@ -129,16 +129,16 @@ public class WordProcessingServiceTests
         var thirdWord = new WordToken(word: "Test3", confidence: 0.7f, startTime: 6, endTime: 7, speaker: 1);
 
         // Act
-        controller.HandleNewWord(firstWord);
-        controller.HandleNewWord(secondWord);
-        controller.HandleNewWord(thirdWord);
+        await controller.HandleNewWord(firstWord);
+        await controller.HandleNewWord(secondWord);
+        await controller.HandleNewWord(thirdWord);
 
         // Assert
         speechBubbleListService.Verify(sl => sl.AddNewSpeechBubble(It.IsAny<SpeechBubble>()), Times.Exactly(2));
     }
 
     [Test]
-    public void Insert4WordsDifferentTimeStampsDifferentSpeakers_SpeechBubbleListContains2Bubbles()
+    public async Task Insert4WordsDifferentTimeStampsDifferentSpeakers_SpeechBubbleListContains2Bubbles()
     {
         // Arrange
         var controller = new WordProcessingService(frontendCommunicationServiceMock.Object, hubContextMock.Object, speechBubbleListService.Object);
@@ -149,17 +149,17 @@ public class WordProcessingServiceTests
         var fourthWord = new WordToken(word: "Test4", confidence: 0.7f, startTime: 12, endTime: 14, speaker: 2);
 
         // Act
-        controller.HandleNewWord(firstWord);
-        controller.HandleNewWord(secondWord);
-        controller.HandleNewWord(thirdWord);
-        controller.HandleNewWord(fourthWord);
+        await controller.HandleNewWord(firstWord);
+        await controller.HandleNewWord(secondWord);
+        await controller.HandleNewWord(thirdWord);
+        await controller.HandleNewWord(fourthWord);
 
         // Assert
         speechBubbleListService.Verify(sl => sl.AddNewSpeechBubble(It.IsAny<SpeechBubble>()), Times.Exactly(2));
     }
 
     [Test]
-    public void InsertCommaAfterWord_OneSpeechBubbleGenerated()
+    public async Task InsertCommaAfterWord_OneSpeechBubbleGenerated()
     {
         // Arrange
         var controller = new WordProcessingService(frontendCommunicationServiceMock.Object, hubContextMock.Object, speechBubbleListService.Object);
@@ -169,9 +169,9 @@ public class WordProcessingServiceTests
         var thirdWord = new WordToken(word: "Test2", confidence: 0.7f, startTime: 15, endTime: 17, speaker: 1);
 
         // Act
-        controller.HandleNewWord(firstWord);
-        controller.HandleNewWord(secondWord);
-        controller.HandleNewWord(thirdWord);
+        await controller.HandleNewWord(firstWord);
+        await controller.HandleNewWord(secondWord);
+        await controller.HandleNewWord(thirdWord);
 
         // Assert
         speechBubbleListService.Verify(sl => sl.AddNewSpeechBubble(It.IsAny<SpeechBubble>()), Times.Exactly(1));

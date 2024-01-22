@@ -7,7 +7,7 @@ namespace Backend.Services;
 public interface ISpeechmaticsReceiveService
 {
     /// <summary>
-    /// A tracker for the <c>seq_no</c> field of the last-received
+    /// Gets a tracker for the <c>seq_no</c> field of the last-received
     /// <see cref="AudioAddedMessage"/> message. Will be compared against
     /// <see cref="ISpeechmaticsSendService.SequenceNumber"/> at
     /// the end of the communication.
@@ -19,8 +19,9 @@ public interface ISpeechmaticsReceiveService
     /// <see cref="EndOfTranscriptMessage"/> has been received, or
     /// an error is encountered.
     /// </summary>
+    /// <param name="ctSource">The CancellationTokenSource to use for cancellation</param>
     /// <returns>Whether or not everything went well</returns>
-    Task<bool> ReceiveLoop();
+    Task<bool> ReceiveLoop(CancellationTokenSource ctSource);
 
     /// <summary>
     /// Perform a quick test of the complex (and scary-looking) Reflection call

@@ -12,30 +12,30 @@ using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.audio_format;
 public interface ISpeechmaticsConnectionService
 {
     /// <summary>
-    /// What audio format will be sent over the connection.
+    /// Gets what audio format will be sent over the connection.
     /// </summary>
     StartRecognitionMessage_AudioFormat AudioFormat { get; }
 
     /// <summary>
-    /// If <see cref="Connected"/>, a <c>ClientWebSocket</c> that corresponds to the established connection.
-    /// If not connected, throws an <c>InvalidOperationException</c>.
+    /// Gets a <c>ClientWebSocket</c> that corresponds to the established connection, if <see cref="Connected"/>.
+    /// When not connected, throws an <c>InvalidOperationException</c>.
     /// </summary>
-    ClientWebSocket Socket { get; }
+    WebSocket Socket { get; }
 
     /// <summary>
-    /// Common (de)serialiser options to use for this connection
+    /// Gets the common (de)serialiser options to use for this connection
     /// </summary>
     JsonSerializerOptions JsonOptions { get; }
 
     /// <summary>
-    /// A <c>CancellationToken</c> corresponding to the existence of this connection.
+    /// Gets a <c>CancellationToken</c> corresponding to the existence of this connection.
     /// Will be created when <see cref="Connect"/> is called, and
     /// cancelled when <see cref="Disconnect"/> is called.
     /// </summary>
     CancellationToken CancellationToken { get; }
 
     /// <summary>
-    /// Indicates whether a connection has been established.
+    /// Gets a value indicating whether a connection has been established.
     /// </summary>
     bool Connected { get; }
 
@@ -55,6 +55,7 @@ public interface ISpeechmaticsConnectionService
     /// Establishes a connection to Speechmatics.
     /// </summary>
     /// <param name="ct">A CancellationToken to use for the network calls</param>
+    /// <returns>Whether or not everything went well</returns>
     Task<bool> Connect(CancellationToken ct);
 
     /// <summary>
@@ -62,5 +63,6 @@ public interface ISpeechmaticsConnectionService
     /// </summary>
     /// <param name="signalSuccess">Whether we should tell Speechmatics that everything went well</param>
     /// <param name="ct">A CancellationToken to use for the network calls</param>
+    /// <returns>Whether or not everything went well</returns>
     Task<bool> Disconnect(bool signalSuccess, CancellationToken ct);
 }

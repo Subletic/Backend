@@ -11,7 +11,10 @@ namespace Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcriptio
 /// </summary>
 public class StartRecognitionMessage_TranscriptionConfig
 {
-    private const int MAX_ADDITIONAL_VOCAB_COUNT = 1000;
+    /// <summary>
+    /// Maximum count for additional vocabulary.
+    /// </summary>
+    public const int MAX_ADDITIONAL_VOCAB_COUNT = 1000;
 
     /// <summary>
     /// Simple constructor.

@@ -1,14 +1,10 @@
 namespace Backend.Services;
 
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Threading;
 using Backend.Data;
 using Backend.Hubs;
 using Microsoft.AspNetCore.SignalR;
-using Serilog;
+using ILogger = Serilog.ILogger;
 
 /// <summary>
 /// Provides services to handle frontend requests, including audio streaming and speech bubble management.
@@ -24,7 +20,7 @@ public class FrontendCommunicationService : IFrontendCommunicationService
     /// <summary>
     /// Logger instance for logging events and errors.
     /// </summary>
-    private readonly Serilog.ILogger logger;
+    private readonly ILogger logger;
 
     /// <summary>
     /// Context for interacting with SignalR hubs, used to communicate with the frontend.
@@ -41,7 +37,7 @@ public class FrontendCommunicationService : IFrontendCommunicationService
     /// </summary>
     /// <param name="logger">Logger for logging events and errors.</param>
     /// <param name="hubContext">Context for interacting with SignalR hubs.</param>
-    public FrontendCommunicationService(Serilog.ILogger logger, IHubContext<FrontendCommunicationHub> hubContext)
+    public FrontendCommunicationService(ILogger logger, IHubContext<FrontendCommunicationHub> hubContext)
     {
         this.logger = logger;
         this.hubContext = hubContext;

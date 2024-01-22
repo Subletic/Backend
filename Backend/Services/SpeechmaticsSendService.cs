@@ -1,46 +1,55 @@
 namespace Backend.Services;
 
 using System.Net.WebSockets;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
+using ILogger = Serilog.ILogger;
 
-using Backend.Data.SpeechmaticsMessages.AddTranscriptMessage;
-using Backend.Data.SpeechmaticsMessages.AudioAddedMessage;
-using Backend.Data.SpeechmaticsMessages.EndOfStreamMessage;
-using Backend.Data.SpeechmaticsMessages.EndOfTranscriptMessage;
-using Backend.Data.SpeechmaticsMessages.ErrorMessage;
-using Backend.Data.SpeechmaticsMessages.InfoMessage;
-using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage;
-
-using Serilog;
-
-public partial class SpeechmaticsSendService : ISpeechmaticsSendService
+/// <summary>
+/// Service to send messages to Speechmatics.
+/// </summary>
+public class SpeechmaticsSendService : ISpeechmaticsSendService
 {
     private ISpeechmaticsConnectionService speechmaticsConnectionService;
 
-    private Serilog.ILogger log;
+    private ILogger log;
 
+    /// <summary>
+    /// Gets the sequence number of the last audio chunk that was sent to Speechmatics.
+    /// </summary>
     public ulong SequenceNumber
     {
         get;
         private set;
     }
 
-    public SpeechmaticsSendService(ISpeechmaticsConnectionService speechmaticsConnectionService, Serilog.ILogger log)
+    /// <summary>
+    /// Constructor for the SpeechmaticsSendService.
+    /// </summary>
+    /// <param name="speechmaticsConnectionService">Service that handles the connection to Speechmatics.</param>
+    /// <param name="log">The logger.</param>
+    public SpeechmaticsSendService(ISpeechmaticsConnectionService speechmaticsConnectionService, ILogger log)
     {
         this.speechmaticsConnectionService = speechmaticsConnectionService;
         this.log = log;
 
-        resetSequenceNumber();
+        ResetSequenceNumber();
     }
 
-    private void resetSequenceNumber()
+    /// <summary>
+    /// Resets the sequence number to 0.
+    /// </summary>
+    public void ResetSequenceNumber()
     {
         SequenceNumber = 0;
     }
 
+    /// <summary>
+    /// Sends a JSON message to Speechmatics.
+    /// </summary>
+    /// <typeparam name="T">Type of the message to send.</typeparam>
+    /// <param name="message">The message to send.</param>
+    /// <returns>True if the message was sent successfully, false otherwise.</returns>
     public async Task<bool> SendJsonMessage<T>(T message)
     {
         speechmaticsConnectionService.ThrowIfNotConnected();
@@ -59,6 +68,11 @@ public partial class SpeechmaticsSendService : ISpeechmaticsSendService
         return true;
     }
 
+    /// <summary>
+    /// Sends an audio chunk to Speechmatics.
+    /// </summary>
+    /// <param name="audioBuffer">The audio chunk to send.</param>
+    /// <returns>True if the audio chunk was sent successfully, false otherwise.</returns>
     public async Task<bool> SendAudio(byte[] audioBuffer)
     {
         speechmaticsConnectionService.ThrowIfNotConnected();

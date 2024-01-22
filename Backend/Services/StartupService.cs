@@ -16,7 +16,9 @@ public class StartupService : IHostedService
     /// <summary>
     /// Represents a service that handles startup operations.
     /// </summary>
-    /// <param name="avProcessingService">The AV processing service.</param>
+    /// <param name="speechmaticsConnectionService">The service that handles the connection to the Speechmatics API</param>
+    /// <param name="speechmaticsReceiveService">The service that handles the reception of data from the Speechmatics API</param>
+    /// <param name="log">The logger</param>
     public StartupService(
         ISpeechmaticsConnectionService speechmaticsConnectionService,
         ISpeechmaticsReceiveService speechmaticsReceiveService,

@@ -7,21 +7,42 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Backend.Data;
 using Backend.Services;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Memory;
 using Moq;
 using NUnit.Framework;
+using Serilog;
+using Serilog.Events;
 
 public class SubtitleExporterServiceTests
 {
-    [Test]
-    public async Task Start_SendsSubtitlesOverWebSocket()
+    private readonly IConfiguration configuration = new ConfigurationBuilder()
+        .Add(new MemoryConfigurationSource
+        {
+            InitialData = new List<KeyValuePair<string, string?>>
+            {
+                new KeyValuePair<string, string?>("ClientCommunicationSettings:TIMEOUT_IN_SECONDS", "1"),
+            },
+        })
+        .Build();
+
+    [TestCase("vtt", 2)]
+    [TestCase("srt", 1)]
+    public async Task Start_SendsSubtitlesOverWebSocket(string format, int amountOfWrites)
     {
         // Arrange
-        var service = new SubtitleExporterService();
+        var logger = new LoggerConfiguration()
+            .MinimumLevel.Is(LogEventLevel.Debug)
+            .WriteTo.Console()
+            .CreateLogger();
+
+        var service = new SubtitleExporterService(configuration, logger);
 
         // Select the format to initialize the subtitleConverter
-        service.SelectFormat("srt"); // Or use "webvtt" as needed
+        service.SelectFormat(format);
 
         var mockWebSocket = new Mock<WebSocket>();
         var cancellationTokenSource = new CancellationTokenSource();
@@ -41,20 +62,23 @@ public class SubtitleExporterServiceTests
         // Act: Start sending task
         var sendingTask = service.Start(mockWebSocket.Object, cancellationTokenSource);
 
+        // Allow some time for reading loop to start
+        await Task.Delay(100);
+
+        // Act: Inform service that there will be no more subtitles beyond this one, and that it should finish
+        service.SetQueueContainsItems(false);
+        service.RequestShutdown();
+
         // Act: Export the subtitle
         await service.ExportSubtitle(speechBubble);
 
-        // Allow time for data to be sent
-        await Task.Delay(100);
-
-        // Clean up
-        cancellationTokenSource.Cancel();
+        // Act: Await service to finish
+        sendingTask.Wait(2000); // Wait for the sending task to complete
 
         // Assert
-        sendingTask.Wait(2000); // Wait for the sending task to complete
-        mockWebSocket.Verify(
-            webSocket =>
-            webSocket.SendAsync(It.IsAny<ReadOnlyMemory<byte>>(), WebSocketMessageType.Text, false, cancellationTokenSource.Token),
-            Times.AtLeastOnce());
+        Assert.That(
+            mockWebSocket.Invocations.Count(
+                x => x.Method.Name.Equals(nameof(WebSocket.SendAsync))),
+            Is.EqualTo(amountOfWrites));
     }
 }
