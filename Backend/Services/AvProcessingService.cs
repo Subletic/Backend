@@ -185,7 +185,16 @@ public class AvProcessingService : IAvProcessingService
 
             while ((filledAmount = await readProcessedChunk(audioPipeReader, buffer)) != 0)
             {
-                ctSource.Token.ThrowIfCancellationRequested();
+                try
+                {
+                    ctSource.Token.ThrowIfCancellationRequested();
+                }
+                catch (OperationCanceledException)
+                {
+                    log.Information("Cancellation of processed audio pushing has been requested");
+                    throw;
+                }
+
                 Task sendToSpeechmatics = sendAudioToSpeechmatics(buffer, filledAmount);
                 sendAudioToFrontend(buffer);
                 await sendToSpeechmatics;
@@ -194,6 +203,10 @@ public class AvProcessingService : IAvProcessingService
                 if (simulateDelay)
                     await Task.Delay(TimeSpan.FromSeconds(1));
             }
+        }
+        catch (OperationCanceledException)
+        {
+            log.Information("Pushing processed audio has been cancelled");
         }
         catch (Exception e)
         {
