@@ -82,11 +82,13 @@ public class AvReceiverServiceTests
                 });
 
         Mock<IAvProcessingService> mockAvProcessingService = new Mock<IAvProcessingService>();
+        Mock<IFrontendCommunicationService> mockFrontendCommunicationService = new Mock<IFrontendCommunicationService>();
 
         IAvReceiverService service = new AvReceiverService(
-            mockAvProcessingService.Object,
-            configuration,
-            logger);
+            avProcessingService: mockAvProcessingService.Object,
+            frontendCommunicationService: mockFrontendCommunicationService.Object,
+            configuration: configuration,
+            log: logger);
 
         CancellationTokenSource cts = new CancellationTokenSource();
 
@@ -98,6 +100,10 @@ public class AvReceiverServiceTests
             mockAvProcessingService.Invocations.Count(
                 x => x.Method.Name.Equals(nameof(IAvProcessingService.PushProcessedAudio))),
             Is.EqualTo(1));
+        Assert.That(
+            mockFrontendCommunicationService.Invocations.Count(
+                x => x.Method.Name.Equals(nameof(IFrontendCommunicationService.AbortCorrection))),
+            Is.EqualTo(0));
         Assert.That(cts.IsCancellationRequested, Is.EqualTo(false));
     }
 
@@ -151,11 +157,13 @@ public class AvReceiverServiceTests
                 });
 
         Mock<IAvProcessingService> mockAvProcessingService = new Mock<IAvProcessingService>();
+        Mock<IFrontendCommunicationService> mockFrontendCommunicationService = new Mock<IFrontendCommunicationService>();
 
         IAvReceiverService service = new AvReceiverService(
-            mockAvProcessingService.Object,
-            configuration,
-            logger);
+            avProcessingService: mockAvProcessingService.Object,
+            frontendCommunicationService: mockFrontendCommunicationService.Object,
+            configuration: configuration,
+            log: logger);
 
         CancellationTokenSource cts = new CancellationTokenSource();
 
@@ -166,6 +174,10 @@ public class AvReceiverServiceTests
         Assert.That(
             mockAvProcessingService.Invocations.Count(
                 x => x.Method.Name.Equals(nameof(IAvProcessingService.PushProcessedAudio))),
+            Is.EqualTo(1));
+        Assert.That(
+            mockFrontendCommunicationService.Invocations.Count(
+                x => x.Method.Name.Equals(nameof(IFrontendCommunicationService.AbortCorrection))),
             Is.EqualTo(1));
         Assert.That(cts.IsCancellationRequested, Is.EqualTo(true));
     }
@@ -219,11 +231,13 @@ public class AvReceiverServiceTests
                 });
 
         Mock<IAvProcessingService> mockAvProcessingService = new Mock<IAvProcessingService>();
+        Mock<IFrontendCommunicationService> mockFrontendCommunicationService = new Mock<IFrontendCommunicationService>();
 
         IAvReceiverService service = new AvReceiverService(
-            mockAvProcessingService.Object,
-            configuration,
-            logger);
+            avProcessingService: mockAvProcessingService.Object,
+            frontendCommunicationService: mockFrontendCommunicationService.Object,
+            configuration: configuration,
+            log: logger);
 
         // Act
         Task receivingTask = service.Start(mockWebSocket.Object, cts);
@@ -236,6 +250,10 @@ public class AvReceiverServiceTests
             mockAvProcessingService.Invocations.Count(
                 x => x.Method.Name.Equals(nameof(IAvProcessingService.PushProcessedAudio))),
             Is.EqualTo(1));
+        Assert.That(
+            mockFrontendCommunicationService.Invocations.Count(
+                x => x.Method.Name.Equals(nameof(IFrontendCommunicationService.AbortCorrection))),
+            Is.EqualTo(0));
         Assert.That(cts.IsCancellationRequested, Is.EqualTo(true));
 
         return Task.CompletedTask;
@@ -291,11 +309,13 @@ public class AvReceiverServiceTests
                 });
 
         Mock<IAvProcessingService> mockAvProcessingService = new Mock<IAvProcessingService>();
+        Mock<IFrontendCommunicationService> mockFrontendCommunicationService = new Mock<IFrontendCommunicationService>();
 
         IAvReceiverService service = new AvReceiverService(
-            mockAvProcessingService.Object,
-            configuration,
-            logger);
+            avProcessingService: mockAvProcessingService.Object,
+            frontendCommunicationService: mockFrontendCommunicationService.Object,
+            configuration: configuration,
+            log: logger);
 
         CancellationTokenSource cts = new CancellationTokenSource();
 
@@ -306,6 +326,10 @@ public class AvReceiverServiceTests
         Assert.That(
             mockAvProcessingService.Invocations.Count(
                 x => x.Method.Name.Equals(nameof(IAvProcessingService.PushProcessedAudio))),
+            Is.EqualTo(1));
+        Assert.That(
+            mockFrontendCommunicationService.Invocations.Count(
+                x => x.Method.Name.Equals(nameof(IFrontendCommunicationService.AbortCorrection))),
             Is.EqualTo(1));
         Assert.That(cts.IsCancellationRequested, Is.EqualTo(true));
     }

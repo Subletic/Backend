@@ -30,6 +30,7 @@ public class ClientExchangeController : ControllerBase
     private readonly IConfiguration configuration;
     private readonly ILogger log;
     private readonly IConfigurationService configurationService;
+    private readonly IFrontendCommunicationService frontendCommunicationService;
     private static bool alreadyConnected = false;
     private TimeSpan clientTimeout;
 
@@ -55,7 +56,8 @@ public class ClientExchangeController : ControllerBase
         ISubtitleExporterService subtitleExporterService,
         IConfiguration configuration,
         IConfigurationService configurationService,
-        ILogger log)
+        ILogger log,
+        IFrontendCommunicationService frontendCommunicationService)
     {
         this.avReceiverService = avReceiverService;
         this.speechBubbleListService = speechBubbleListService;
@@ -66,6 +68,7 @@ public class ClientExchangeController : ControllerBase
         this.configuration = configuration;
         this.configurationService = configurationService;
         this.log = log;
+        this.frontendCommunicationService = frontendCommunicationService;
         clientTimeout =
             TimeSpan.FromSeconds(configuration.GetValue<double>("ClientCommunicationSettings:TIMEOUT_IN_SECONDS"));
     }
@@ -99,6 +102,7 @@ public class ClientExchangeController : ControllerBase
         log.Information("Accepting transcription request");
         using WebSocket webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
         alreadyConnected = true;
+        frontendCommunicationService.ResetAbortedTracker();
 
         string format = await receiveFormatInformation(webSocket);
 

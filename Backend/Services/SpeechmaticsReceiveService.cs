@@ -31,11 +31,13 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
     [GeneratedRegex(@"""message""\s*:\s*""([^""]+)""")]
     private static partial Regex MESSAGE_TYPE_REGEX();
 
-    private ISpeechmaticsConnectionService speechmaticsConnectionService;
+    private readonly ISpeechmaticsConnectionService speechmaticsConnectionService;
 
-    private IWordProcessingService wordProcessingService;
+    private readonly IWordProcessingService wordProcessingService;
 
-    private ILogger log;
+    private readonly IFrontendCommunicationService frontendCommunicationService;
+
+    private readonly ILogger log;
 
     /// <summary>
     /// Gets the sequence number of the last audio chunk that was sent to Speechmatics.
@@ -55,10 +57,12 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
     public SpeechmaticsReceiveService(
         ISpeechmaticsConnectionService speechmaticsConnectionService,
         IWordProcessingService wordProcessingService,
+        IFrontendCommunicationService frontendCommunicationService,
         ILogger log)
     {
         this.speechmaticsConnectionService = speechmaticsConnectionService;
         this.wordProcessingService = wordProcessingService;
+        this.frontendCommunicationService = frontendCommunicationService;
         this.log = log;
 
         resetSequenceNumber();
@@ -290,6 +294,7 @@ public partial class SpeechmaticsReceiveService : ISpeechmaticsReceiveService
             {
                 log.Error($"Exception occured while trying to receive data from Speechmatics: {e.Message}");
                 log.Debug(e.ToString());
+                await frontendCommunicationService.AbortCorrection($"Fehler beim Empfang der Daten vom Transkriptionsservice: {e.Message}");
                 ctSource.Cancel();
                 done = true;
                 success = false;

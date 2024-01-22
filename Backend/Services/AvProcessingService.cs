@@ -103,7 +103,9 @@ public class AvProcessingService : IAvProcessingService
         }
         catch (Exception e)
         {
-            Console.WriteLine(e.ToString());
+            log.Error($"Failed to process AV data with FFmpeg: {e.Message}");
+            log.Debug(e.ToString());
+            await frontendCommunicationService.AbortCorrection($"Fehler bei der Verarbeitung der Echtzeitübertragung: {e.Message}");
             success = false;
             ctSource.Cancel();
         }
@@ -195,8 +197,10 @@ public class AvProcessingService : IAvProcessingService
         }
         catch (Exception e)
         {
-            log.Error(e.ToString());
+            log.Error($"Failed to push processed audio from FFmpeg to Speechmatics: {e.Message}");
+            log.Debug(e.ToString());
             success = false;
+            await frontendCommunicationService.AbortCorrection($"Fehler beim Lesen der verarbeiteten Echtzeitübertragung: {e.Message}");
             ctSource.Cancel();
         }
 

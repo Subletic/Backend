@@ -20,6 +20,11 @@ public class AvReceiverService : IAvReceiverService
     private readonly IAvProcessingService avProcessingService;
 
     /// <summary>
+    /// Dependency Injection for FrontendCommunicationService to abort frontend speechbubble correcting if necessary
+    /// </summary>
+    private readonly IFrontendCommunicationService frontendCommunicationService;
+
+    /// <summary>
     /// Dependency Injection for the application's configuration
     /// </summary>
     private readonly IConfiguration configuration;
@@ -37,10 +42,12 @@ public class AvReceiverService : IAvReceiverService
     /// <param name="log">The logger</param>
     public AvReceiverService(
         IAvProcessingService avProcessingService,
+        IFrontendCommunicationService frontendCommunicationService,
         IConfiguration configuration,
         ILogger log)
     {
         this.avProcessingService = avProcessingService;
+        this.frontendCommunicationService = frontendCommunicationService;
         this.configuration = configuration;
         this.log = log;
     }
@@ -78,6 +85,7 @@ public class AvReceiverService : IAvReceiverService
                 catch (OperationCanceledException)
                 {
                     log.Error("Timed out waiting for client to send AV data");
+                    await frontendCommunicationService.AbortCorrection("Fehler beim Empfang der Echtzeitübertragung: Timeout");
                     ctSource.Cancel();
                     throw;
                 }
@@ -103,6 +111,7 @@ public class AvReceiverService : IAvReceiverService
         {
             log.Error($"WebSocket to client has an error: {e.Message}");
             log.Debug(e.ToString());
+            await frontendCommunicationService.AbortCorrection($"Fehler beim Empfang der Echtzeitübertragung: {e.Message}");
             ctSource.Cancel();
         }
 

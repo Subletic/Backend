@@ -36,4 +36,15 @@ public interface IFrontendCommunicationService
     /// <param name="speechBubble">The speech bubble object to be sent to the frontend.</param>
     /// <returns>PublishSpeechBubble.</returns>
     Task PublishSpeechBubble(SpeechBubble speechBubble);
+
+    /// <summary>
+    /// Reset the tracker that ensures frontend processing is only aborted once per processing.
+    /// </summary>
+    void ResetAbortedTracker();
+
+    /// <summary>
+    /// Inform the Frontend that an error occurred and it should stop the subtitle correction process.
+    /// </summary>
+    /// <param name="errorMessage">The error message to be displayed in the frontend. Should be mostly German, because it's user-facing.</param>
+    Task AbortCorrection(string errorMessage);
 }
