@@ -15,6 +15,7 @@ using Microsoft.Extensions.Configuration.Memory;
 using Moq;
 using NUnit.Framework;
 using Serilog;
+using Serilog.Events;
 
 public class SubtitleExporterServiceTests
 {
@@ -28,16 +29,20 @@ public class SubtitleExporterServiceTests
         })
         .Build();
 
-    [Test]
-    public async Task Start_SendsSubtitlesOverWebSocket()
+    [TestCase("vtt", 2)]
+    [TestCase("srt", 1)]
+    public async Task Start_SendsSubtitlesOverWebSocket(string format, int amountOfWrites)
     {
         // Arrange
-        var logger = new LoggerConfiguration().CreateLogger();
+        var logger = new LoggerConfiguration()
+            .MinimumLevel.Is(LogEventLevel.Debug)
+            .WriteTo.Console()
+            .CreateLogger();
 
         var service = new SubtitleExporterService(configuration, logger);
 
         // Select the format to initialize the subtitleConverter
-        service.SelectFormat("srt"); // Or use "webvtt" as needed
+        service.SelectFormat(format);
 
         var mockWebSocket = new Mock<WebSocket>();
         var cancellationTokenSource = new CancellationTokenSource();
@@ -57,20 +62,23 @@ public class SubtitleExporterServiceTests
         // Act: Start sending task
         var sendingTask = service.Start(mockWebSocket.Object, cancellationTokenSource);
 
+        // Allow some time for reading loop to start
+        await Task.Delay(100);
+
+        // Act: Inform service that there will be no more subtitles beyond this one, and that it should finish
+        service.SetQueueContainsItems(false);
+        service.RequestShutdown();
+
         // Act: Export the subtitle
         await service.ExportSubtitle(speechBubble);
 
-        // Allow time for data to be sent
-        await Task.Delay(100);
-
-        // Clean up
-        cancellationTokenSource.Cancel();
+        // Act: Await service to finish
+        sendingTask.Wait(2000); // Wait for the sending task to complete
 
         // Assert
-        sendingTask.Wait(2000); // Wait for the sending task to complete
         Assert.That(
             mockWebSocket.Invocations.Count(
                 x => x.Method.Name.Equals(nameof(WebSocket.SendAsync))),
-            Is.EqualTo(1));
+            Is.EqualTo(amountOfWrites));
     }
 }

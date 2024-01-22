@@ -37,7 +37,7 @@ public class WarningMessage
     /// <summary>
     /// The internal name of this message.
     /// </summary>
-    private const string MESSAGE_TYPE = "Info";
+    private const string MESSAGE_TYPE = "Warning";
 
     /// <summary>
     /// Gets or sets the message name.
