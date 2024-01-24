@@ -33,6 +33,11 @@ public class FrontendCommunicationService : IFrontendCommunicationService
     private ConcurrentQueue<short[]> audioQueue = new ConcurrentQueue<short[]>();
 
     /// <summary>
+    /// Tracker to make sure abortCorrection frontend endpoint is only called once per processing pipeline.
+    /// </summary>
+    private bool frontendCorrectionAborted = true;
+
+    /// <summary>
     /// Initializes a new instance of the FrontendProviderService class.
     /// </summary>
     /// <param name="logger">Logger for logging events and errors.</param>
@@ -50,6 +55,12 @@ public class FrontendCommunicationService : IFrontendCommunicationService
     /// <param name="item">Buffer to enqueue</param>
     public void Enqueue(short[] item)
     {
+        if (frontendCorrectionAborted)
+        {
+            logger.Debug("Frontend correction process has been aborted, refusing to enqueue new audio data");
+            return;
+        }
+
         if (item.Length != AUDIO_FRQUENCY) throw new ArgumentException($"Enqueued buffer ({item.Length} samples) doesn't have correct element count ({AUDIO_FRQUENCY} samples)");
         audioQueue.Enqueue(item);
     }
@@ -90,6 +101,12 @@ public class FrontendCommunicationService : IFrontendCommunicationService
     /// <returns>PublishSpeechBubble.</returns>
     public async Task PublishSpeechBubble(SpeechBubble speechBubble)
     {
+        if (frontendCorrectionAborted)
+        {
+            logger.Debug("Frontend correction process has been aborted, refusing to publish new speech bubble");
+            return;
+        }
+
         try
         {
             var listToSend = new List<SpeechBubble>() { speechBubble };
@@ -99,5 +116,37 @@ public class FrontendCommunicationService : IFrontendCommunicationService
         {
             logger.Error($"Failed to transmit to Frontend: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Reset the tracker that ensures frontend processing is only aborted once per processing.
+    /// </summary>
+    public void ResetAbortedTracker()
+    {
+        frontendCorrectionAborted = false;
+    }
+
+    /// <summary>
+    /// Inform the Frontend that an error occurred and it should stop the subtitle correction process.
+    /// </summary>
+    /// <param name="errorMessage">The error message to be displayed in the frontend. Should be mostly German, because it's user-facing.</param>
+    public async Task AbortCorrection(string errorMessage)
+    {
+        if (frontendCorrectionAborted)
+        {
+            logger.Error($"Attempted to abort frontend processing more than once, cancellation appears to not be caught properly somewhere!");
+            return;
+        }
+
+        try
+        {
+            await hubContext.Clients.All.SendAsync("abortCorrection", errorMessage);
+        }
+        catch (Exception ex)
+        {
+            logger.Error($"Failed to inform the Frontend that it should abort its processing: {ex.Message}");
+        }
+
+        frontendCorrectionAborted = true;
     }
 }

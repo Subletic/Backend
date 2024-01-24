@@ -39,7 +39,9 @@ public class SubtitleExporterServiceTests
             .WriteTo.Console()
             .CreateLogger();
 
-        var service = new SubtitleExporterService(configuration, logger);
+        Mock<IFrontendCommunicationService> mockFrontendCommunicationService = new Mock<IFrontendCommunicationService>();
+
+        var service = new SubtitleExporterService(mockFrontendCommunicationService.Object, configuration, logger);
 
         // Select the format to initialize the subtitleConverter
         service.SelectFormat(format);
@@ -80,5 +82,9 @@ public class SubtitleExporterServiceTests
             mockWebSocket.Invocations.Count(
                 x => x.Method.Name.Equals(nameof(WebSocket.SendAsync))),
             Is.EqualTo(amountOfWrites));
+        Assert.That(
+            mockFrontendCommunicationService.Invocations.Count(
+                x => x.Method.Name.Equals(nameof(IFrontendCommunicationService.AbortCorrection))),
+            Is.EqualTo(0));
     }
 }

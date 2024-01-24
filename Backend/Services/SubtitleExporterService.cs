@@ -16,6 +16,11 @@ public class SubtitleExporterService : ISubtitleExporterService
     private const int MAXIMUM_READ_SIZE = 4096;
 
     /// <summary>
+    /// Dependency Injection for aborting frontend speechbubble correcting if needed
+    /// </summary>
+    private readonly IFrontendCommunicationService frontendCommunicationService;
+
+    /// <summary>
     /// Dependency Injection for the application configuration
     /// </summary>
     private readonly IConfiguration configuration;
@@ -53,8 +58,12 @@ public class SubtitleExporterService : ISubtitleExporterService
     /// </remarks>
     /// <param name="log">DI Serilog reference</param>
     /// <param name="configuration">DI appsettings reference</param>
-    public SubtitleExporterService(IConfiguration configuration, ILogger log)
+    public SubtitleExporterService(
+        IFrontendCommunicationService frontendCommunicationService,
+        IConfiguration configuration,
+        ILogger log)
     {
+        this.frontendCommunicationService = frontendCommunicationService;
         this.configuration = configuration;
         this.log = log;
         subtitlePipe = new Pipe();
@@ -157,6 +166,7 @@ public class SubtitleExporterService : ISubtitleExporterService
         catch (Exception e)
         {
             log.Error("Exception occured while trying to export subtitles: {Exception}", e);
+            await frontendCommunicationService.AbortCorrection($"Fehler beim Senden der Untertitel: {e.Message}");
             ctSource.Cancel();
         }
 

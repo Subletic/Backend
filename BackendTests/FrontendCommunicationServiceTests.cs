@@ -24,6 +24,7 @@ public class FrontendCommunicationServiceTests
         loggerMock = new Mock<ILogger>();
         hubContextMock = new Mock<IHubContext<FrontendCommunicationHub>>();
         service = new FrontendCommunicationService(loggerMock.Object, hubContextMock.Object);
+        service.ResetAbortedTracker();
     }
 
     [Test]

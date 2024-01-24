@@ -361,15 +361,17 @@ public class SpeechmaticsReceiveServiceTests
                 });
 
         Mock<IWordProcessingService> mockWordProcessingService = new Mock<IWordProcessingService>();
+        Mock<IFrontendCommunicationService> mockFrontendCommunicationService = new Mock<IFrontendCommunicationService>();
         mockSpeechmaticsConnectionService.Setup(c => c.Socket)
             .Returns(mockWebSocket.Object);
         mockSpeechmaticsConnectionService.Setup(c => c.CancellationToken)
             .Returns(new CancellationTokenSource(TimeSpan.FromSeconds(5)).Token);
 
         ISpeechmaticsReceiveService service = new SpeechmaticsReceiveService(
-            mockSpeechmaticsConnectionService.Object,
-            mockWordProcessingService.Object,
-            logger);
+            speechmaticsConnectionService: mockSpeechmaticsConnectionService.Object,
+            wordProcessingService: mockWordProcessingService.Object,
+            frontendCommunicationService: mockFrontendCommunicationService.Object,
+            log: logger);
 
         CancellationTokenSource cts = new CancellationTokenSource();
 
@@ -382,6 +384,10 @@ public class SpeechmaticsReceiveServiceTests
             mockWordProcessingService.Invocations.Count(
                 x => x.Method.Name.Equals(nameof(IWordProcessingService.HandleNewWord))),
             Is.EqualTo(expectedNewWordsCount));
+        Assert.That(
+            mockFrontendCommunicationService.Invocations.Count(
+                x => x.Method.Name.Equals(nameof(IFrontendCommunicationService.AbortCorrection))),
+            Is.EqualTo(shouldCauseCancel ? 1 : 0));
         Assert.That(cts.IsCancellationRequested, Is.EqualTo(shouldCauseCancel));
     }
 }
