@@ -4,8 +4,8 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using Backend.ClientCommunication;
 using Backend.Data;
-using Backend.Services;
 using NUnit.Framework;
 
 [TestFixture]

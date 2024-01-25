@@ -1,8 +1,8 @@
 namespace BackendTests;
 
-using Backend.Controllers;
 using Backend.Data;
-using Backend.Services;
+using Backend.FrontendCommunication;
+using Backend.SpeechBubble;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 using Moq;
