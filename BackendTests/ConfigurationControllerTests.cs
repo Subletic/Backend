@@ -2,10 +2,9 @@ namespace BackendTests;
 
 using System;
 using System.Collections.Generic;
-using Backend.Controllers;
 using Backend.Data;
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_config;
-using Backend.Services;
+using Backend.FrontendCommunication;
 using Microsoft.AspNetCore.Mvc;
 using NUnit.Framework;
 using Serilog;

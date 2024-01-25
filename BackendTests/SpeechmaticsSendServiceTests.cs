@@ -7,13 +7,12 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-using Backend.Controllers;
 using Backend.Data;
 using Backend.Data.SpeechmaticsMessages.EndOfStreamMessage;
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage;
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.audio_format;
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_config;
-using Backend.Services;
+using Backend.SpeechEngine;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;

@@ -7,7 +7,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-using Backend.Controllers;
 using Backend.Data.SpeechmaticsMessages.AddTranscriptMessage;
 using Backend.Data.SpeechmaticsMessages.AddTranscriptMessage.metadata;
 using Backend.Data.SpeechmaticsMessages.AddTranscriptMessage.result;
@@ -19,7 +18,9 @@ using Backend.Data.SpeechmaticsMessages.InfoMessage;
 using Backend.Data.SpeechmaticsMessages.RecognitionStartedMessage;
 using Backend.Data.SpeechmaticsMessages.RecognitionStartedMessage.language_pack_info;
 using Backend.Data.SpeechmaticsMessages.WarningMessage;
-using Backend.Services;
+using Backend.FrontendCommunication;
+using Backend.SpeechBubble;
+using Backend.SpeechEngine;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;

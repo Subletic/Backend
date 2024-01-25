@@ -1,7 +1,11 @@
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
-using Backend.Hubs;
-using Backend.Services;
+using Backend.Audio;
+using Backend.ClientCommunication;
+using Backend.FrontendCommunication;
+using Backend.SpeechBubble;
+using Backend.SpeechEngine;
+using Backend.Startup;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Serilog;
 using ILogger = Serilog.ILogger;

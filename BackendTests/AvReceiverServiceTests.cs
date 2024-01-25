@@ -2,7 +2,9 @@ namespace BackendTests;
 
 using System.Net.WebSockets;
 
-using Backend.Services;
+using Backend.Audio;
+using Backend.ClientCommunication;
+using Backend.FrontendCommunication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Memory;
 using Moq;
