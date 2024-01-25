@@ -1,4 +1,4 @@
-namespace Backend.Startup;
+namespace Backend;
 
 using Backend.SpeechEngine;
 
