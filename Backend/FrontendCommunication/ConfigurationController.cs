@@ -3,6 +3,7 @@ namespace Backend.FrontendCommunication;
 using System;
 using Backend.Data;
 using Backend.Data.SpeechmaticsMessages.StartRecognitionMessage.transcription_config;
+using Backend.SpeechEngine;
 using Microsoft.AspNetCore.Mvc;
 using ILogger = Serilog.ILogger;
 
@@ -17,6 +18,9 @@ public class ConfigurationController : ControllerBase
     // Service for managing custom dictionaries
     private readonly IConfigurationService dictionaryService;
 
+    // Service for managing Speechmatics connection
+    private readonly ISpeechmaticsConnectionService speechmaticsConnectionService;
+
     // Logger for logging within this class
     private readonly ILogger log;
 
@@ -29,9 +33,13 @@ public class ConfigurationController : ControllerBase
     /// </summary>
     /// <param name="dictionaryService">Service for managing custom dictionaries.</param>
     /// <param name="log">Logger for logging activities within the class.</param>
-    public ConfigurationController(IConfigurationService dictionaryService, Serilog.ILogger log)
+    public ConfigurationController(
+        IConfigurationService dictionaryService,
+        ISpeechmaticsConnectionService speechmaticsConnectionService,
+        Serilog.ILogger log)
     {
-        this.dictionaryService = dictionaryService ?? throw new ArgumentNullException(nameof(dictionaryService));
+        this.dictionaryService = dictionaryService;
+        this.speechmaticsConnectionService = speechmaticsConnectionService;
         this.log = log;
     }
 
@@ -70,8 +78,15 @@ public class ConfigurationController : ControllerBase
                 return BadRequest("Invalid language specified. Please provide 'de'.");
             }
 
+            // TODO: This could use some better handling to avoid TOCTOU, but
+            // the worst case here is an incorrect, non-critical message to the user
+            bool speechmaticsAlreadyConnected = speechmaticsConnectionService.Connected;
+
             // Process the custom dictionary
             dictionaryService.ProcessCustomDictionary(configuration!.dictionary);
+
+            // Log the successful upload of the custom dictionary
+            log.Information($"Custom dictionary uploaded successfully in {nameof(UploadCustomDictionary)}.");
 
             // Check if delayLength is valid
             if (!validDelayLengths.Contains(configuration!.delayLength))
@@ -83,9 +98,10 @@ public class ConfigurationController : ControllerBase
             // Set the delayLength
             dictionaryService.SetDelay(configuration!.delayLength);
 
-            // Log the successful upload of the custom dictionary
-            log.Information($"Custom dictionary uploaded successfully in {nameof(UploadCustomDictionary)}.");
-            return Ok("Custom dictionary uploaded successfully.");
+            if (!speechmaticsAlreadyConnected)
+                return Ok("Configuration uploaded successfully.");
+            else
+                return Accepted("Custom dictionary will be used on the next connection");
         }
         catch (Exception ex)
         {
