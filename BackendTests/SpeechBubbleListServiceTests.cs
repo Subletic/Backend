@@ -1,7 +1,7 @@
 namespace BackendTests;
 
 using Backend.Data;
-using Backend.Services;
+using Backend.SpeechBubble;
 
 [TestFixture]
 public class SpeechBubbleListServiceTests

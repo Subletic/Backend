@@ -1,9 +1,9 @@
 namespace BackendTests;
 
-using Backend.Controllers;
+using Backend.ClientCommunication;
 using Backend.Data;
-using Backend.Hubs;
-using Backend.Services;
+using Backend.FrontendCommunication;
+using Backend.SpeechBubble;
 using Microsoft.AspNetCore.SignalR;
 using Moq;
 

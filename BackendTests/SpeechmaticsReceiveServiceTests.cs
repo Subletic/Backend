@@ -7,7 +7,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-using Backend.Controllers;
 using Backend.Data.SpeechmaticsMessages.AddTranscriptMessage;
 using Backend.Data.SpeechmaticsMessages.AddTranscriptMessage.metadata;
 using Backend.Data.SpeechmaticsMessages.AddTranscriptMessage.result;
@@ -19,7 +18,9 @@ using Backend.Data.SpeechmaticsMessages.InfoMessage;
 using Backend.Data.SpeechmaticsMessages.RecognitionStartedMessage;
 using Backend.Data.SpeechmaticsMessages.RecognitionStartedMessage.language_pack_info;
 using Backend.Data.SpeechmaticsMessages.WarningMessage;
-using Backend.Services;
+using Backend.FrontendCommunication;
+using Backend.SpeechBubble;
+using Backend.SpeechEngine;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -361,15 +362,17 @@ public class SpeechmaticsReceiveServiceTests
                 });
 
         Mock<IWordProcessingService> mockWordProcessingService = new Mock<IWordProcessingService>();
+        Mock<IFrontendCommunicationService> mockFrontendCommunicationService = new Mock<IFrontendCommunicationService>();
         mockSpeechmaticsConnectionService.Setup(c => c.Socket)
             .Returns(mockWebSocket.Object);
         mockSpeechmaticsConnectionService.Setup(c => c.CancellationToken)
             .Returns(new CancellationTokenSource(TimeSpan.FromSeconds(5)).Token);
 
         ISpeechmaticsReceiveService service = new SpeechmaticsReceiveService(
-            mockSpeechmaticsConnectionService.Object,
-            mockWordProcessingService.Object,
-            logger);
+            speechmaticsConnectionService: mockSpeechmaticsConnectionService.Object,
+            wordProcessingService: mockWordProcessingService.Object,
+            frontendCommunicationService: mockFrontendCommunicationService.Object,
+            log: logger);
 
         CancellationTokenSource cts = new CancellationTokenSource();
 
@@ -382,6 +385,10 @@ public class SpeechmaticsReceiveServiceTests
             mockWordProcessingService.Invocations.Count(
                 x => x.Method.Name.Equals(nameof(IWordProcessingService.HandleNewWord))),
             Is.EqualTo(expectedNewWordsCount));
+        Assert.That(
+            mockFrontendCommunicationService.Invocations.Count(
+                x => x.Method.Name.Equals(nameof(IFrontendCommunicationService.AbortCorrection))),
+            Is.EqualTo(shouldCauseCancel ? 1 : 0));
         Assert.That(cts.IsCancellationRequested, Is.EqualTo(shouldCauseCancel));
     }
 }

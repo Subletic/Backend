@@ -4,8 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Backend.Data;
-using Backend.Hubs;
-using Backend.Services;
+using Backend.FrontendCommunication;
 using Microsoft.AspNetCore.SignalR;
 using Moq;
 using NUnit.Framework;
@@ -24,6 +23,7 @@ public class FrontendCommunicationServiceTests
         loggerMock = new Mock<ILogger>();
         hubContextMock = new Mock<IHubContext<FrontendCommunicationHub>>();
         service = new FrontendCommunicationService(loggerMock.Object, hubContextMock.Object);
+        service.ResetAbortedTracker();
     }
 
     [Test]
