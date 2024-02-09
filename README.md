@@ -22,11 +22,10 @@ Please also ensure that the `ffmpeg.exe` lies on the PATH of your OS. In Windows
 
 To start the software a few **environment-variables** have to be set. When the software is run for development purpose a **`launchSettings.json`** can be used to set these values. Also note the port **`40114`** the Backend is started on.
 
-| Variable-Name | Value | Development | Production |
-|---|---|---|---|
-| SPEECHMATICS_API_KEY | >is located in the credentials location< | ✅ | ✅ |
-| FRONTEND_URL | http://d.projekte.swe.htwk-leipzig.de:40110 | ❌ | ✅ |
-| BACKEND_URL | http://0.0.0.0:40114 | ❌ | ✅ |
+| Variable-Name | Value |
+|---|---|
+| SPEECHMATICS_API_KEY | >is located in the credentials location< |
+| FRONTEND_URL | http://localhost:40110 |
 
 **`Properties/launchSettings.json`:**
 ```json
@@ -60,9 +59,7 @@ To start the software a few **environment-variables** have to be set. When the s
 
 ## Ports
 
-| Software    | Port  |
-|-------------|-------|
-| Frontend    | 40110 |
-| Backend     | 40114 |
-| Mock Server | 40118 |
-
+| Software | HTTP Port  | HTTPS Port |
+|----------|------------|------------|
+| Frontend | 40110      | 40111      |
+| Backend  | 40114      | 40115      |
